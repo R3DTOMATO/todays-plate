@@ -1,0 +1,102 @@
+# Recipe Source Audit v3
+## Summary
+- Menu count: 197
+- Verified/source-mapped recipe count: 197
+- Added in v3: 88 manually mapped recipes
+- Residual generic source-mapped recipes requiring later narrow-source review: 0
+- Policy: Do not copy recipe prose. Use source structure, ingredient logic, heat control, and failure points; rewrite for beginners.
+
+## v3 Added Recipes
+- 연어 포케볼: 하와이/일식권 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 베이글 샌드위치: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 크루아상: 프랑스/양식 / source-mapped-v3 / Larousse Gastronomique, Serious Eats · French recipes
+- 미음: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 야채 스무디 보울: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 아침 부리또: 멕시코/미국식 / source-mapped-v3 / Rick Bayless · Mexican recipes, Mexico in My Kitchen
+- 고구마 라떼: 카페식/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 키쉬: 프랑스/양식 / source-mapped-v3 / Larousse Gastronomique, Serious Eats · French recipes
+- 규카츠: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 마키롤: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 포케볼: 하와이/세계음식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 쌈밥 정식: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 전주비빔밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 전골: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 불고기덮밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 잡채밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 보쌈정식: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 보리비빔밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 돌솥비빔밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 꼬막비빔밥: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 양꼬치: 중식/중앙아시아식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 곱창전골: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 사시미: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 케밥: 중동/튀르키예식 / source-mapped-v3 / The Mediterranean Dish, Middle Eats
+- 랍스터: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 족발: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 페퍼로니 피자: 이탈리아/미국식 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 아사이볼: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 팥빙수: 한식 디저트 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 우니동: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 스콘: 영국/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 푸딩: 양식 디저트 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 콥 샐러드: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 경단: 한식 디저트 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 소시지 볶음: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 에그 샌드위치: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 아보카도 샐러드: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 멘보샤: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 아침 머핀: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 알리오 감바스: 스페인/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 미트파이: 영국/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 해물파전: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 닭곰탕: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 청국장: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 콩국수: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 막국수: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 호박죽: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 김치수제비: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 낙지볶음: 한식 / source-mapped-v3 / Maangchi · Korean recipes, Korean Bapsang · Korean recipes
+- 울면: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 유린기: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 라조기: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 마라롱샤: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 북경오리: 중식 / source-mapped-v3 / The Woks of Life · Chinese recipes, Red House Spice · Chinese recipes
+- 야키토리덮밥: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 츠케멘: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 사케동: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 규니쿠 우동: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 나베: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 치라시스시: 일식 / source-mapped-v3 / Just One Cookbook · Japanese recipes, Japanese Cooking 101
+- 라구 파스타: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 봉골레 파스타: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 버섯 리조또: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 뇨키: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 치킨 샐러드: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 바질 크림 파스타: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 프렌치 어니언 수프: 프랑스/양식 / source-mapped-v3 / Larousse Gastronomique, Serious Eats · French recipes
+- 로스트 치킨: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 바베큐 립: 미국식/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 그릴드 치즈: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 맥앤치즈: 미국식/양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 시금치 라자냐: 이탈리아 / source-mapped-v3 / The Silver Spoon · Phaidon, GialloZafferano · Italian recipes
+- 시저랩: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 나시고렝: 인도네시아 / source-mapped-v3 / RecipeTin Eats · Nasi Goreng, SBS Food · Indonesian recipes
+- 미고렝: 인도네시아 / source-mapped-v3 / RecipeTin Eats · Nasi Goreng, SBS Food · Indonesian recipes
+- 분짜: 베트남 / source-mapped-v3 / Helen’s Recipes · Vietnamese recipes, 식품안전나라 조리식품의 레시피 DB
+- 분보남보: 베트남 / source-mapped-v3 / Helen’s Recipes · Vietnamese recipes, 식품안전나라 조리식품의 레시피 DB
+- 난 세트: 인도 / source-mapped-v3 / Swasthi’s Recipes · Indian recipes, 식품안전나라 조리식품의 레시피 DB
+- 팔라펠 랩: 중동 / source-mapped-v3 / The Mediterranean Dish, Middle Eats
+- 샥슈카: 중동/북아프리카 / source-mapped-v3 / The Mediterranean Dish, Middle Eats
+- 후무스 플레이트: 중동 / source-mapped-v3 / The Mediterranean Dish, Middle Eats
+- 엔칠라다: 멕시코 / source-mapped-v3 / Rick Bayless · Mexican recipes, Mexico in My Kitchen
+- 과카몰리 타코: 멕시코 / source-mapped-v3 / Rick Bayless · Mexican recipes, Mexico in My Kitchen
+- 똠얌꿍: 태국 / source-mapped-v3 / Hot Thai Kitchen · Thai recipes, 식품안전나라 조리식품의 레시피 DB
+- 도너 케밥: 튀르키예/중동 / source-mapped-v3 / The Mediterranean Dish, Middle Eats
+- 파투쉬 샐러드: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+- 락사: 동남아 / source-mapped-v3 / Hot Thai Kitchen · Thai recipes, 식품안전나라 조리식품의 레시피 DB
+- 쿠바 샌드위치: 양식 / source-mapped-v3 / Serious Eats · Recipes, BBC Good Food
+
+- 치즈버거: 미국식/양식 / source-mapped-v3 / Serious Eats · Burger recipes, BBC Good Food · Burger recipes
+
+## Needs Narrow Source Review
+- None. All current menu names have source-mapped recipe entries.

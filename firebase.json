@@ -1,0 +1,34 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "docs/**",
+      "server/**",
+      "package.json",
+      "package-lock.json",
+      "railway.json",
+      "README.md",
+      "*.zip"
+    ],
+    "headers": [
+      {
+        "source": "**/*.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" }
+        ]
+      }
+    ]
+  }
+}

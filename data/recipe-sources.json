@@ -1,0 +1,491 @@
+{
+  "trusted": {
+    "safety": {
+      "title": "식품안전나라 조리식품의 레시피 DB",
+      "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+      "type": "public_api",
+      "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+    }
+  },
+  "sourceCatalog": {
+    "foodsafety": {
+      "title": "식품안전나라 조리식품의 레시피 DB",
+      "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+      "type": "public_api",
+      "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+    },
+    "maangchi_miyeok": {
+      "title": "Maangchi · Seaweed soup with beef (Miyeokguk)",
+      "url": "https://www.maangchi.com/recipe/miyeokguk",
+      "type": "expert_blog",
+      "note": "불린 미역, 소고기, 마늘, 액젓/간장 계열 간, 참기름의 기본 구조 참고"
+    },
+    "maangchi_honghap": {
+      "title": "Maangchi · Seaweed soup with mussels",
+      "url": "https://www.maangchi.com/recipe/honghap-miyeokguk",
+      "type": "expert_blog",
+      "note": "홍합을 넣은 해산물 미역국의 세척·육수 구조 참고"
+    },
+    "maangchi_kimchi": {
+      "title": "Maangchi · Kimchi-jjigae",
+      "url": "https://www.maangchi.com/recipe/kimchi-jjigae",
+      "type": "expert_blog",
+      "note": "묵은 김치, 김치국물, 돼지고기, 두부를 중심으로 한 김치찌개 구조 참고"
+    },
+    "koreanbapsang_doenjang": {
+      "title": "Korean Bapsang · Doenjang Jjigae",
+      "url": "https://www.koreanbapsang.com/doenjang-jjigae-korean-soy-bean-paste/",
+      "type": "expert_blog",
+      "note": "된장, 두부, 애호박, 양파, 멸치육수 기반 된장찌개 구조 참고"
+    },
+    "koreanbapsang_bibimbap": {
+      "title": "Korean Bapsang · Bibimbap",
+      "url": "https://www.koreanbapsang.com/bibimbap/",
+      "type": "expert_blog",
+      "note": "나물·밥·고추장 양념을 분리 조리하는 비빔밥 구성 참고"
+    },
+    "joc_oyakodon": {
+      "title": "Just One Cookbook · Oyakodon",
+      "url": "https://www.justonecookbook.com/oyakodon/",
+      "type": "expert_blog",
+      "note": "다시, 간장, 미림, 닭고기, 달걀을 부드럽게 익히는 돈부리 구조 참고"
+    },
+    "joc_gyudon": {
+      "title": "Just One Cookbook · Gyudon",
+      "url": "https://www.justonecookbook.com/gyudon/",
+      "type": "expert_blog",
+      "note": "얇은 소고기와 양파를 단짠 다시 소스에 조리는 규동 구조 참고"
+    },
+    "joc_katsudon": {
+      "title": "Just One Cookbook · Katsudon",
+      "url": "https://www.justonecookbook.com/katsudon/",
+      "type": "expert_blog",
+      "note": "돈카츠를 다시 소스와 달걀에 얹는 가츠동 구조 참고"
+    },
+    "joc_tonkatsu": {
+      "title": "Just One Cookbook · Tonkatsu",
+      "url": "https://www.justonecookbook.com/tonkatsu/",
+      "type": "expert_blog",
+      "note": "밀가루·달걀·빵가루 순서와 튀김 온도 관리 참고"
+    },
+    "joc_udon": {
+      "title": "Just One Cookbook · Udon",
+      "url": "https://www.justonecookbook.com/beef-udon/",
+      "type": "expert_blog",
+      "note": "다시 국물과 우동면을 분리해 완성하는 방식 참고"
+    },
+    "joc_okonomiyaki": {
+      "title": "Just One Cookbook · Okonomiyaki",
+      "url": "https://www.justonecookbook.com/okonomiyaki/",
+      "type": "expert_blog",
+      "note": "양배추 많은 반죽을 두껍게 굽는 오코노미야키 구조 참고"
+    },
+    "woks_mapo": {
+      "title": "The Woks of Life · Mapo Tofu",
+      "url": "https://thewoksoflife.com/ma-po-tofu-real-deal/",
+      "type": "expert_blog",
+      "note": "두반장, 사천 후추, 다진 고기, 연두부의 사천식 구조 참고"
+    },
+    "redhouse_dumpling": {
+      "title": "Red House Spice · Chinese Dumplings",
+      "url": "https://redhousespice.com/chinese-dumplings/",
+      "type": "expert_blog",
+      "note": "만두소 수분 조절, 피 밀봉, 찜·굽기 방식 참고"
+    },
+    "redhouse_noodles": {
+      "title": "Red House Spice · Chinese Noodles",
+      "url": "https://redhousespice.com/",
+      "type": "expert_blog",
+      "note": "중국식 면·소스·향신료 조리 원리 참고"
+    },
+    "giallo_carbonara": {
+      "title": "GialloZafferano · Spaghetti Carbonara",
+      "url": "https://www.giallozafferano.com/recipes/Spaghetti-Carbonara-Bacon-and-egg-spaghetti.html",
+      "type": "expert_media",
+      "note": "구안찰레, 페코리노, 달걀, 후추, 면수 유화 방식 참고"
+    },
+    "silver_spoon": {
+      "title": "The Silver Spoon · Phaidon",
+      "url": "https://www.phaidon.com/en-us/products/the-silver-spoon-classic",
+      "type": "cookbook",
+      "note": "이탈리아 전통 가정식 레시피북 기준"
+    },
+    "giallo_general": {
+      "title": "GialloZafferano · Italian Recipes",
+      "url": "https://www.giallozafferano.com/",
+      "type": "expert_media",
+      "note": "이탈리아 현지식 파스타·피자·리조또 조리 원리 참고"
+    },
+    "serious_caesar": {
+      "title": "Serious Eats · Caesar Salad",
+      "url": "https://www.seriouseats.com/the-best-caesar-salad-recipe",
+      "type": "expert_media",
+      "note": "로메인, 크루통, 앤초비·달걀·레몬·파르미지아노 드레싱 구조 참고"
+    },
+    "hotthai_padthai": {
+      "title": "Hot Thai Kitchen · Authentic Pad Thai",
+      "url": "https://hot-thai-kitchen.com/best-pad-thai/",
+      "type": "expert_blog",
+      "note": "타마린드, 피시소스, 팜슈가 균형의 팟타이 소스 참고"
+    },
+    "hotthai_curry": {
+      "title": "Hot Thai Kitchen · Thai Curry/Tom Yum",
+      "url": "https://hot-thai-kitchen.com/",
+      "type": "expert_blog",
+      "note": "태국식 커리 페이스트, 피시소스, 코코넛밀크, 라임 산미 조절 참고"
+    },
+    "helen_pho": {
+      "title": "Helen’s Recipes · Phở bò",
+      "url": "https://helenrecipes.com/recipe-39-pho/",
+      "type": "expert_blog",
+      "note": "소뼈 육수, 구운 양파·생강, 팔각·계피 향신료 구조 참고"
+    },
+    "rick_taco": {
+      "title": "Rick Bayless · Taco Recipes",
+      "url": "https://www.rickbayless.com/recipe/crisped-slow-cooked-beef-tacos/",
+      "type": "chef_site",
+      "note": "토르티야, 살사, 고기 조리와 조립 방식 참고"
+    },
+    "swasthi_butter": {
+      "title": "Swasthi’s Recipes · Butter Chicken",
+      "url": "https://www.indianhealthyrecipes.com/butter-chicken/",
+      "type": "expert_blog",
+      "note": "요거트 양념 치킨, 토마토·버터·크림 소스 구조 참고"
+    },
+    "maangchi_tteokguk": {
+      "title": "Maangchi · Tteokguk",
+      "url": "https://www.maangchi.com/recipe/tteokguk",
+      "type": "expert_blog",
+      "note": "떡국의 맑은 육수, 떡국떡, 고명 구성 참고"
+    },
+    "maangchi_budae": {
+      "title": "Maangchi · Budae-jjigae",
+      "url": "https://www.maangchi.com/recipe/budae-jjigae",
+      "type": "expert_blog",
+      "note": "스팸·소시지·김치·고추장/고춧가루·육수 기반 부대찌개 구조 참고"
+    },
+    "maangchi_dakgalbi": {
+      "title": "Maangchi · Dakgalbi",
+      "url": "https://www.maangchi.com/recipe/dakgalbi",
+      "type": "expert_blog",
+      "note": "닭고기 양념, 양배추·고구마·떡을 함께 볶는 닭갈비 구조 참고"
+    },
+    "maangchi_kongnamul": {
+      "title": "Maangchi · Kongnamul-gukbap",
+      "url": "https://www.maangchi.com/recipe/kongnamul-gukbap",
+      "type": "expert_blog",
+      "note": "콩나물국밥의 맑은 국물, 콩나물 식감, 밥 말기 구조 참고"
+    },
+    "koreanbapsang_galbitang": {
+      "title": "Korean Bapsang · Galbitang",
+      "url": "https://www.koreanbapsang.com/galbitang-beef-short-rib-soup/",
+      "type": "expert_blog",
+      "note": "소갈비 핏물 제거, 무·대파·마늘로 맑게 끓이는 갈비탕 구조 참고"
+    },
+    "koreanbapsang_soups": {
+      "title": "Korean Bapsang · Korean Soups and Stews",
+      "url": "https://www.koreanbapsang.com/category/soup/",
+      "type": "expert_blog",
+      "note": "한국 국·탕·찌개 계열의 육수와 간 조절 방식 참고"
+    },
+    "koreanbapsang_side": {
+      "title": "Korean Bapsang · Korean Side Dishes",
+      "url": "https://www.koreanbapsang.com/category/side-dish/",
+      "type": "expert_blog",
+      "note": "계란말이·볶음·구이 등 한식 반찬 조리 원리 참고"
+    },
+    "maangchi_korean": {
+      "title": "Maangchi · Korean Recipes",
+      "url": "https://www.maangchi.com/recipes",
+      "type": "expert_blog",
+      "note": "한식 메뉴의 기본 양념, 국물, 볶음 조리 원리 참고"
+    },
+    "joc_onigiri": {
+      "title": "Just One Cookbook · Onigiri",
+      "url": "https://www.justonecookbook.com/onigiri-rice-balls/",
+      "type": "expert_blog",
+      "note": "주먹밥의 밥 간, 속재료, 김 감싸기 방식 참고"
+    },
+    "joc_tempura": {
+      "title": "Just One Cookbook · Tempura",
+      "url": "https://www.justonecookbook.com/tempura/",
+      "type": "expert_blog",
+      "note": "차가운 튀김옷, 기름 온도, 짧은 튀김 시간 참고"
+    },
+    "joc_shabu": {
+      "title": "Just One Cookbook · Shabu Shabu",
+      "url": "https://www.justonecookbook.com/shabu-shabu/",
+      "type": "expert_blog",
+      "note": "다시 국물, 얇은 고기, 채소를 순서대로 익히는 샤브샤브 구조 참고"
+    },
+    "joc_sukiyaki": {
+      "title": "Just One Cookbook · Sukiyaki",
+      "url": "https://www.justonecookbook.com/sukiyaki/",
+      "type": "expert_blog",
+      "note": "와리시타 소스와 얇은 소고기·두부·대파 조림 구조 참고"
+    },
+    "joc_yakisoba": {
+      "title": "Just One Cookbook · Yakisoba",
+      "url": "https://www.justonecookbook.com/yakisoba/",
+      "type": "expert_blog",
+      "note": "찐 면을 채소·고기와 볶고 소스로 마무리하는 방식 참고"
+    },
+    "joc_takoyaki": {
+      "title": "Just One Cookbook · Takoyaki",
+      "url": "https://www.justonecookbook.com/takoyaki-recipe/",
+      "type": "expert_blog",
+      "note": "묽은 다시 반죽, 문어, 타코야키 팬 회전 조리 방식 참고"
+    },
+    "joc_tendon": {
+      "title": "Just One Cookbook · Tendon",
+      "url": "https://www.justonecookbook.com/tendon-tempura-donburi/",
+      "type": "expert_blog",
+      "note": "튀김을 밥 위에 올리고 달콤짭짤한 텐츠유를 곁들이는 텐동 구조 참고"
+    },
+    "joc_katsu_curry": {
+      "title": "Just One Cookbook · Katsu Curry",
+      "url": "https://www.justonecookbook.com/katsu-curry/",
+      "type": "expert_blog",
+      "note": "일본식 카레와 돈카츠를 결합하는 카츠카레 구조 참고"
+    },
+    "joc_inari": {
+      "title": "Just One Cookbook · Inarizushi",
+      "url": "https://www.justonecookbook.com/inarizushi/",
+      "type": "expert_blog",
+      "note": "조린 유부 안에 초밥밥을 넣는 이나리즈시 구조 참고"
+    },
+    "woks_dim_sum": {
+      "title": "The Woks of Life · Dim Sum",
+      "url": "https://thewoksoflife.com/dim-sum/",
+      "type": "expert_blog",
+      "note": "딤섬·만두류의 속, 피, 찜 조리 원리 참고"
+    },
+    "woks_potsticker": {
+      "title": "The Woks of Life · Potstickers",
+      "url": "https://thewoksoflife.com/potstickers/",
+      "type": "expert_blog",
+      "note": "군만두의 굽기-증기-바삭하게 마무리 구조 참고"
+    },
+    "woks_malaxiangguo": {
+      "title": "The Woks of Life · Mala Xiang Guo",
+      "url": "https://thewoksoflife.com/ma-la-xiang-guo/",
+      "type": "expert_blog",
+      "note": "마라 베이스와 재료를 강하게 볶는 마라샹궈 구조 참고"
+    },
+    "woks_hotpot": {
+      "title": "The Woks of Life · Sichuan Hot Pot",
+      "url": "https://thewoksoflife.com/sichuan-hot-pot/",
+      "type": "expert_blog",
+      "note": "사천식 훠궈 육수와 재료별 투입 순서 참고"
+    },
+    "woks_hotsour": {
+      "title": "The Woks of Life · Hot and Sour Soup",
+      "url": "https://thewoksoflife.com/hot-and-sour-soup/",
+      "type": "expert_blog",
+      "note": "산라탕의 식초·후추 산미/매운맛, 전분 농도 구조 참고"
+    },
+    "woks_friedrice": {
+      "title": "The Woks of Life · Yangzhou Fried Rice",
+      "url": "https://thewoksoflife.com/yangzhou-fried-rice/",
+      "type": "expert_blog",
+      "note": "양저우볶음밥의 밥 수분, 재료 순서, 센 불 볶음 원리 참고"
+    },
+    "serious_breakfast": {
+      "title": "Serious Eats · Breakfast Recipes",
+      "url": "https://www.seriouseats.com/simple-easy-breakfast-recipes",
+      "type": "expert_media",
+      "note": "스크램블 에그, 팬케이크, 프렌치토스트 등 서양식 아침 조리 원리 참고"
+    },
+    "serious_french_toast": {
+      "title": "Serious Eats · Quick and Easy French Toast",
+      "url": "https://www.seriouseats.com/perfect-quick-easy-french-toast",
+      "type": "expert_media",
+      "note": "달걀·우유 커스터드 흡수와 팬 굽기 방식 참고"
+    },
+    "serious_burger": {
+      "title": "Serious Eats · Burger Recipes",
+      "url": "https://www.seriouseats.com/burger-recipes-5117820",
+      "type": "expert_media",
+      "note": "패티 성형, 시어링, 번 조립 원리 참고"
+    },
+    "serious_eggs_benedict": {
+      "title": "Serious Eats · Eggs Benedict",
+      "url": "https://www.seriouseats.com/eggs-benedict-recipe",
+      "type": "expert_media",
+      "note": "포치드 에그와 홀랜다이즈 소스 구조 참고"
+    },
+    "giallo_pesto": {
+      "title": "GialloZafferano · Pesto Pasta",
+      "url": "https://www.giallozafferano.com/recipes/Pasta-with-Pesto.html",
+      "type": "expert_media",
+      "note": "바질 페스토를 면수로 풀어 면과 코팅하는 방식 참고"
+    },
+    "giallo_cream": {
+      "title": "GialloZafferano · Creamy Pasta Recipes",
+      "url": "https://www.giallozafferano.com/recipes/",
+      "type": "expert_media",
+      "note": "크림 파스타의 소스 농도와 면수 조절 방식 참고"
+    },
+    "giallo_gambas": {
+      "title": "Spanish Garlic Shrimp/Gambas reference",
+      "url": "https://www.seriouseats.com/spanish-style-garlic-shrimp-gambas-al-ajillo-recipe",
+      "type": "expert_media",
+      "note": "마늘 오일에 새우를 짧게 익히는 감바스 알 아히요 방식 참고"
+    },
+    "maangchi_gamjatang": {
+      "title": "Maangchi · Korean soup/stew recipes",
+      "url": "https://www.maangchi.com/recipes/soups-stews",
+      "type": "expert_blog",
+      "note": "감자탕·매운탕 계열의 양념과 오래 끓이는 구조 참고"
+    },
+    "koreanbapsang_yukgaejang": {
+      "title": "Korean Bapsang · Korean soup recipes",
+      "url": "https://www.koreanbapsang.com/category/soup/",
+      "type": "expert_blog",
+      "note": "육개장·순대국·어묵탕 등 국물 메뉴의 육수와 간 조절 방식 참고"
+    },
+    "serious_sandwich": {
+      "title": "Serious Eats · Sandwich Recipes",
+      "url": "https://www.seriouseats.com/sandwich-recipes-5117701",
+      "type": "expert_media",
+      "note": "샌드위치 조립, 빵 굽기, 수분 관리 원리 참고"
+    },
+    "serious_oatmeal": {
+      "title": "Serious Eats · Oatmeal and breakfast reference",
+      "url": "https://www.seriouseats.com/simple-easy-breakfast-recipes",
+      "type": "expert_media",
+      "note": "오트밀·요거트·아침식사 조리 원리 참고"
+    }
+  },
+  "curationPolicy": {
+    "noVerbatimCopy": true,
+    "use": "출처의 재료 구조와 조리 원리를 확인하고 초보자용 문장으로 재작성",
+    "doNotUse": "블로그 본문, 설명 문장, 사진, 레시피 원문 단계의 무단 복사",
+    "verifiedRecipeCount": 108,
+    "batch": "v2: 51 additional verified rewrites over v1"
+  },
+  "v3_additional_sources": {
+    "thai": [
+      {
+        "title": "Hot Thai Kitchen · Thai recipes",
+        "url": "https://hot-thai-kitchen.com/",
+        "type": "expert_blog",
+        "note": "태국 요리의 피시소스, 타마린드, 라임, 허브 균형 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "vietnamese": [
+      {
+        "title": "Helen’s Recipes · Vietnamese recipes",
+        "url": "https://helenrecipes.com/",
+        "type": "expert_blog",
+        "note": "베트남 쌀국수, 분짜, 반미, 생허브 조합 구조 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "indian": [
+      {
+        "title": "Swasthi’s Recipes · Indian recipes",
+        "url": "https://www.indianhealthyrecipes.com/",
+        "type": "expert_blog",
+        "note": "인도 커리, 난, 향신료 순서와 초보자용 조리 흐름 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "mexican": [
+      {
+        "title": "Rick Bayless · Mexican recipes",
+        "url": "https://www.rickbayless.com/recipes/",
+        "type": "chef_site",
+        "note": "멕시코식 또띠야, 살사, 콩, 고기 조립 원리 참고"
+      },
+      {
+        "title": "Mexico in My Kitchen",
+        "url": "https://www.mexicoinmykitchen.com/",
+        "type": "expert_blog",
+        "note": "멕시코 가정식 레시피 구조 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "middleeast": [
+      {
+        "title": "The Mediterranean Dish",
+        "url": "https://www.themediterraneandish.com/recipes/",
+        "type": "expert_blog",
+        "note": "중동·지중해식 병아리콩, 허브, 요거트 소스, 샐러드 조리 구조 참고"
+      },
+      {
+        "title": "Middle Eats",
+        "url": "https://www.youtube.com/c/MiddleEats",
+        "type": "expert_media",
+        "note": "중동 요리의 향신료, 소스, 조립 방식 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "indonesian": [
+      {
+        "title": "RecipeTin Eats · Nasi Goreng",
+        "url": "https://www.recipetineats.com/nasi-goreng-indonesian-fried-rice/",
+        "type": "expert_blog",
+        "note": "나시고렝의 케찹마니스, 마늘, 샬롯, 달걀 조합 참고"
+      },
+      {
+        "title": "SBS Food · Indonesian recipes",
+        "url": "https://www.sbs.com.au/food/cuisine/indonesian",
+        "type": "expert_media",
+        "note": "인도네시아식 볶음밥·볶음면 조리 원리 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ],
+    "french": [
+      {
+        "title": "Larousse Gastronomique",
+        "url": "https://www.larousse.com/",
+        "type": "cookbook_reference",
+        "note": "프랑스 조리 기준과 기본 수프·키쉬 구조 참고"
+      },
+      {
+        "title": "Serious Eats · French recipes",
+        "url": "https://www.seriouseats.com/french-recipes-5117300",
+        "type": "expert_media",
+        "note": "프랑스식 수프, 키쉬, 샌드위치 조리 원리 참고"
+      },
+      {
+        "title": "식품안전나라 조리식품의 레시피 DB",
+        "url": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&show_cnt=10&start_idx=1&svc_no=COOKRCP01",
+        "type": "public_api",
+        "note": "재료정보, 만드는법_01~20, 영양성분 필드가 있는 공공 레시피 DB"
+      }
+    ]
+  }
+}

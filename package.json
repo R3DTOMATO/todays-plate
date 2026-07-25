@@ -1,0 +1,14 @@
+{
+  "name": "todays-plate-beta-api",
+  "version": "4.3.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/kakao-nearby-proxy.mjs",
+    "report": "node server/beta-report.mjs",
+    "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\""
+  }
+}

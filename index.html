@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 식탁 · 오늘 뭐 먹지?</title>
+<meta name="description" content="상황과 예산에 맞는 메뉴를 30초 안에 추천하고, 레시피와 주변 식당까지 연결하는 식사 결정 앱">
+<meta name="theme-color" content="#FF684E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="오늘의 식탁">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="./assets/icons/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- ─── TOP BAR ─── -->
+  <header class="topbar">
+    <button class="brand" type="button" onclick="switchPanel('home')" aria-label="오늘의 식탁 홈으로 이동">
+      <img class="brand-logo" src="./assets/brand/logo-symbol.svg" alt="" width="42" height="42">
+      <span class="brand-copy"><strong>오늘의 식탁</strong><small>오늘 뭐 먹지? 30초 안에 결정</small></span>
+    </button>
+    <div class="date-pill" id="dateLine">7월 23일 · 목요일</div>
+  </header>
+
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- ONBOARDING PANEL                 -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-onboarding">
+    <div class="sub-panel">
+      <div class="onboarding-intro">
+        <div class="onboarding-kicker">내 입맛 설정</div>
+        <div class="onboarding-title">더 정확한 추천을 위해<br>취향을 알려주세요.</div>
+        <p class="onboarding-copy">좋아하는 음식과 피하고 싶은 재료, 한 끼 예산을 저장하면 다음 추천부터 자동으로 반영됩니다.</p>
+      </div>
+      <div id="onboardingContent"></div>
+      <div class="onboarding-actions">
+        <button class="onboard-secondary" onclick="skipOnboarding()">나중에</button>
+        <button class="onboard-primary" onclick="completeOnboarding()">저장하고 시작</button>
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════════════════════════ -->
+  <!-- HOME PANEL                       -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel active" id="panel-home">
+    <main class="home">
+      <section class="home-hero">
+        <div class="hero-copy">
+          <div class="home-eyebrow"><span class="status-dot"></span><span id="mealGreeting">지금 먹기 좋은 메뉴를 찾아드려요</span></div>
+          <h1 class="home-title">오늘 뭐 먹지?<br><span>30초면 결정돼요.</span></h1>
+          <p class="home-sub">시간대와 입맛, 예산을 반영해<br>지금 가장 잘 맞는 한 끼를 추천합니다.</p>
+        </div>
+        <figure class="hero-visual">
+          <span class="hero-fallback" aria-hidden="true">🍲</span>
+          <img src="https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=900&q=84" alt="정갈하게 차려진 한식 한 끼" width="900" height="1100" loading="eager" decoding="async" onerror="this.style.display='none'">
+          <figcaption class="photo-caption">오늘의 한 끼</figcaption>
+          <div class="plate-orbit orbit-one">지금 시간에 맞춰</div>
+          <div class="plate-orbit orbit-two">내 예산 안에서</div>
+        </figure>
+      </section>
+
+      <button class="start-card primary" type="button" onclick="startQuiz()">
+        <span class="start-icon">✦</span>
+        <span class="start-card-copy">
+          <span class="start-title">30초 메뉴 추천 시작</span>
+          <span class="start-desc">식사 방식·오늘 상태·예산 3가지만 선택</span>
+        </span>
+        <span class="start-arrow" aria-hidden="true">→</span>
+      </button>
+      <div id="resumeRecommendation" class="resume-slot" aria-live="polite"></div>
+
+      <div class="beta-trust-note" aria-label="사용 안내">
+        <span>로그인 없이 바로 사용</span>
+        <span>위치는 주변 검색할 때만 요청</span>
+      </div>
+
+      <section class="home-section">
+        <div class="section-heading">
+          <div><span class="section-kicker">맞춤 선택</span><h2>내 상황에 맞게 고르기</h2></div>
+        </div>
+        <div class="home-action-grid">
+          <button class="start-card compact" type="button" onclick="quickRecommend()">
+            <span class="start-icon soft">↗</span>
+            <span class="start-title" id="quickRecommendTitle">바로 추천</span>
+            <span class="start-desc">현재 시간과 이전 선택으로 즉시 추천</span>
+            <span class="start-arrow">→</span>
+          </button>
+          <button class="start-card compact" type="button" onclick="openOnboarding(true)">
+            <span class="start-icon soft">♡</span>
+            <span class="start-title">내 입맛 설정</span>
+            <span class="start-desc">불호 재료와 선호 메뉴를 반영</span>
+            <span class="start-arrow">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="today-strip">
+        <div class="today-strip-head">
+          <div><span class="section-kicker">오늘</span><h2>오늘의 식사 기록</h2></div>
+          <button type="button" onclick="switchPanel('diary')">전체보기</button>
+        </div>
+        <div class="today-meals" id="todayMeals"></div>
+      </section>
+
+      <button class="record-link-card" type="button" onclick="switchPanel('favorites')">
+        <span class="record-link-icon">♥</span>
+        <span><strong>찜한 메뉴 다시 보기</strong><small>고민될 때 저장해둔 메뉴에서 빠르게 골라보세요.</small></span>
+        <span aria-hidden="true">→</span>
+      </button>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- QUIZ PANEL                       -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-quiz">
+    <div class="progress-area">
+      <div class="progress-top">
+        <div class="progress-label"><span id="stepCurrent">1</span> / <span id="stepTotal">3</span></div>
+        <div class="candidate-count">후보 <span class="num" id="candidateNum">36</span>개</div>
+      </div>
+      <div class="progress-steps" id="progressSteps"></div>
+    </div>
+
+    <div class="filter-summary" id="filterSummary"></div>
+
+    <div class="question-area">
+      <div class="step-num" id="stepNum">선택 01</div>
+      <h1 class="question-text" id="questionText">언제 먹을 메뉴인가요?</h1>
+      <p class="question-sub" id="questionSub">시간대에 어울리는 음식을 추천해드릴게요</p>
+      <div class="options" id="optionsContainer"></div>
+      <div class="skip-row">
+        <button class="skip-btn" id="skipBtn">아무거나 괜찮아요 →</button>
+      </div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="nav-text-btn" id="backBtn" disabled>← 이전</button>
+      <button class="nav-text-btn" onclick="switchPanel('home')">처음으로</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- RESULT PANEL                     -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-result">
+    <div class="result-screen">
+      <div class="result-label">오늘의 추천</div>
+      <h2 class="result-title">오늘은 이 메뉴 어때요?</h2>
+      <p class="result-sub" id="resultSub">베스트 매치</p>
+
+      <div class="top-pick" id="topPick" aria-live="polite"></div>
+
+      <div class="action-grid">
+        <button class="action-btn primary-action" onclick="acceptCurrentMenu()">
+          <span class="action-btn-icon">✓</span>
+          <div class="action-btn-text">이 메뉴로 결정</div>
+          <div class="action-btn-sub">선택하고 식사 기록하기</div>
+        </button>
+        <button class="action-btn" onclick="goRecipe()">
+          <span class="action-btn-icon">▤</span>
+          <div class="action-btn-text">집에서 만들어 먹기</div>
+          <div class="action-btn-sub">초보자용 레시피 보기</div>
+        </button>
+        <button class="action-btn" onclick="goNearby()">
+          <span class="action-btn-icon">⌖</span>
+          <div class="action-btn-text">주변 식당 찾기</div>
+          <div class="action-btn-sub">위치를 확인한 뒤 검색</div>
+        </button>
+        <button class="action-btn" id="favActionBtn" onclick="toggleFavorite()">
+          <span class="action-btn-icon" id="favActionIcon">♡</span>
+          <div class="action-btn-text" id="favActionText">찜하기</div>
+          <div class="action-btn-sub">나중에 다시 보기</div>
+        </button>
+        <button class="action-btn" onclick="rejectCurrentMenu()">
+          <span class="action-btn-icon">↻</span>
+          <div class="action-btn-text">다른 메뉴</div>
+          <div class="action-btn-sub">새 추천 받기</div>
+        </button>
+      </div>
+
+      <div id="resultDetails" class="result-details"></div>
+
+      <div class="runner-title">다른 후보들</div>
+      <div id="runnerList"></div>
+
+      <button class="retry-btn" onclick="startQuiz()">↻ 다시 찾아보기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- RECIPE PANEL                     -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-recipe">
+    <div class="sub-panel">
+      <h2 class="sub-title">레시피</h2>
+      <p class="sub-subtitle" id="recipeSubtitle">선택한 메뉴를 직접 만들어보세요</p>
+      <div id="recipeContent">
+        <div class="empty-state">
+          <div class="empty-icon">📖</div>
+          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
+          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- NEARBY PANEL                     -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-nearby">
+    <div class="sub-panel">
+      <h2 class="sub-title">주변 식당</h2>
+      <p class="sub-subtitle" id="nearbySubtitle">가까운 식당을 찾아드려요</p>
+      <div id="nearbyContent">
+        <div class="empty-state">
+          <div class="empty-icon">📍</div>
+          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
+          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- DIARY PANEL                      -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-diary">
+    <div class="sub-panel">
+      <h2 class="sub-title">식단 기록</h2>
+      <p class="sub-subtitle">최근 식사 기록과 실제 지출</p>
+      <div id="diaryContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- FAVORITES PANEL                  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-favorites">
+    <div class="sub-panel">
+      <h2 class="sub-title">찜한 메뉴</h2>
+      <p class="sub-subtitle" id="favSubtitle">언젠가 먹어보고 싶은 메뉴 모음</p>
+      <div id="favoritesContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- PROFILE / TASTE PANEL            -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-profile">
+    <div class="sub-panel">
+      <h2 class="sub-title">내 입맛</h2>
+      <p class="sub-subtitle">개인화 추천에 반영되는 취향 데이터</p>
+      <div id="profileContent"></div>
+      <div class="data-actions profile-data-actions">
+        <button class="profile-utility-btn" type="button" onclick="openFeedbackModal()">의견·오류 보내기</button>
+        <button class="profile-utility-btn" type="button" onclick="openPrivacyModal()">개인정보 및 분석 설정</button>
+        <button class="reset-btn" onclick="resetAllData()">모든 앱 데이터 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- RECOMMENDATION TEST PANEL        -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-debug">
+    <div class="sub-panel">
+      <h2 class="sub-title">추천 검증</h2>
+      <p class="sub-subtitle">조건 조합별 후보 수와 추천 순위를 확인합니다.</p>
+      <div class="test-control-grid" id="recommendationTestControls"></div>
+      <div id="recommendationTestResult"></div>
+    </div>
+  </div>
+
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- RECIPE QA PANEL                  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-recipeqa">
+    <div class="sub-panel">
+      <h2 class="sub-title">레시피 QA</h2>
+      <p class="sub-subtitle">출처·재료·조리 단계·실패 포인트를 메뉴별로 검수합니다.</p>
+      <div id="recipeQaContent"></div>
+    </div>
+  </div>
+
+    <!-- ─── BOTTOM NAV ─── -->
+  <nav class="bottom-nav" aria-label="주요 메뉴">
+    <button class="nav-item active" data-panel="home" aria-label="홈">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5v9a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M9 21v-6h6v6"/></svg></span><span class="nav-label">홈</span>
+    </button>
+    <button class="nav-item" data-panel="favorites" aria-label="찜한 메뉴">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg></span><span class="nav-label">찜</span>
+    </button>
+    <button class="nav-item" data-panel="nearby" aria-label="주변 식당">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="nav-label">주변</span>
+    </button>
+    <button class="nav-item" data-panel="diary" aria-label="식사 기록">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="nav-label">기록</span>
+    </button>
+    <button class="nav-item" data-panel="profile" aria-label="내 입맛">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg></span><span class="nav-label">내 입맛</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Record Modal -->
+<div class="modal-overlay" id="recordModal" aria-hidden="true">
+  <div class="modal record-modal" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
+    <div class="modal-title" id="recordModalTitle">식사 기록</div>
+    <p class="modal-sub" id="recordModalDish">먹은 메뉴와 실제 경험을 남겨주세요.</p>
+
+    <label class="form-field">
+      <span>날짜와 시간</span>
+      <input id="recordDateTime" type="datetime-local" required>
+    </label>
+
+    <div class="form-field">
+      <span>식사 구분</span>
+      <div class="meal-time-pick" id="mealTimePick">
+        <button class="meal-time-btn" type="button" data-time="아침"><span class="mt-emoji">🌅</span><span class="mt-text">아침</span></button>
+        <button class="meal-time-btn" type="button" data-time="점심"><span class="mt-emoji">☀️</span><span class="mt-text">점심</span></button>
+        <button class="meal-time-btn" type="button" data-time="저녁"><span class="mt-emoji">🌙</span><span class="mt-text">저녁</span></button>
+        <button class="meal-time-btn" type="button" data-time="야식"><span class="mt-emoji">🌙</span><span class="mt-text">야식</span></button>
+      </div>
+    </div>
+
+    <label class="form-field">
+      <span>식사 방식</span>
+      <select id="recordMethod">
+        <option value="외식">외식</option>
+        <option value="배달">배달</option>
+        <option value="집밥">집밥</option>
+        <option value="편의점">편의점</option>
+      </select>
+    </label>
+
+    <label class="form-field">
+      <span>실제 지출 금액 <small>선택</small></span>
+      <div class="input-with-unit"><input id="recordAmount" type="number" min="0" max="1000000" step="100" inputmode="numeric" placeholder="예: 9500"><span>원</span></div>
+    </label>
+
+    <div class="form-field">
+      <span>만족도 <small>선택</small></span>
+      <div class="segmented-input" id="recordSatisfaction">
+        <button type="button" data-value="좋음">좋았어요</button>
+        <button type="button" data-value="보통">보통이에요</button>
+        <button type="button" data-value="아쉬움">아쉬웠어요</button>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <span>다시 먹고 싶나요? <small>선택</small></span>
+      <div class="segmented-input" id="recordEatAgain">
+        <button type="button" data-value="yes">네</button>
+        <button type="button" data-value="maybe">고민돼요</button>
+        <button type="button" data-value="no">아니요</button>
+      </div>
+    </div>
+
+    <label class="form-field">
+      <span>간단한 메모 <small>선택 · 300자</small></span>
+      <textarea id="recordMemo" maxlength="300" rows="3" placeholder="맛, 양, 다음에 바꾸고 싶은 점 등을 적어보세요."></textarea>
+    </label>
+
+    <label class="form-field photo-field">
+      <span>음식 사진 <small>선택 · 기기 안에 압축 저장</small></span>
+      <input id="recordPhoto" type="file" accept="image/*">
+      <div id="recordPhotoPreview" class="photo-preview" hidden></div>
+    </label>
+
+    <p class="form-notice">사진과 메모는 현재 기기에만 저장됩니다. 분석 이벤트에는 사진·메모 원문을 전송하지 않습니다.</p>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeRecordModal()">취소</button>
+      <button class="btn-confirm" id="recordSubmitBtn" type="button" onclick="confirmRecord()">기록하기</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Recommendation rejection reason modal -->
+<div class="modal-overlay" id="rejectReasonModal" aria-hidden="true">
+  <div class="modal reject-modal" role="dialog" aria-modal="true" aria-labelledby="rejectReasonTitle">
+    <div class="modal-title" id="rejectReasonTitle">왜 다른 메뉴가 필요하신가요?</div>
+    <p class="modal-sub">한 번만 알려주면 다음 추천이 더 정확해집니다.</p>
+    <div class="reject-reason-grid">
+      <button type="button" onclick="confirmRejectReason('not_in_mood')">지금은 안 당겨요</button>
+      <button type="button" onclick="confirmRejectReason('too_expensive')">예산보다 비싸요</button>
+      <button type="button" onclick="confirmRejectReason('recently_eaten')">최근에 먹었어요</button>
+      <button type="button" onclick="confirmRejectReason('hard_to_find')">주변에서 찾기 어려워요</button>
+      <button type="button" onclick="confirmRejectReason('hard_to_cook')">만들기 번거로워요</button>
+      <button type="button" onclick="confirmRejectReason('dislike_ingredient')">재료가 마음에 안 들어요</button>
+      <button type="button" onclick="confirmRejectReason('too_small')">양이 적을 것 같아요</button>
+      <button type="button" onclick="confirmRejectReason('too_large')">양이 많을 것 같아요</button>
+      <button type="button" onclick="confirmRejectReason('other')">기타 이유</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeRejectReasonModal()">취소</button>
+      <button class="btn-confirm secondary-confirm" type="button" onclick="confirmRejectReason('skip')">이유 없이 다른 메뉴</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- General feedback modal -->
+<div class="modal-overlay" id="feedbackModal" aria-hidden="true">
+  <div class="modal feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+    <div class="modal-title" id="feedbackModalTitle">의견·오류 보내기</div>
+    <p class="modal-sub">베타 개선에 필요한 정보만 받습니다. 연락처 입력은 선택입니다.</p>
+    <label class="form-field">
+      <span>문제 유형</span>
+      <select id="feedbackType">
+        <option value="recommendation_inappropriate">추천이 적절하지 않음</option>
+        <option value="menu_incorrect">메뉴 정보가 틀림</option>
+        <option value="price_incorrect">예상 가격이 실제와 다름</option>
+        <option value="recipe_incorrect">레시피가 틀림</option>
+        <option value="restaurant_incorrect">식당 정보가 틀림</option>
+        <option value="restaurant_closed">폐업한 식당</option>
+        <option value="hours_incorrect">영업시간이 틀림</option>
+        <option value="feature_broken">기능이 작동하지 않음</option>
+        <option value="usage_unclear">사용 방법이 이해되지 않음</option>
+        <option value="other">기타 의견</option>
+      </select>
+    </label>
+    <label class="form-field">
+      <span>내용</span>
+      <textarea id="feedbackMessage" maxlength="1000" rows="5" placeholder="어떤 화면에서 무엇이 잘못되었는지 적어주세요."></textarea>
+    </label>
+    <label class="form-field">
+      <span>답변 받을 연락처 <small>선택</small></span>
+      <input id="feedbackContact" type="text" maxlength="120" autocomplete="email" placeholder="이메일 또는 연락 가능한 수단">
+    </label>
+    <label class="check-field"><input id="feedbackIncludeContext" type="checkbox" checked><span>현재 메뉴, 화면, 발생 시각, 앱 버전과 오류 정보를 함께 보냅니다.</span></label>
+    <p class="form-notice">정밀 위치, 음식 사진, 식사 메모 원문은 자동 첨부하지 않습니다.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeFeedbackModal()">취소</button>
+      <button class="btn-confirm" id="feedbackSubmitBtn" type="button" onclick="submitGeneralFeedback()">보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy and analytics modal -->
+<div class="modal-overlay" id="privacyModal" aria-hidden="true">
+  <div class="modal privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
+    <div class="modal-title" id="privacyModalTitle">개인정보 및 분석 설정</div>
+    <div class="privacy-copy">
+      <section>
+        <h3>비회원 데이터</h3>
+        <p>추천 기록, 찜, 식사 기록과 입맛 정보는 우선 현재 기기에 저장됩니다. 로그인 기능이 연결되기 전에는 다른 기기로 자동 동기화되지 않습니다.</p>
+      </section>
+      <section>
+        <h3>위치 정보</h3>
+        <p>주변 식당 찾기를 실행할 때만 현재 위치를 요청합니다. 식당 검색 요청 처리에 사용하며 지속적으로 추적하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
+      </section>
+      <section>
+        <h3>베타 분석 데이터</h3>
+        <p>앱 실행, 추천 단계, 메뉴 선택·거절, 식당·레시피 이용, 식사 기록과 오류 여부를 익명 사용자 ID와 함께 기록할 수 있습니다. 이름, 연락처, 정밀 위치, 사진, 메모 원문은 분석 데이터에 넣지 않습니다.</p>
+      </section>
+      <label class="consent-switch"><span><strong>선택 분석 데이터 수집</strong><small>추천 품질과 오류 개선에 사용</small></span><input id="analyticsConsentToggle" type="checkbox" onchange="setAnalyticsConsent(this.checked)"></label>
+      <button class="profile-utility-btn full" type="button" onclick="downloadLocalData()">내 데이터 파일로 저장</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-confirm" type="button" onclick="closePrivacyModal()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- First-use analytics consent -->
+<div class="consent-banner" id="analyticsConsentBanner" hidden>
+  <div><strong>친구 베타 개선 데이터</strong><p>추천 단계와 오류 여부만 익명으로 수집할 수 있습니다. 정밀 위치·사진·메모는 수집하지 않습니다.</p></div>
+  <div class="consent-banner-actions"><button type="button" onclick="respondAnalyticsConsent(false)">수집 안 함</button><button type="button" class="primary" onclick="respondAnalyticsConsent(true)">동의하고 계속</button></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
+
+<script src="./js/config.js"></script>
+<script src="./js/app.js" defer></script>
+</body>
+</html>
