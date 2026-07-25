@@ -16,7 +16,11 @@
 - 일반 피드백 접수와 오프라인 재전송 큐
 - 이벤트·피드백 수집용 서버 API와 베타 지표 리포트
 
+<<<<<<< HEAD
 자세한 변경 내용은 `docs/korea-beta-v4.1-release-notes.md`, 테스트 기준은 `docs/beta-v4-acceptance-checklist.md`를 확인하세요.
+=======
+자세한 변경 내용은 `docs/korea-beta-v4-release-notes.md`, 테스트 기준은 `docs/beta-v4-acceptance-checklist.md`를 확인하세요.
+>>>>>>> 410633b790b96d2cde833c6405be56bf8829161f
 
 ## 현재 구조
 
@@ -38,14 +42,20 @@ docs/
 `file://`로 직접 열면 JSON 데이터 요청이 차단될 수 있으므로 정적 서버를 사용합니다.
 
 ```bash
+<<<<<<< HEAD
 cd todays_plate_korea_beta_v4
+=======
+>>>>>>> 410633b790b96d2cde833c6405be56bf8829161f
 python -m http.server 5500
 ```
 
 브라우저에서 `http://localhost:5500`을 엽니다.
 
+<<<<<<< HEAD
 서버 API까지 함께 테스트하려면 `js/config.example.js` 내용을 `js/config.js`에 적용합니다.
 
+=======
+>>>>>>> 410633b790b96d2cde833c6405be56bf8829161f
 ## 2. 베타 API 실행
 
 Kakao REST API 키는 브라우저에 넣지 않습니다.
@@ -53,6 +63,7 @@ Kakao REST API 키는 브라우저에 넣지 않습니다.
 ```bash
 KAKAO_REST_API_KEY="발급받은_서버용_키" \
 ALLOWED_ORIGINS="http://localhost:5500,http://127.0.0.1:5500" \
+<<<<<<< HEAD
 node server/kakao-nearby-proxy.mjs
 ```
 
@@ -82,12 +93,23 @@ node server/beta-report.mjs > beta-report.json
 - 오류 이벤트
 - 피드백 유형
 - 익명 사용자·세션 수
+=======
+npm start
+```
+
+## 3. 배포
+
+- 프런트엔드: Firebase Hosting
+- API 서버: Railway
+- 상세 절차: `docs/deployment-firebase-railway.md`
+>>>>>>> 410633b790b96d2cde833c6405be56bf8829161f
 
 ## 개인정보 원칙
 
 - 추천·기록은 로그인 없이 로컬에 저장됩니다.
 - 선택 분석은 사용자가 동의한 경우에만 수집합니다.
 - 분석 이벤트에는 이름, 연락처, 정밀 위치, 주소, 사진, 식사 메모를 넣지 않습니다.
+<<<<<<< HEAD
 - 피드백 연락처는 사용자가 직접 입력한 경우에만 피드백 저장소에 포함됩니다.
 - 위치는 주변 식당 검색 요청에만 사용하고 분석 이벤트에는 좌표를 남기지 않습니다.
 - 알레르기·제외 식재료는 감점이 아니라 추천 후보 제외 조건입니다.
@@ -113,3 +135,7 @@ node server/beta-report.mjs > beta-report.json
 - 운영 환경 데이터베이스·백업·접근 제어 적용
 - 개인정보 처리방침과 실제 보관·삭제 정책 일치 확인
 - 모바일 브라우저 및 iOS Safari 권한 흐름 실기기 테스트
+=======
+- 위치는 주변 식당 검색 요청에만 사용하고 분석 이벤트에는 좌표를 남기지 않습니다.
+- 알레르기·제외 식재료는 감점이 아니라 추천 후보 제외 조건입니다.
+>>>>>>> 410633b790b96d2cde833c6405be56bf8829161f
