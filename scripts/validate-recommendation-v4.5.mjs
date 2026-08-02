@@ -3,7 +3,7 @@ const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
 const keywords = JSON.parse(fs.readFileSync(new URL('../data/restaurant-keywords.json', import.meta.url), 'utf8'));
 const checks = [];
 const ok = (name, pass, detail='') => checks.push({name, pass:Boolean(pass), detail});
-ok('앱 버전 v4.5', app.includes("korea-beta-v4.5"));
+ok('앱 버전 v4.5 이상', /korea-beta-v4\.(5|6)/.test(app));
 ok('국가별 집밥 설정', app.includes('HOME_COUNTRY_CONFIG') && app.includes("JP: { label:'일본'") && app.includes("cuisine:'일식'"));
 ok('집밥 대표 메뉴 국가 우선', app.includes('prioritizeHomeCuisineForHomeMode') && app.includes("ans.mode !== '집밥'"));
 ok('라조기 정확 키워드', JSON.stringify(keywords['라조기']) === JSON.stringify(['라조기']), JSON.stringify(keywords['라조기']));

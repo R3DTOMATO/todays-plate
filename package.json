@@ -1,6 +1,6 @@
 {
   "name": "todays-plate-beta-api",
-  "version": "4.5.0",
+  "version": "4.6.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,6 +11,7 @@
     "report": "node server/beta-report.mjs",
     "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\"",
     "validate:recommendation": "node scripts/validate-recommendation-v4.4.mjs",
-    "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs"
+    "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs",
+    "validate:v4.6": "node scripts/validate-nearby-v4.6.mjs"
   }
 }

@@ -1,0 +1,497 @@
+diff --git a/README.md b/README.md
+index e0ad70c..163e09a 100644
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,15 @@
+-# 오늘의 식탁 · 한국 친구 베타 v4.5.4
++# 오늘의 식탁 · 한국 친구 베타 v4.6.4
+ 
+ 한국 사용자가 로그인 없이 `식사 방식 → 원하는 식사 → 예산` 세 단계만 선택해 메뉴를 결정하고, 주변 식당·레시피·실제 식사 기록으로 이어갈 수 있는 정적 웹 베타입니다.
+ 
++## v4.6 핵심 개선
++
++- 메뉴별 전문 업종 기반 주변 식당 검색
++- 바베큐 립을 브런치로 확장하지 않도록 수정
++- 일반 식사 메뉴에서 카페·디저트 업종 제외
++- 식당 결과를 상호명 일치·메뉴 검색 후보·전문점 후보로 구분
++- HTML·JavaScript 배포 캐시 무효화
++
+ ## v4.4 핵심 개선
+ 
+ - 한국형 집밥 우선 추천
+diff --git a/data/restaurant-keywords.json b/data/restaurant-keywords.json
+index 098e170..3a92cd2 100644
+--- a/data/restaurant-keywords.json
++++ b/data/restaurant-keywords.json
+@@ -196,5 +196,13 @@
+   ],
+   "마라롱샤": [
+     "마라롱샤"
++  ],
++  "바베큐 립": [
++    "바베큐 립",
++    "바비큐 립",
++    "BBQ 립",
++    "폭립",
++    "바베큐 폭립",
++    "바비큐 폭립"
+   ]
+ }
+diff --git a/docs/korea-beta-v4.6-release-notes.md b/docs/korea-beta-v4.6-release-notes.md
+new file mode 100644
+index 0000000..ef0d3ec
+--- /dev/null
++++ b/docs/korea-beta-v4.6-release-notes.md
+@@ -0,0 +1,29 @@
++# 오늘의 식탁 v4.6 주변 식당 검색 수정
++
++## 수정한 문제
++
++- 바베큐 립 검색이 브런치 카페로 확장되던 문제
++- 메뉴와 무관한 카페를 높은 추천도로 표시하던 문제
++- 카카오 키워드 검색 결과를 메뉴 판매 확인으로 오해하던 문제
++- Firebase 배포 후 오래된 app.js가 남을 수 있는 캐시 문제
++
++## 검색 정책
++
++1. 정확 메뉴명과 표기 변형 검색
++2. 메뉴에 맞는 전문 업종 검색
++3. 상호명 일치, 메뉴 검색 후보, 전문점 후보를 구분
++4. 판매가 확인되지 않은 장소에는 추천도 표현을 사용하지 않음
++5. 일반 식사 메뉴에서는 카페·커피·디저트 업종 제외
++
++## 바베큐 립 예시
++
++- 바베큐 립
++- 바비큐 립
++- BBQ 립
++- 폭립
++- 바베큐 폭립
++- 미국식 바비큐
++- 스테이크하우스
++- 그릴 레스토랑
++
++`브런치`는 검색하지 않습니다.
+diff --git a/firebase.json b/firebase.json
+index 44ad2bf..a176240 100644
+--- a/firebase.json
++++ b/firebase.json
+@@ -15,18 +15,48 @@
+       "*.zip"
+     ],
+     "headers": [
++      {
++        "source": "/index.html",
++        "headers": [
++          {
++            "key": "Cache-Control",
++            "value": "no-store, max-age=0"
++          }
++        ]
++      },
++      {
++        "source": "**/*.js",
++        "headers": [
++          {
++            "key": "Cache-Control",
++            "value": "no-store, max-age=0"
++          }
++        ]
++      },
+       {
+         "source": "**/*.json",
+         "headers": [
+-          { "key": "Cache-Control", "value": "no-cache" }
++          {
++            "key": "Cache-Control",
++            "value": "no-cache"
++          }
+         ]
+       },
+       {
+         "source": "**",
+         "headers": [
+-          { "key": "X-Content-Type-Options", "value": "nosniff" },
+-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+-          { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" }
++          {
++            "key": "X-Content-Type-Options",
++            "value": "nosniff"
++          },
++          {
++            "key": "Referrer-Policy",
++            "value": "strict-origin-when-cross-origin"
++          },
++          {
++            "key": "Permissions-Policy",
++            "value": "camera=(self), geolocation=(self), microphone=()"
++          }
+         ]
+       }
+     ]
+diff --git a/index.html b/index.html
+index dfba05e..1e1fcac 100644
+--- a/index.html
++++ b/index.html
+@@ -489,6 +489,6 @@
+ <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
+ 
+ <script src="./js/config.js"></script>
+-<script src="./js/app.js" defer></script>
++<script src="./js/app.js?v=4.6.0" defer></script>
+ </body>
+ </html>
+diff --git a/js/app.js b/js/app.js
+index 63bf29a..01843de 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -1046,7 +1046,7 @@
+ 
+ 
+   // ─── State ───
+-  const APP_VERSION = 'korea-beta-v4.5';
++  const APP_VERSION = 'korea-beta-v4.6';
+   let currentStep = 0;
+   let answers = {};
+   let history = [];
+@@ -5854,3 +5854,268 @@
+         </div>`;
+     }
+   });
++
++
++  // ─── v4.6 Nearby search evidence filter ───
++  // 메뉴명 검색 결과라는 이유만으로 모든 장소를 신뢰하지 않습니다.
++  // 1) 상호명에서 메뉴/별칭이 확인되는 장소
++  // 2) 메뉴명 검색으로 반환됐고 업종이 해당 요리군과 일치하는 장소
++  // 3) 가까운 전문점 후보
++  // 순으로 구분하며, 판매가 확인되지 않은 장소에는 추천도 표현을 사용하지 않습니다.
++  function normalizePlaceSearchText(value) {
++    return String(value || '')
++      .toLowerCase()
++      .replace(/bbq/g, '바비큐')
++      .replace(/barbecue/g, '바비큐')
++      .replace(/바베큐/g, '바비큐')
++      .replace(/[^0-9a-z가-힣]/g, '');
++  }
++
++  function menuSearchAliases(menu) {
++    const name = compactText(menu?.name);
++    const core = coreDishName(menu);
++    const loaded = DISH_TO_RESTAURANT_KEYWORDS[name] || DISH_TO_RESTAURANT_KEYWORDS[core] || [];
++    const aliases = [name, core, ...loaded];
++    const compact = normalizePlaceSearchText(name);
++
++    if (/바비큐립|폭립|립바비큐/.test(compact)) {
++      aliases.push('바비큐 립', '바베큐 립', 'BBQ 립', '폭립', '바비큐 폭립', '바베큐 폭립');
++    }
++    if (/라조기/.test(compact)) aliases.push('라조기');
++    if (/유린기/.test(compact)) aliases.push('유린기');
++    if (/깐풍기/.test(compact)) aliases.push('깐풍기');
++
++    return uniq(aliases).filter(value => value.length >= 2).slice(0, 8);
++  }
++
++  function isCafeCompatibleMenu(menu) {
++    const text = normalizePlaceSearchText(`${menu?.name || ''} ${menu?.desc || ''}`);
++    return /브런치|토스트|샌드위치|샐러드|베이글|팬케이크|와플|크루아상|커피|라떼|스무디|아사이|요거트|디저트|케이크|푸딩/.test(text);
++  }
++
++  function dishVenueProfile(menu) {
++    const name = normalizePlaceSearchText(menu?.name);
++    const origin = normalizePlaceSearchText(menu?.origin);
++
++    if (/바비큐립|폭립|립바비큐/.test(name)) {
++      return {
++        venueQueries: ['미국식 바비큐', '아메리칸 바베큐', '바비큐 전문점', '폭립', '스테이크하우스', '그릴 레스토랑', '패밀리레스토랑'],
++        venueTerms: ['바비큐', '바베큐', 'bbq', '폭립', '립', '스테이크', '그릴', '패밀리레스토랑', '아메리칸', '텍사스', '양식', '레스토랑'],
++        rejectTerms: ['브런치', '카페', '커피', '디저트', '베이커리', '제과'],
++        allowCafe: false,
++      };
++    }
++
++    if (menu?.type === '양식') {
++      if (/파스타|볼로네제|라구|라자냐|리조또|뇨끼/.test(name)) {
++        return { venueQueries:['이탈리안', '파스타', '트라토리아', '이탈리안 레스토랑'], venueTerms:['이탈리안','파스타','트라토리아','라자냐','리조또','뇨끼','양식','레스토랑'], rejectTerms:['한식','중식','일식'], allowCafe:false };
++      }
++      if (/피자/.test(name)) {
++        return { venueQueries:['피자', '피제리아', '화덕피자'], venueTerms:['피자','피제리아','화덕','양식','레스토랑'], rejectTerms:['한식','중식','일식'], allowCafe:false };
++      }
++      if (/버거|햄버거/.test(name)) {
++        return { venueQueries:['수제버거', '버거'], venueTerms:['버거','햄버거','양식','레스토랑'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++      }
++      if (/스테이크|로스트|그릴/.test(name)) {
++        return { venueQueries:['스테이크하우스', '그릴 레스토랑', '패밀리레스토랑'], venueTerms:['스테이크','그릴','패밀리레스토랑','비스트로','양식','레스토랑'], rejectTerms:['브런치','카페','커피','디저트'], allowCafe:false };
++      }
++      if (isCafeCompatibleMenu(menu)) {
++        return { venueQueries:['브런치 카페', '브런치', '카페'], venueTerms:['브런치','카페','베이커리','샌드위치','샐러드'], rejectTerms:[], allowCafe:true };
++      }
++      return { venueQueries:['양식 레스토랑', '비스트로', '패밀리레스토랑'], venueTerms:['양식','레스토랑','비스트로','패밀리레스토랑'], rejectTerms:['카페','커피','디저트','베이커리'], allowCafe:false };
++    }
++
++    if (menu?.type === '중식') {
++      if (/마라/.test(name)) return { venueQueries:['마라탕', '마라샹궈', '마라 전문점', '중화요리'], venueTerms:['마라','중식','중화','중국집','반점'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++      if (/딤섬|만두|소롱포|샤오롱바오/.test(name)) return { venueQueries:['딤섬 전문점', '중화요리', '중국집'], venueTerms:['딤섬','중식','중화','중국집','반점','홍콩'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++      return { venueQueries:['중화요리', '중국집', '반점'], venueTerms:['중식','중화','중국집','반점','사천','광동','홍콩'], rejectTerms:['마라탕전문','카페','커피','디저트'], allowCafe:false };
++    }
++
++    if (menu?.type === '한식') {
++      return { venueQueries:['한식', '백반', '한식당'], venueTerms:['한식','백반','한정식','국밥','찌개','탕','구이','분식'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++    }
++
++    if (menu?.type === '일식') {
++      return { venueQueries:['일식', '일본식당', '이자카야'], venueTerms:['일식','스시','초밥','라멘','우동','돈카츠','돈까스','이자카야','일본'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++    }
++
++    if (/베트남/.test(origin) || /쌀국수|반미/.test(name)) return { venueQueries:['베트남 음식', '쌀국수', '베트남 식당'], venueTerms:['베트남','쌀국수','반미'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++    if (/멕시코/.test(origin) || /타코|부리또|퀘사디야|케사디야/.test(name)) return { venueQueries:['멕시칸', '타코', '부리또'], venueTerms:['멕시칸','타코','부리또','퀘사디야','케사디야'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++    if (/태국/.test(origin) || /팟타이|똠얌/.test(name)) return { venueQueries:['태국 음식', '타이 레스토랑'], venueTerms:['태국','타이','팟타이','똠얌'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++    if (/인도/.test(origin) || /커리|비리야니/.test(name)) return { venueQueries:['인도 음식', '인도 커리'], venueTerms:['인도','커리','비리야니'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++
++    return { venueQueries:['세계음식 식당', '에스닉 레스토랑'], venueTerms:['세계음식','에스닉','레스토랑'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
++  }
++
++  function cuisineCandidateQueries(menu) {
++    return uniq(dishVenueProfile(menu).venueQueries).slice(0, 7);
++  }
++
++  function strictMenuPlaceQueries(menu) {
++    return menuSearchAliases(menu);
++  }
++
++  function placeHardReject(place, menu) {
++    const profile = dishVenueProfile(menu || currentMenu || {});
++    const category = normalizePlaceSearchText(`${place.category_name || ''} ${place.category_group_name || ''}`);
++    const name = normalizePlaceSearchText(place.place_name || '');
++    const text = `${name} ${category}`;
++
++    if (/마트|슈퍼|편의점|식자재|정육점|수산시장|식품|반찬가게|배달대행|도매|소매|제조|학원|숙박|호텔|펜션/.test(text)) return true;
++    if (!profile.allowCafe && (/카페|커피|디저트|베이커리|제과/.test(text) || place.category_group_code === 'CE7')) return true;
++    if ((profile.rejectTerms || []).some(term => text.includes(normalizePlaceSearchText(term)))) return true;
++    return false;
++  }
++
++  function evaluatePlaceEvidence(place, menu, query, requestedTier) {
++    if (placeHardReject(place, menu)) return null;
++    const profile = dishVenueProfile(menu);
++    const placeText = normalizePlaceSearchText(`${place.place_name || ''} ${place.category_name || ''} ${place.category_group_name || ''}`);
++    const aliases = menuSearchAliases(menu).map(normalizePlaceSearchText).filter(value => value.length >= 2);
++    const queryText = normalizePlaceSearchText(query);
++    const strongNameMatch = aliases.some(alias => normalizePlaceSearchText(place.place_name || '').includes(alias));
++    const venueMatch = (profile.venueTerms || []).some(term => placeText.includes(normalizePlaceSearchText(term)));
++
++    if (strongNameMatch) return { tier:'verified_name_match', evidenceRank:0, menuAvailability:'name_evidence' };
++    if (requestedTier === 'exact' && venueMatch) return { tier:'menu_query_candidate', evidenceRank:1, menuAvailability:'unknown' };
++    if (requestedTier === 'cuisine_candidate' && venueMatch) return { tier:'cuisine_candidate', evidenceRank:2, menuAvailability:'unknown' };
++
++    // 카카오가 정확 메뉴 검색으로 반환했더라도 업종 근거가 전혀 없으면 노출하지 않습니다.
++    if (requestedTier === 'exact' && queryText && placeText.includes(queryText)) {
++      return { tier:'verified_name_match', evidenceRank:0, menuAvailability:'name_evidence' };
++    }
++    return null;
++  }
++
++  function placeTierRank(tier) {
++    if (tier === 'verified_name_match') return 0;
++    if (tier === 'menu_query_candidate') return 1;
++    if (tier === 'cuisine_candidate') return 2;
++    return 3;
++  }
++
++  async function searchPlacesForExactMenuOnly(menu, location) {
++    const exactQueries = strictMenuPlaceQueries(menu);
++    const venueQueries = cuisineCandidateQueries(menu);
++    const radiusSteps = getNearbySearchRadiusSteps();
++    const results = new Map();
++    const logs = [];
++
++    async function collect(queries, requestedTier, targetCount, sorts) {
++      for (const radius of radiusSteps) {
++        for (const query of queries) {
++          for (const sort of sorts) {
++            let places = [];
++            try {
++              places = await searchPlacesKakao(query, location, { radius, sort, tier: requestedTier, size:15, pageLimit:2 });
++            } catch (error) {
++              logs.push({ query:`${requestedTier === 'exact' ? '[메뉴]' : '[업종]'} ${query}`, radius, sort, tier:requestedTier, count:0, error:error.message || String(error) });
++              continue;
++            }
++
++            let acceptedCount = 0;
++            places.forEach(place => {
++              const evidence = evaluatePlaceEvidence(place, menu, query, requestedTier);
++              if (!evidence) return;
++              acceptedCount += 1;
++              const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
++              const distance = Number(place.distance || 99999);
++              const candidate = {
++                ...place,
++                query,
++                radius,
++                sort,
++                ...evidence,
++                score: 100 - evidence.evidenceRank * 25 - Math.min(20, distance / 800),
++              };
++              const previous = results.get(key);
++              if (!previous || placeTierRank(candidate.tier) < placeTierRank(previous.tier) || (placeTierRank(candidate.tier) === placeTierRank(previous.tier) && candidate.score > previous.score)) {
++                results.set(key, candidate);
++              }
++            });
++            logs.push({ query:`${requestedTier === 'exact' ? '[메뉴]' : '[업종]'} ${query}`, radius, sort, tier:requestedTier, count:acceptedCount });
++          }
++          if (results.size >= targetCount) break;
++        }
++        if (results.size >= targetCount) break;
++      }
++    }
++
++    // 메뉴명·표기 변형을 먼저 확인합니다. 카페 등 업종 불일치 결과는 여기서 제거됩니다.
++    await collect(exactQueries, 'exact', 6, ['accuracy', 'distance']);
++    // 결과가 부족할 때만 메뉴에 맞는 전문 업종으로 확장합니다. 양식 전체/브런치로 확장하지 않습니다.
++    if (results.size < 8) await collect(venueQueries, 'cuisine_candidate', 10, ['distance']);
++
++    lastNearbySearchLog = logs;
++    return Array.from(results.values())
++      .sort((a, b) => placeTierRank(a.tier) - placeTierRank(b.tier) || Number(a.distance || 99999) - Number(b.distance || 99999) || b.score - a.score)
++      .slice(0, 10);
++  }
++
++  function qualityBadgesForPlace(place, menu) {
++    if (place.tier === 'verified_name_match') return ['상호명 일치', '판매 여부 확인'];
++    if (place.tier === 'menu_query_candidate') return ['메뉴명 검색 결과', '판매 여부 확인'];
++    return [`${menu.type} 전문점 후보`, '판매 여부 확인'];
++  }
++
++  function restaurantFitLabel(value, tier) {
++    if (tier === 'verified_name_match') return '상호명 일치';
++    if (tier === 'menu_query_candidate') return '메뉴 검색 후보';
++    if (tier === 'cuisine_candidate') return '전문점 후보';
++    return '';
++  }
++
++  function formatPlace(place, menu) {
++    const distance = parseInt(place.distance, 10);
++    const dist = Number.isFinite(distance) ? (distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${distance}m`) : '';
++    const categoryParts = (place.category_name || '').split('>').map(value => value.trim()).filter(Boolean);
++    const category = categoryParts[categoryParts.length - 1] || menu.type;
++    const verified = place.tier === 'verified_name_match';
++    const queryCandidate = place.tier === 'menu_query_candidate';
++    return {
++      id: place.id || '',
++      emoji: menu.emoji,
++      name: place.place_name,
++      dist,
++      score: place.score,
++      fitLabel: restaurantFitLabel(place.score, place.tier),
++      price: '',
++      addr: place.road_address_name || place.address_name || '',
++      subcategory: category,
++      placeUrl: place.place_url,
++      phone: place.phone || '',
++      query: place.query || '',
++      tier: place.tier || 'cuisine_candidate',
++      availabilityNote: verified
++        ? `상호명에 '${menu.name}' 관련 표현이 있습니다. 실제 판매 여부와 영업 상태를 확인하세요.`
++        : queryCandidate
++          ? `'${menu.name}' 검색으로 확인된 ${menu.type} 식당입니다. 메뉴판 또는 전화로 판매 여부를 확인하세요.`
++          : `가까운 ${menu.type} 전문점 후보입니다. '${menu.name}' 판매를 보장하지 않습니다.`,
++      badges: qualityBadgesForPlace(place, menu),
++    };
++  }
++
++  function renderNearbySearchDebug() {
++    if (!lastNearbySearchLog.length) return '';
++    const aggregated = new Map();
++    lastNearbySearchLog.forEach(item => {
++      const key = `${item.query}|${item.radius}|${item.sort}`;
++      const previous = aggregated.get(key) || { ...item, count:0 };
++      previous.count += Number(item.count || 0);
++      if (item.error) previous.error = item.error;
++      aggregated.set(key, previous);
++    });
++    const rows = Array.from(aggregated.values()).slice(0, 18).map(item => `
++      <div class="nearby-debug-row">
++        <span>${escapeHtml(item.query)}</span>
++        <span>${Number(item.radius).toLocaleString()}m</span>
++        <span>${escapeHtml(item.sort)}</span>
++        <strong>${item.error ? 'ERR' : item.count + '개'}</strong>
++      </div>`).join('');
++    return `
++      <details class="nearby-debug">
++        <summary>검색 진단 보기</summary>
++        <div class="nearby-debug-head"><span>검색 단계</span><span>반경</span><span>정렬</span><span>채택</span></div>
++        ${rows}
++      </details>`;
++  }
+diff --git a/package.json b/package.json
+index 8c5699c..50d0651 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "todays-plate-beta-api",
+-  "version": "4.5.0",
++  "version": "4.6.0",
+   "private": true,
+   "type": "module",
+   "engines": {
+@@ -11,6 +11,7 @@
+     "report": "node server/beta-report.mjs",
+     "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\"",
+     "validate:recommendation": "node scripts/validate-recommendation-v4.4.mjs",
+-    "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs"
++    "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs",
++    "validate:v4.6": "node scripts/validate-nearby-v4.6.mjs"
+   }
+ }
+diff --git a/scripts/validate-nearby-v4.6.mjs b/scripts/validate-nearby-v4.6.mjs
+new file mode 100644
+index 0000000..08c4023
+--- /dev/null
++++ b/scripts/validate-nearby-v4.6.mjs
+@@ -0,0 +1,32 @@
++import fs from 'node:fs';
++
++const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
++const keywords = JSON.parse(fs.readFileSync(new URL('../data/restaurant-keywords.json', import.meta.url), 'utf8'));
++const firebase = JSON.parse(fs.readFileSync(new URL('../firebase.json', import.meta.url), 'utf8'));
++const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
++
++const failures = [];
++const assert = (condition, message) => { if (!condition) failures.push(message); };
++
++const bbq = keywords['바베큐 립'] || [];
++assert(bbq.includes('바비큐 립'), '바비큐 립 표기 변형 누락');
++assert(bbq.includes('폭립'), '폭립 별칭 누락');
++assert(bbq.includes('BBQ 립'), 'BBQ 립 별칭 누락');
++assert(app.includes("venueQueries: ['미국식 바비큐', '아메리칸 바베큐', '바비큐 전문점', '폭립', '스테이크하우스'"), '바베큐 립 전문 업종 검색 계획 누락');
++assert(app.includes("rejectTerms: ['브런치', '카페', '커피', '디저트'"), '바베큐 립 카페/브런치 제외 규칙 누락');
++assert(app.includes("if (!profile.allowCafe && (/카페|커피|디저트|베이커리|제과/.test(text) || place.category_group_code === 'CE7')) return true;"), '일반 식사 메뉴의 카페 제외 규칙 누락');
++assert(app.includes("return '메뉴 검색 후보';"), '미확인 장소 라벨 누락');
++assert(!app.slice(app.lastIndexOf('// ─── v4.6')).includes("return '추천도 높음'"), 'v4.6에서 추천도 높음 표현이 남아 있음');
++assert(index.includes('app.js?v=4.6.0'), 'app.js 캐시 버전 누락');
++assert(JSON.stringify(firebase).includes('no-store'), 'Firebase HTML/JS 캐시 방지 설정 누락');
++
++if (failures.length) {
++  console.error('v4.6 validation failed');
++  failures.forEach(item => console.error(`- ${item}`));
++  process.exit(1);
++}
++console.log('v4.6 nearby search validation passed');
++console.log('- 바베큐 립 표기 변형 검색');
++console.log('- 브런치/카페 오탐 제외');
++console.log('- 미확인 장소 추천도 표현 제거');
++console.log('- 배포 캐시 무효화');
+diff --git a/scripts/validate-recommendation-v4.5.mjs b/scripts/validate-recommendation-v4.5.mjs
+index a76db6d..ca30864 100644
+--- a/scripts/validate-recommendation-v4.5.mjs
++++ b/scripts/validate-recommendation-v4.5.mjs
+@@ -3,7 +3,7 @@ const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+ const keywords = JSON.parse(fs.readFileSync(new URL('../data/restaurant-keywords.json', import.meta.url), 'utf8'));
+ const checks = [];
+ const ok = (name, pass, detail='') => checks.push({name, pass:Boolean(pass), detail});
+-ok('앱 버전 v4.5', app.includes("korea-beta-v4.5"));
++ok('앱 버전 v4.5 이상', /korea-beta-v4\.(5|6)/.test(app));
+ ok('국가별 집밥 설정', app.includes('HOME_COUNTRY_CONFIG') && app.includes("JP: { label:'일본'") && app.includes("cuisine:'일식'"));
+ ok('집밥 대표 메뉴 국가 우선', app.includes('prioritizeHomeCuisineForHomeMode') && app.includes("ans.mode !== '집밥'"));
+ ok('라조기 정확 키워드', JSON.stringify(keywords['라조기']) === JSON.stringify(['라조기']), JSON.stringify(keywords['라조기']));

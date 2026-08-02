@@ -1046,7 +1046,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.5';
+  const APP_VERSION = 'korea-beta-v4.6';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -5854,3 +5854,268 @@
         </div>`;
     }
   });
+
+
+  // ─── v4.6 Nearby search evidence filter ───
+  // 메뉴명 검색 결과라는 이유만으로 모든 장소를 신뢰하지 않습니다.
+  // 1) 상호명에서 메뉴/별칭이 확인되는 장소
+  // 2) 메뉴명 검색으로 반환됐고 업종이 해당 요리군과 일치하는 장소
+  // 3) 가까운 전문점 후보
+  // 순으로 구분하며, 판매가 확인되지 않은 장소에는 추천도 표현을 사용하지 않습니다.
+  function normalizePlaceSearchText(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/bbq/g, '바비큐')
+      .replace(/barbecue/g, '바비큐')
+      .replace(/바베큐/g, '바비큐')
+      .replace(/[^0-9a-z가-힣]/g, '');
+  }
+
+  function menuSearchAliases(menu) {
+    const name = compactText(menu?.name);
+    const core = coreDishName(menu);
+    const loaded = DISH_TO_RESTAURANT_KEYWORDS[name] || DISH_TO_RESTAURANT_KEYWORDS[core] || [];
+    const aliases = [name, core, ...loaded];
+    const compact = normalizePlaceSearchText(name);
+
+    if (/바비큐립|폭립|립바비큐/.test(compact)) {
+      aliases.push('바비큐 립', '바베큐 립', 'BBQ 립', '폭립', '바비큐 폭립', '바베큐 폭립');
+    }
+    if (/라조기/.test(compact)) aliases.push('라조기');
+    if (/유린기/.test(compact)) aliases.push('유린기');
+    if (/깐풍기/.test(compact)) aliases.push('깐풍기');
+
+    return uniq(aliases).filter(value => value.length >= 2).slice(0, 8);
+  }
+
+  function isCafeCompatibleMenu(menu) {
+    const text = normalizePlaceSearchText(`${menu?.name || ''} ${menu?.desc || ''}`);
+    return /브런치|토스트|샌드위치|샐러드|베이글|팬케이크|와플|크루아상|커피|라떼|스무디|아사이|요거트|디저트|케이크|푸딩/.test(text);
+  }
+
+  function dishVenueProfile(menu) {
+    const name = normalizePlaceSearchText(menu?.name);
+    const origin = normalizePlaceSearchText(menu?.origin);
+
+    if (/바비큐립|폭립|립바비큐/.test(name)) {
+      return {
+        venueQueries: ['미국식 바비큐', '아메리칸 바베큐', '바비큐 전문점', '폭립', '스테이크하우스', '그릴 레스토랑', '패밀리레스토랑'],
+        venueTerms: ['바비큐', '바베큐', 'bbq', '폭립', '립', '스테이크', '그릴', '패밀리레스토랑', '아메리칸', '텍사스', '양식', '레스토랑'],
+        rejectTerms: ['브런치', '카페', '커피', '디저트', '베이커리', '제과'],
+        allowCafe: false,
+      };
+    }
+
+    if (menu?.type === '양식') {
+      if (/파스타|볼로네제|라구|라자냐|리조또|뇨끼/.test(name)) {
+        return { venueQueries:['이탈리안', '파스타', '트라토리아', '이탈리안 레스토랑'], venueTerms:['이탈리안','파스타','트라토리아','라자냐','리조또','뇨끼','양식','레스토랑'], rejectTerms:['한식','중식','일식'], allowCafe:false };
+      }
+      if (/피자/.test(name)) {
+        return { venueQueries:['피자', '피제리아', '화덕피자'], venueTerms:['피자','피제리아','화덕','양식','레스토랑'], rejectTerms:['한식','중식','일식'], allowCafe:false };
+      }
+      if (/버거|햄버거/.test(name)) {
+        return { venueQueries:['수제버거', '버거'], venueTerms:['버거','햄버거','양식','레스토랑'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+      }
+      if (/스테이크|로스트|그릴/.test(name)) {
+        return { venueQueries:['스테이크하우스', '그릴 레스토랑', '패밀리레스토랑'], venueTerms:['스테이크','그릴','패밀리레스토랑','비스트로','양식','레스토랑'], rejectTerms:['브런치','카페','커피','디저트'], allowCafe:false };
+      }
+      if (isCafeCompatibleMenu(menu)) {
+        return { venueQueries:['브런치 카페', '브런치', '카페'], venueTerms:['브런치','카페','베이커리','샌드위치','샐러드'], rejectTerms:[], allowCafe:true };
+      }
+      return { venueQueries:['양식 레스토랑', '비스트로', '패밀리레스토랑'], venueTerms:['양식','레스토랑','비스트로','패밀리레스토랑'], rejectTerms:['카페','커피','디저트','베이커리'], allowCafe:false };
+    }
+
+    if (menu?.type === '중식') {
+      if (/마라/.test(name)) return { venueQueries:['마라탕', '마라샹궈', '마라 전문점', '중화요리'], venueTerms:['마라','중식','중화','중국집','반점'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+      if (/딤섬|만두|소롱포|샤오롱바오/.test(name)) return { venueQueries:['딤섬 전문점', '중화요리', '중국집'], venueTerms:['딤섬','중식','중화','중국집','반점','홍콩'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+      return { venueQueries:['중화요리', '중국집', '반점'], venueTerms:['중식','중화','중국집','반점','사천','광동','홍콩'], rejectTerms:['마라탕전문','카페','커피','디저트'], allowCafe:false };
+    }
+
+    if (menu?.type === '한식') {
+      return { venueQueries:['한식', '백반', '한식당'], venueTerms:['한식','백반','한정식','국밥','찌개','탕','구이','분식'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+    }
+
+    if (menu?.type === '일식') {
+      return { venueQueries:['일식', '일본식당', '이자카야'], venueTerms:['일식','스시','초밥','라멘','우동','돈카츠','돈까스','이자카야','일본'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+    }
+
+    if (/베트남/.test(origin) || /쌀국수|반미/.test(name)) return { venueQueries:['베트남 음식', '쌀국수', '베트남 식당'], venueTerms:['베트남','쌀국수','반미'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+    if (/멕시코/.test(origin) || /타코|부리또|퀘사디야|케사디야/.test(name)) return { venueQueries:['멕시칸', '타코', '부리또'], venueTerms:['멕시칸','타코','부리또','퀘사디야','케사디야'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+    if (/태국/.test(origin) || /팟타이|똠얌/.test(name)) return { venueQueries:['태국 음식', '타이 레스토랑'], venueTerms:['태국','타이','팟타이','똠얌'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+    if (/인도/.test(origin) || /커리|비리야니/.test(name)) return { venueQueries:['인도 음식', '인도 커리'], venueTerms:['인도','커리','비리야니'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+
+    return { venueQueries:['세계음식 식당', '에스닉 레스토랑'], venueTerms:['세계음식','에스닉','레스토랑'], rejectTerms:['카페','커피','디저트'], allowCafe:false };
+  }
+
+  function cuisineCandidateQueries(menu) {
+    return uniq(dishVenueProfile(menu).venueQueries).slice(0, 7);
+  }
+
+  function strictMenuPlaceQueries(menu) {
+    return menuSearchAliases(menu);
+  }
+
+  function placeHardReject(place, menu) {
+    const profile = dishVenueProfile(menu || currentMenu || {});
+    const category = normalizePlaceSearchText(`${place.category_name || ''} ${place.category_group_name || ''}`);
+    const name = normalizePlaceSearchText(place.place_name || '');
+    const text = `${name} ${category}`;
+
+    if (/마트|슈퍼|편의점|식자재|정육점|수산시장|식품|반찬가게|배달대행|도매|소매|제조|학원|숙박|호텔|펜션/.test(text)) return true;
+    if (!profile.allowCafe && (/카페|커피|디저트|베이커리|제과/.test(text) || place.category_group_code === 'CE7')) return true;
+    if ((profile.rejectTerms || []).some(term => text.includes(normalizePlaceSearchText(term)))) return true;
+    return false;
+  }
+
+  function evaluatePlaceEvidence(place, menu, query, requestedTier) {
+    if (placeHardReject(place, menu)) return null;
+    const profile = dishVenueProfile(menu);
+    const placeText = normalizePlaceSearchText(`${place.place_name || ''} ${place.category_name || ''} ${place.category_group_name || ''}`);
+    const aliases = menuSearchAliases(menu).map(normalizePlaceSearchText).filter(value => value.length >= 2);
+    const queryText = normalizePlaceSearchText(query);
+    const strongNameMatch = aliases.some(alias => normalizePlaceSearchText(place.place_name || '').includes(alias));
+    const venueMatch = (profile.venueTerms || []).some(term => placeText.includes(normalizePlaceSearchText(term)));
+
+    if (strongNameMatch) return { tier:'verified_name_match', evidenceRank:0, menuAvailability:'name_evidence' };
+    if (requestedTier === 'exact' && venueMatch) return { tier:'menu_query_candidate', evidenceRank:1, menuAvailability:'unknown' };
+    if (requestedTier === 'cuisine_candidate' && venueMatch) return { tier:'cuisine_candidate', evidenceRank:2, menuAvailability:'unknown' };
+
+    // 카카오가 정확 메뉴 검색으로 반환했더라도 업종 근거가 전혀 없으면 노출하지 않습니다.
+    if (requestedTier === 'exact' && queryText && placeText.includes(queryText)) {
+      return { tier:'verified_name_match', evidenceRank:0, menuAvailability:'name_evidence' };
+    }
+    return null;
+  }
+
+  function placeTierRank(tier) {
+    if (tier === 'verified_name_match') return 0;
+    if (tier === 'menu_query_candidate') return 1;
+    if (tier === 'cuisine_candidate') return 2;
+    return 3;
+  }
+
+  async function searchPlacesForExactMenuOnly(menu, location) {
+    const exactQueries = strictMenuPlaceQueries(menu);
+    const venueQueries = cuisineCandidateQueries(menu);
+    const radiusSteps = getNearbySearchRadiusSteps();
+    const results = new Map();
+    const logs = [];
+
+    async function collect(queries, requestedTier, targetCount, sorts) {
+      for (const radius of radiusSteps) {
+        for (const query of queries) {
+          for (const sort of sorts) {
+            let places = [];
+            try {
+              places = await searchPlacesKakao(query, location, { radius, sort, tier: requestedTier, size:15, pageLimit:2 });
+            } catch (error) {
+              logs.push({ query:`${requestedTier === 'exact' ? '[메뉴]' : '[업종]'} ${query}`, radius, sort, tier:requestedTier, count:0, error:error.message || String(error) });
+              continue;
+            }
+
+            let acceptedCount = 0;
+            places.forEach(place => {
+              const evidence = evaluatePlaceEvidence(place, menu, query, requestedTier);
+              if (!evidence) return;
+              acceptedCount += 1;
+              const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
+              const distance = Number(place.distance || 99999);
+              const candidate = {
+                ...place,
+                query,
+                radius,
+                sort,
+                ...evidence,
+                score: 100 - evidence.evidenceRank * 25 - Math.min(20, distance / 800),
+              };
+              const previous = results.get(key);
+              if (!previous || placeTierRank(candidate.tier) < placeTierRank(previous.tier) || (placeTierRank(candidate.tier) === placeTierRank(previous.tier) && candidate.score > previous.score)) {
+                results.set(key, candidate);
+              }
+            });
+            logs.push({ query:`${requestedTier === 'exact' ? '[메뉴]' : '[업종]'} ${query}`, radius, sort, tier:requestedTier, count:acceptedCount });
+          }
+          if (results.size >= targetCount) break;
+        }
+        if (results.size >= targetCount) break;
+      }
+    }
+
+    // 메뉴명·표기 변형을 먼저 확인합니다. 카페 등 업종 불일치 결과는 여기서 제거됩니다.
+    await collect(exactQueries, 'exact', 6, ['accuracy', 'distance']);
+    // 결과가 부족할 때만 메뉴에 맞는 전문 업종으로 확장합니다. 양식 전체/브런치로 확장하지 않습니다.
+    if (results.size < 8) await collect(venueQueries, 'cuisine_candidate', 10, ['distance']);
+
+    lastNearbySearchLog = logs;
+    return Array.from(results.values())
+      .sort((a, b) => placeTierRank(a.tier) - placeTierRank(b.tier) || Number(a.distance || 99999) - Number(b.distance || 99999) || b.score - a.score)
+      .slice(0, 10);
+  }
+
+  function qualityBadgesForPlace(place, menu) {
+    if (place.tier === 'verified_name_match') return ['상호명 일치', '판매 여부 확인'];
+    if (place.tier === 'menu_query_candidate') return ['메뉴명 검색 결과', '판매 여부 확인'];
+    return [`${menu.type} 전문점 후보`, '판매 여부 확인'];
+  }
+
+  function restaurantFitLabel(value, tier) {
+    if (tier === 'verified_name_match') return '상호명 일치';
+    if (tier === 'menu_query_candidate') return '메뉴 검색 후보';
+    if (tier === 'cuisine_candidate') return '전문점 후보';
+    return '';
+  }
+
+  function formatPlace(place, menu) {
+    const distance = parseInt(place.distance, 10);
+    const dist = Number.isFinite(distance) ? (distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${distance}m`) : '';
+    const categoryParts = (place.category_name || '').split('>').map(value => value.trim()).filter(Boolean);
+    const category = categoryParts[categoryParts.length - 1] || menu.type;
+    const verified = place.tier === 'verified_name_match';
+    const queryCandidate = place.tier === 'menu_query_candidate';
+    return {
+      id: place.id || '',
+      emoji: menu.emoji,
+      name: place.place_name,
+      dist,
+      score: place.score,
+      fitLabel: restaurantFitLabel(place.score, place.tier),
+      price: '',
+      addr: place.road_address_name || place.address_name || '',
+      subcategory: category,
+      placeUrl: place.place_url,
+      phone: place.phone || '',
+      query: place.query || '',
+      tier: place.tier || 'cuisine_candidate',
+      availabilityNote: verified
+        ? `상호명에 '${menu.name}' 관련 표현이 있습니다. 실제 판매 여부와 영업 상태를 확인하세요.`
+        : queryCandidate
+          ? `'${menu.name}' 검색으로 확인된 ${menu.type} 식당입니다. 메뉴판 또는 전화로 판매 여부를 확인하세요.`
+          : `가까운 ${menu.type} 전문점 후보입니다. '${menu.name}' 판매를 보장하지 않습니다.`,
+      badges: qualityBadgesForPlace(place, menu),
+    };
+  }
+
+  function renderNearbySearchDebug() {
+    if (!lastNearbySearchLog.length) return '';
+    const aggregated = new Map();
+    lastNearbySearchLog.forEach(item => {
+      const key = `${item.query}|${item.radius}|${item.sort}`;
+      const previous = aggregated.get(key) || { ...item, count:0 };
+      previous.count += Number(item.count || 0);
+      if (item.error) previous.error = item.error;
+      aggregated.set(key, previous);
+    });
+    const rows = Array.from(aggregated.values()).slice(0, 18).map(item => `
+      <div class="nearby-debug-row">
+        <span>${escapeHtml(item.query)}</span>
+        <span>${Number(item.radius).toLocaleString()}m</span>
+        <span>${escapeHtml(item.sort)}</span>
+        <strong>${item.error ? 'ERR' : item.count + '개'}</strong>
+      </div>`).join('');
+    return `
+      <details class="nearby-debug">
+        <summary>검색 진단 보기</summary>
+        <div class="nearby-debug-head"><span>검색 단계</span><span>반경</span><span>정렬</span><span>채택</span></div>
+        ${rows}
+      </details>`;
+  }
