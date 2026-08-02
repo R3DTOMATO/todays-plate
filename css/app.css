@@ -1488,12 +1488,12 @@
 
   .nearby-search-card {
     background: linear-gradient(180deg, rgba(31,26,21,0.96), rgba(74,63,51,0.95));
-    color: #000000;
+    color: var(--paper);
     border-color: rgba(31,26,21,0.18);
   }
 
   .nearby-search-card .nearby-label { color: var(--mustard); }
-  .nearby-search-card .nearby-title { color: #000000; }
+  .nearby-search-card .nearby-title { color: var(--paper); }
 
   .nearby-chip-row {
     display: flex;
@@ -1505,7 +1505,7 @@
   .nearby-chip {
     border: 1px solid rgba(250,246,237,0.22);
     background: rgba(250,246,237,0.08);
-    color: rgba(0, 0, 0, 0.9);
+    color: rgba(250,246,237,0.9);
     border-radius: 100px;
     padding: 6px 9px;
     font-family: 'JetBrains Mono', monospace;
@@ -1549,7 +1549,7 @@
   }
 
   .nearby-tier small {
-    color: rgba(0, 0, 0, 0.68);
+    color: rgba(250,246,237,0.68);
     font-size: 11px;
   }
 

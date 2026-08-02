@@ -112,6 +112,60 @@
   };
 
 
+  // ─── Home cuisine by country ───
+  // '집밥'은 단순히 집에서 조리 가능한 음식이 아니라 사용자의 생활권에서 익숙한 가정식을 뜻합니다.
+  // 한국 사용자는 한식, 일본 사용자는 일식, 중국권 사용자는 중식을 대표 집밥으로 우선합니다.
+  const HOME_COUNTRY_CONFIG = {
+    KR: { label:'대한민국', flag:'🇰🇷', cuisine:'한식' },
+    JP: { label:'일본', flag:'🇯🇵', cuisine:'일식' },
+    CN: { label:'중국', flag:'🇨🇳', cuisine:'중식' },
+    TW: { label:'대만', flag:'🇹🇼', cuisine:'중식' },
+    HK: { label:'홍콩', flag:'🇭🇰', cuisine:'중식' },
+    US: { label:'미국', flag:'🇺🇸', cuisine:'양식' },
+    CA: { label:'캐나다', flag:'🇨🇦', cuisine:'양식' },
+    GB: { label:'영국', flag:'🇬🇧', cuisine:'양식' },
+    FR: { label:'프랑스', flag:'🇫🇷', cuisine:'양식' },
+    IT: { label:'이탈리아', flag:'🇮🇹', cuisine:'양식' },
+    DE: { label:'독일', flag:'🇩🇪', cuisine:'양식' },
+    ES: { label:'스페인', flag:'🇪🇸', cuisine:'양식' },
+    VN: { label:'베트남', flag:'🇻🇳', cuisine:'세계음식' },
+    TH: { label:'태국', flag:'🇹🇭', cuisine:'세계음식' },
+    IN: { label:'인도', flag:'🇮🇳', cuisine:'세계음식' },
+    MX: { label:'멕시코', flag:'🇲🇽', cuisine:'세계음식' },
+    OTHER: { label:'기타 지역', flag:'🌏', cuisine:'세계음식' }
+  };
+
+  function detectHomeCountry() {
+    try {
+      const locale = String((navigator.languages && navigator.languages[0]) || navigator.language || '').replace('_', '-');
+      const region = locale.split('-')[1]?.toUpperCase();
+      if (region && HOME_COUNTRY_CONFIG[region]) return region;
+      const language = locale.split('-')[0]?.toLowerCase();
+      if (language === 'ko') return 'KR';
+      if (language === 'ja') return 'JP';
+      if (language === 'zh') return 'CN';
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (timezone === 'Asia/Seoul') return 'KR';
+      if (timezone === 'Asia/Tokyo') return 'JP';
+      if (/Asia\/(Shanghai|Chongqing|Harbin|Urumqi)/.test(timezone)) return 'CN';
+    } catch (_) { /* 한국 베타 기본값 사용 */ }
+    return 'KR';
+  }
+
+  function getHomeCountryCode() {
+    const code = personalProfile?.homeCountry || detectHomeCountry();
+    return HOME_COUNTRY_CONFIG[code] ? code : 'KR';
+  }
+
+  function getHomeCountryInfo() {
+    return HOME_COUNTRY_CONFIG[getHomeCountryCode()] || HOME_COUNTRY_CONFIG.KR;
+  }
+
+  function getHomeCuisineType() {
+    return getHomeCountryInfo().cuisine;
+  }
+
+
   // 실제 음식 사진을 활용한 모던 미니멀 UI용 이미지 매핑.
   // 메뉴별 사진이 없을 때 음식 분류별 대표 이미지를 사용합니다.
   const MENU_IMAGE_BY_TYPE = {
@@ -687,6 +741,17 @@
     return selected;
   }
 
+
+  function prioritizeHomeCuisineForHomeMode(scored, ans = {}) {
+    if (!Array.isArray(scored) || !scored.length) return [];
+    if (ans.mode !== '집밥' || ans.type) return scored;
+    const homeCuisine = getHomeCuisineType();
+    const localTop = scored.find(menu => menu.type === homeCuisine);
+    if (!localTop || scored[0] === localTop) return scored;
+    // 대표 메뉴는 국가 기준 집밥으로 고정하고, 대안에서는 다른 음식 문화를 허용합니다.
+    return [localTop, ...scored.filter(menu => menu !== localTop)];
+  }
+
   // ─── Questions ───
 
 
@@ -981,7 +1046,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.4';
+  const APP_VERSION = 'korea-beta-v4.5';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -1129,6 +1194,11 @@
 
 
   const ONBOARDING_OPTIONS = {
+    homeCountry: [
+      ['KR','🇰🇷 대한민국'], ['JP','🇯🇵 일본'], ['CN','🇨🇳 중국'], ['TW','🇹🇼 대만'], ['HK','🇭🇰 홍콩'],
+      ['US','🇺🇸 미국'], ['GB','🇬🇧 영국'], ['FR','🇫🇷 프랑스'], ['IT','🇮🇹 이탈리아'],
+      ['VN','🇻🇳 베트남'], ['TH','🇹🇭 태국'], ['IN','🇮🇳 인도'], ['MX','🇲🇽 멕시코'], ['OTHER','🌏 기타 지역']
+    ],
     preferredTypes: [
       ['한식','🇰🇷 한식'], ['중식','🇨🇳 중식'], ['일식','🇯🇵 일식'], ['양식','🍝 양식'], ['세계음식','🌏 세계음식']
     ],
@@ -1259,8 +1329,9 @@
   // ─── Personalization Profile ───
   function defaultPersonalProfile() {
     return {
-      version: 2,
+      version: 3,
       onboardingDone: false,
+      homeCountry: detectHomeCountry(),
       preferredTypes: [],
       allergens: [],
       excludedIngredients: [],
@@ -1281,6 +1352,7 @@
     const base = defaultPersonalProfile();
     const merged = { ...base, ...(profile || {}) };
     merged.bannedMenus = Array.isArray(merged.bannedMenus) ? merged.bannedMenus : [];
+    merged.homeCountry = HOME_COUNTRY_CONFIG[merged.homeCountry] ? merged.homeCountry : detectHomeCountry();
     merged.preferredTypes = Array.isArray(merged.preferredTypes) ? merged.preferredTypes : [];
     merged.allergens = Array.isArray(merged.allergens) ? merged.allergens : [];
     merged.excludedIngredients = Array.isArray(merged.excludedIngredients) ? merged.excludedIngredients : [];
@@ -1337,43 +1409,49 @@
     if (!c) return;
     c.innerHTML = `
       <div class="onboard-section">
-        <div class="onboard-label">Step 01</div>
+        <div class="onboard-label">Step 01 · Home Cuisine</div>
+        <div class="onboard-title">어느 나라의 집밥을 기준으로 할까요?</div>
+        <p class="onboard-help">집밥을 선택하면 이 국가의 일상적인 가정식을 대표 메뉴로 우선 추천합니다. 자동 감지 결과가 다르면 직접 바꿀 수 있습니다.</p>
+        ${renderChoiceButtons('homeCountry', ONBOARDING_OPTIONS.homeCountry, false, true)}
+      </div>
+      <div class="onboard-section">
+        <div class="onboard-label">Step 02</div>
         <div class="onboard-title">자주 끌리는 음식 스타일</div>
         <p class="onboard-help">선택한 카테고리는 바로 추천에서 가중치로 반영됩니다. 자세히 고르기에서 따로 고르면 그 조건이 더 우선입니다.</p>
         ${renderChoiceButtons('preferredTypes', ONBOARDING_OPTIONS.preferredTypes, true)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 02 · Safety Filter</div>
+        <div class="onboard-label">Step 03 · Safety Filter</div>
         <div class="onboard-title">알레르기 가능 식재료</div>
         <p class="onboard-help">선택한 항목이 포함될 가능성이 있는 메뉴는 추천 후보에서 제외합니다. 실제 원재료와 교차 오염 가능성은 식당·제품에 직접 확인해야 합니다.</p>
         ${renderChoiceButtons('allergens', ONBOARDING_OPTIONS.allergens, true, true)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 03 · Hard Filter</div>
+        <div class="onboard-label">Step 04 · Hard Filter</div>
         <div class="onboard-title">먹지 않는 재료와 음식</div>
         <p class="onboard-help">알레르기와 별도로, 먹지 않거나 강하게 싫어하는 재료를 선택하세요. 추천 후보에서 제외합니다.</p>
         ${renderChoiceButtons('excludedIngredients', ONBOARDING_OPTIONS.excludedIngredients, true, true)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 04 · Diet Rule</div>
+        <div class="onboard-label">Step 05 · Diet Rule</div>
         <div class="onboard-title">식단 제한</div>
         <p class="onboard-help">채식, 비건, 저탄수, 고단백, 다이어트 조건을 추천 전에 반영합니다.</p>
         ${renderChoiceButtons('dietRestrictions', ONBOARDING_OPTIONS.dietRestrictions, true, true)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 05</div>
+        <div class="onboard-label">Step 06</div>
         <div class="onboard-title">평소 선호하는 포만감</div>
         <p class="onboard-help">바로 추천에서 기본값으로 사용합니다.</p>
         ${renderChoiceButtons('defaultWeight', ONBOARDING_OPTIONS.defaultWeight, false)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 06</div>
+        <div class="onboard-label">Step 07</div>
         <div class="onboard-title">1끼 예산</div>
         <p class="onboard-help">예산을 선택하면 초과 메뉴는 추천 후보에서 제외됩니다.</p>
         ${renderChoiceButtons('budgetMax', ONBOARDING_OPTIONS.budgetMax, false, true)}
       </div>
       <div class="onboard-section">
-        <div class="onboard-label">Step 07</div>
+        <div class="onboard-label">Step 08</div>
         <div class="onboard-title">자주 생기는 식사 상황</div>
         <p class="onboard-help">상황은 후보를 억지로 줄이기보다 점수와 추천 이유에 강하게 반영합니다.</p>
         ${renderChoiceButtons('preferredSituations', ONBOARDING_OPTIONS.preferredSituations, true)}
@@ -1413,7 +1491,7 @@
     saveProfile();
     renderProfile();
     renderToday();
-    trackEvent('taste_profile_saved', { preferredTypes: personalProfile.preferredTypes.length, allergens: personalProfile.allergens.length, exclusions: personalProfile.excludedIngredients.length });
+    trackEvent('taste_profile_saved', { homeCountry: personalProfile.homeCountry, preferredTypes: personalProfile.preferredTypes.length, allergens: personalProfile.allergens.length, exclusions: personalProfile.excludedIngredients.length });
     showToast('입맛 설정을 저장했어요');
     switchPanel('home');
   }
@@ -1850,6 +1928,7 @@
         <div class="profile-label">기본 설정</div>
         <div class="profile-title">추천 전 적용되는 강한 조건</div>
         <div class="settings-summary">
+          <span class="settings-pill">집밥 기준 ${escapeHtml(getHomeCountryInfo().flag + ' ' + getHomeCountryInfo().label)} · ${escapeHtml(getHomeCuisineType())}</span>
           ${(personalProfile.preferredTypes || []).map(x => `<span class="settings-pill">선호 ${escapeHtml(x)}</span>`).join('') || '<span class="settings-pill">선호 스타일 미설정</span>'}
           ${(personalProfile.allergens || []).map(x => `<span class="settings-pill safety">알레르기 ${escapeHtml(labelForOption(x).replace(' 제외',''))}</span>`).join('')}
           ${(personalProfile.excludedIngredients || []).map(x => `<span class="settings-pill">${escapeHtml(labelForOption(x))}</span>`).join('')}
@@ -2153,11 +2232,11 @@
       if (familiarity === 'common') score += 5;
       else if (familiarity === 'explore') score -= 4;
 
-      // 음식 종류를 직접 고르지 않은 신규 세션에서 한국형 기본값을 적용합니다.
+      // 음식 종류를 직접 고르지 않았다면 사용자의 집밥 기준 국가를 적용합니다.
       if (!ans.type) {
-        if (m.type === '한식') score += 10;
-        else if (['일식','중식'].includes(m.type)) score += 4;
-        else if (m.type === '세계음식') score -= 4;
+        const homeCuisine = getHomeCuisineType();
+        if (m.type === homeCuisine) score += 18;
+        else score -= 5;
       }
     }
     if (ans.mode === '편의점' && m.method === '간단' && m.price <= 7000) score += 9;
@@ -2405,7 +2484,7 @@
     document.querySelector('.action-grid').style.display = '';
     document.querySelector('.runner-title').style.display = '';
 
-    const recommendationSet = selectDiverseRecommendationSet(scored, 3);
+    const recommendationSet = selectDiverseRecommendationSet(prioritizeHomeCuisineForHomeMode(scored, answers), 3);
     const top = recommendationSet[0];
     currentMenu = top;
     const runners = recommendationSet.slice(1);
@@ -2764,8 +2843,8 @@
     },
     '중식': {
       category: '중식',
-      specialty: ['중식', '중화요리', '마라', '딤섬', '탕수육', '중국집'],
-      fallback: ['중식 맛집', '중국집', '마라탕', '중화요리'],
+      specialty: ['중식', '중화요리', '중국집', '반점'],
+      fallback: ['중식 맛집', '중국집', '중화요리', '반점'],
       storeWords: ['중화요리', '중국집', '반점', '마라', '딤섬', '양꼬치']
     },
     '일식': {
@@ -5002,6 +5081,198 @@
   function requestNearbyLocation() {
     trackEvent('location_permission_prompted', { source: 'nearby' });
     renderNearby({ requestLocation: true });
+  }
+
+
+  // ─── v4.5 Home-country recommendation + menu-first nearby search ───
+  // Kakao Local 키워드 API는 식당의 전체 메뉴판을 제공하지 않습니다.
+  // 따라서 1차는 정확 메뉴명으로 검색하고, 결과가 부족할 때만 같은 음식 문화의 가까운 식당을
+  // '판매 여부 확인 필요' 후보로 보여줍니다. 라조기를 마라로 바꾸는 식의 임의 치환은 금지합니다.
+  const GENERIC_RESTAURANT_KEYWORDS = new Set([
+    '한식','한식 맛집','백반','가정식','중식','중식 맛집','중화요리','중국집','반점','일식','일식 맛집',
+    '양식','양식 맛집','세계음식','세계음식 맛집','음식점','맛집','전문점','식당','카페','마라','멕시칸',
+    '태국음식','베트남음식','인도음식','중동음식'
+  ]);
+
+  function isDishSpecificRestaurantKeyword(keyword, menu) {
+    const term = compactText(keyword);
+    const name = compactText(menu?.name);
+    const core = coreDishName(menu);
+    if (!term || GENERIC_RESTAURANT_KEYWORDS.has(term)) return false;
+    if (term === name || term === core) return true;
+    if (name && (name.includes(term) || term.includes(name))) return true;
+    if (core && (core.includes(term) || term.includes(core))) return true;
+    // 마라 음식이 아닌데 마라 키워드로 확장하지 않습니다.
+    if (/마라/.test(term) && !/마라/.test(name)) return false;
+    return term.length >= 3 && !/맛집|전문점|식당|카페|중국집|중화요리|반점|한식|중식|일식|양식/.test(term);
+  }
+
+  function cuisineCandidateQueries(menu) {
+    const name = compactText(menu?.name);
+    if (menu?.type === '중식') {
+      if (/마라/.test(name)) return ['마라탕', '마라샹궈', '마라 전문점', '중화요리'];
+      if (/딤섬|만두|소롱포|샤오롱바오/.test(name)) return ['딤섬 전문점', '중화요리', '중국집'];
+      if (/양꼬치|마라롱샤/.test(name)) return ['양꼬치', '중화요리', '중국집'];
+      return ['중화요리', '중국집', '반점'];
+    }
+    if (menu?.type === '한식') return ['한식', '백반', '한식당'];
+    if (menu?.type === '일식') return ['일식', '일본식당', '이자카야'];
+    if (menu?.type === '양식') return ['양식', '이탈리안', '브런치'];
+    return ['세계음식', '아시아음식', '에스닉푸드'];
+  }
+
+  function buildPlaceQueries(menu) {
+    const name = compactText(menu?.name);
+    const core = coreDishName(menu);
+    const aliases = DISH_TO_RESTAURANT_KEYWORDS[name] || DISH_TO_RESTAURANT_KEYWORDS[core] || [];
+    const specificAliases = aliases.filter(keyword => isDishSpecificRestaurantKeyword(keyword, menu));
+    const exact = uniq([name, core, ...specificAliases]);
+    const specialty = uniq(cuisineCandidateQueries(menu));
+    return {
+      exact,
+      specialty,
+      fallback: specialty,
+      primary: exact[0] || name || specialty[0] || '음식점',
+      core
+    };
+  }
+
+  function strictMenuPlaceQueries(menu) {
+    return buildPlaceQueries(menu).exact
+      .map(value => compactText(value))
+      .filter(value => value.length >= 2)
+      .slice(0, 6);
+  }
+
+  function renderNearbySearchStrategy(menu) {
+    const q = buildPlaceQueries(menu);
+    return `
+      <div class="nearby-search-card">
+        <div class="nearby-label">Menu-first Place Search</div>
+        <div class="nearby-title">메뉴명을 바꾸지 않고 검색합니다</div>
+        <div class="nearby-chip-row">
+          ${q.exact.slice(0, 5).map(x => `<span class="nearby-chip">${escapeHtml(x)}</span>`).join('')}
+        </div>
+        <div class="nearby-tier-list">
+          <div class="nearby-tier"><span>1차</span><div><strong>${escapeHtml(q.exact.join(' · ') || menu.name)}</strong><small>정확 메뉴명과 실제 별칭만 검색</small></div></div>
+          <div class="nearby-tier"><span>2차</span><div><strong>${escapeHtml(q.specialty.join(' · '))}</strong><small>정확 검색이 부족할 때 가까운 ${escapeHtml(menu.type)} 식당을 표시하며, 메뉴 판매 여부는 직접 확인</small></div></div>
+        </div>
+        <p class="manual-location-help" style="margin-top:10px;">지도 API에는 식당의 전체 메뉴판이 없을 수 있어, 2차 후보는 해당 메뉴 판매를 보장하지 않습니다.</p>
+      </div>`;
+  }
+
+  function placeTierRank(tier) {
+    return tier === 'exact' ? 0 : tier === 'cuisine_candidate' ? 1 : 2;
+  }
+
+  async function searchPlacesForExactMenuOnly(menu, location) {
+    const exactQueries = strictMenuPlaceQueries(menu);
+    const cuisineQueries = cuisineCandidateQueries(menu);
+    const radiusSteps = getNearbySearchRadiusSteps();
+    const results = new Map();
+    const logs = [];
+
+    async function collect(queries, tier, maxResults, sorts) {
+      for (const radius of radiusSteps) {
+        for (const query of queries) {
+          for (const sort of sorts) {
+            let places = [];
+            try {
+              places = await searchPlacesKakao(query, location, { radius, sort, tier, size: 15, pageLimit: 2 });
+            } catch (error) {
+              logs.push({ query, radius, sort, tier, count: 0, error: error.message || String(error) });
+              continue;
+            }
+            const accepted = places.filter(place => !placeHardReject(place));
+            logs.push({ query, radius, sort, tier, count: accepted.length });
+            accepted.forEach(place => {
+              const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
+              const distance = Number(place.distance || 99999);
+              const rankBonus = tier === 'exact' ? 100 : 0;
+              const candidate = {
+                ...place,
+                query,
+                radius,
+                sort,
+                tier,
+                menuAvailability: tier === 'exact' ? 'keyword_match' : 'unknown',
+                score: rankBonus + placeRelevanceScore(place, menu, tier === 'exact' ? 'exact' : 'fallback', query) - Math.min(12, distance / 1200)
+              };
+              const previous = results.get(key);
+              if (!previous || candidate.score > previous.score) results.set(key, candidate);
+            });
+          }
+          if (results.size >= maxResults) break;
+        }
+        if (results.size >= maxResults) break;
+      }
+    }
+
+    await collect(exactQueries, 'exact', 6, ['accuracy', 'distance']);
+    if (results.size < 8) await collect(cuisineQueries, 'cuisine_candidate', 10, ['distance']);
+
+    lastNearbySearchLog = logs;
+    return Array.from(results.values())
+      .sort((a, b) => placeTierRank(a.tier) - placeTierRank(b.tier) || Number(a.distance || 99999) - Number(b.distance || 99999) || b.score - a.score)
+      .slice(0, 10);
+  }
+
+  function qualityBadgesForPlace(place, menu) {
+    if ((place.tier || '') === 'cuisine_candidate') return [`가까운 ${menu.type} 식당`, '메뉴 판매 여부 확인'];
+    const badges = ['메뉴 키워드 검색'];
+    const name = compactText(place.name || place.place_name || '');
+    const core = coreDishName(menu);
+    if (name.includes(menu.name) || (core && name.includes(core))) badges.unshift('상호명 일치');
+    return badges.slice(0, 3);
+  }
+
+  function formatPlace(place, menu) {
+    const distance = parseInt(place.distance, 10);
+    const dist = Number.isFinite(distance) ? (distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${distance}m`) : '';
+    const categoryParts = (place.category_name || '').split('>').map(value => value.trim()).filter(Boolean);
+    const category = categoryParts[categoryParts.length - 1] || menu.type;
+    const isCandidate = place.tier === 'cuisine_candidate';
+    return {
+      id: place.id || '',
+      emoji: menu.emoji,
+      name: place.place_name,
+      dist,
+      score: place.score,
+      fitLabel: isCandidate ? `${menu.type} 식당 후보` : '메뉴 검색 일치',
+      price: '',
+      addr: place.road_address_name || place.address_name || '',
+      subcategory: category,
+      placeUrl: place.place_url,
+      phone: place.phone || '',
+      query: place.query || '',
+      tier: place.tier || 'exact',
+      availabilityNote: isCandidate ? `'${menu.name}' 판매 여부는 매장에 확인하세요.` : `지도 검색에서 '${menu.name}' 키워드로 확인된 결과입니다.`,
+      badges: qualityBadgesForPlace(place, menu)
+    };
+  }
+
+  function renderRestaurantCard(r) {
+    const metaParts = [];
+    if (r.subcategory) metaParts.push(`<span>${escapeHtml(r.subcategory)}</span>`);
+    if (r.dist) metaParts.push(`<span>${escapeHtml(r.dist)}</span>`);
+    if (r.phone) metaParts.push(`<span>${escapeHtml(r.phone)}</span>`);
+    if (r.query) metaParts.push(`<span>검색어: ${escapeHtml(r.query)}</span>`);
+    const safeName = escapeJsString(r.name || '');
+    const safeAddr = escapeJsString(r.addr || '');
+    const safeUrl = escapeJsString(r.placeUrl || '');
+    const safeId = escapeJsString(r.id || r.name || '');
+    const badges = r.badges || [];
+    return `
+      <div class="restaurant" onclick="openRestaurantResult('${safeId}', '${safeName}', '${safeAddr}', '${safeUrl}')">
+        <div class="rest-emoji">${r.emoji || '🍽️'}</div>
+        <div class="rest-info">
+          <div class="rest-heading"><div class="rest-name">${escapeHtml(r.name || '식당')}</div>${r.fitLabel ? `<div class="rest-score">${escapeHtml(r.fitLabel)}</div>` : ''}</div>
+          <div class="rest-meta">${metaParts.join('<span style="opacity:0.4;">·</span>')}</div>
+          ${r.addr ? `<div class="rest-meta" style="margin-top:4px; opacity:0.7;">${escapeHtml(r.addr)}</div>` : ''}
+          ${r.availabilityNote ? `<div class="rest-meta" style="margin-top:6px;">${escapeHtml(r.availabilityNote)}</div>` : ''}
+          ${badges.length ? `<div class="rest-badge-row">${badges.map(b => `<span class="rest-badge">${escapeHtml(b)}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
   }
 
 

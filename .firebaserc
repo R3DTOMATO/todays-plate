@@ -1,9 +1,5 @@
 {
   "projects": {
-    "default": "todays-plate",
-    "todays_plate": "todays-plate",
-    "todays-plate": "todays-plate"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "todays-plate"
+  }
 }
