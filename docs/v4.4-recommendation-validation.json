@@ -1,0 +1,156 @@
+
+> todays-plate-beta-api@4.4.0 validate:recommendation
+> node scripts/validate-recommendation-v4.4.mjs
+
+{
+  "ok": true,
+  "menuCount": 197,
+  "familyCount": 161,
+  "homeCommonCount": 47,
+  "scenarios": [
+    {
+      "contextTime": "아침",
+      "need": "light",
+      "top": [
+        "미역국",
+        "오믈렛",
+        "미음"
+      ]
+    },
+    {
+      "contextTime": "아침",
+      "need": "full",
+      "top": [
+        "떡국",
+        "미역국",
+        "미음"
+      ]
+    },
+    {
+      "contextTime": "아침",
+      "need": "hangover",
+      "top": [
+        "떡국",
+        "미역국",
+        "미음"
+      ]
+    },
+    {
+      "contextTime": "아침",
+      "need": "spicy",
+      "top": [
+        "김치볶음밥",
+        "주먹밥",
+        "보리비빔밥"
+      ]
+    },
+    {
+      "contextTime": "점심",
+      "need": "light",
+      "top": [
+        "계란말이",
+        "소바",
+        "잔치국수"
+      ]
+    },
+    {
+      "contextTime": "점심",
+      "need": "full",
+      "top": [
+        "불고기덮밥",
+        "마파두부덮밥",
+        "제육덮밥"
+      ]
+    },
+    {
+      "contextTime": "점심",
+      "need": "hangover",
+      "top": [
+        "잔치국수",
+        "우동",
+        "칼국수"
+      ]
+    },
+    {
+      "contextTime": "점심",
+      "need": "spicy",
+      "top": [
+        "김치볶음밥",
+        "마파두부덮밥",
+        "보리비빔밥"
+      ]
+    },
+    {
+      "contextTime": "저녁",
+      "need": "light",
+      "top": [
+        "어묵탕",
+        "소시지 볶음",
+        "계란말이"
+      ]
+    },
+    {
+      "contextTime": "저녁",
+      "need": "full",
+      "top": [
+        "부대찌개",
+        "규동",
+        "닭볶음탕"
+      ]
+    },
+    {
+      "contextTime": "저녁",
+      "need": "hangover",
+      "top": [
+        "된장찌개",
+        "어묵탕",
+        "소시지 볶음"
+      ]
+    },
+    {
+      "contextTime": "저녁",
+      "need": "spicy",
+      "top": [
+        "소시지 볶음",
+        "김치찌개",
+        "부대찌개"
+      ]
+    },
+    {
+      "contextTime": "야식",
+      "need": "light",
+      "top": [
+        "계란말이",
+        "소바",
+        "잔치국수"
+      ]
+    },
+    {
+      "contextTime": "야식",
+      "need": "full",
+      "top": [
+        "떡국",
+        "규동",
+        "부대찌개"
+      ]
+    },
+    {
+      "contextTime": "야식",
+      "need": "hangover",
+      "top": [
+        "잔치국수",
+        "우동",
+        "된장찌개"
+      ]
+    },
+    {
+      "contextTime": "야식",
+      "need": "spicy",
+      "top": [
+        "김치볶음밥",
+        "마파두부덮밥",
+        "보리비빔밥"
+      ]
+    }
+  ]
+}

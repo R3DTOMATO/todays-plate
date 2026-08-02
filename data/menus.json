@@ -13,7 +13,10 @@
     "method": "간단",
     "soup": false,
     "desc": "고소한 아보카도와 바삭한 토스트의 조화. 간단하지만 영양 만점인 모닝 메뉴.",
-    "id": "아보카도-토스트"
+    "id": "아보카도-토스트",
+    "family": "아보카도-토스트",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -29,7 +32,10 @@
     "method": "간단",
     "soup": false,
     "desc": "귀리의 든든함에 과일의 달콤함을 더한 건강 한 그릇.",
-    "id": "오트밀-볼"
+    "id": "오트밀-볼",
+    "family": "오트밀-볼",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍳",
@@ -45,7 +51,10 @@
     "method": "간단",
     "soup": false,
     "desc": "부드럽고 촉촉한 클래식 모닝 에그.",
-    "id": "스크램블-에그"
+    "id": "스크램블-에그",
+    "family": "스크램블-에그",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥞",
@@ -61,7 +70,10 @@
     "method": "요리",
     "soup": false,
     "desc": "주말 아침에 어울리는 폭신폭신한 달콤함.",
-    "id": "바나나-팬케이크"
+    "id": "바나나-팬케이크",
+    "family": "바나나-팬케이크",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍙",
@@ -77,7 +89,10 @@
     "method": "간단",
     "soup": false,
     "desc": "손쉽게 만드는 든든한 한 끼. 다양한 속재료로 변주 가능.",
-    "id": "주먹밥"
+    "id": "주먹밥",
+    "family": "주먹밥",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥛",
@@ -93,7 +108,10 @@
     "method": "간단",
     "soup": false,
     "desc": "바삭한 그래놀라와 부드러운 요거트의 조합.",
-    "id": "그래놀라-요거트"
+    "id": "그래놀라-요거트",
+    "family": "그래놀라-요거트",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -109,7 +127,10 @@
     "method": "요리",
     "soup": true,
     "desc": "시원한 멸치 육수에 후루룩 넘어가는 소면.",
-    "id": "잔치국수"
+    "id": "잔치국수",
+    "family": "잔치국수",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍱",
@@ -125,7 +146,10 @@
     "method": "요리",
     "soup": false,
     "desc": "매콤달콤 양념이 밥에 쫙. 점심의 정석.",
-    "id": "제육덮밥"
+    "id": "제육덮밥",
+    "family": "제육덮밥",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥗",
@@ -141,7 +165,10 @@
     "method": "간단",
     "soup": false,
     "desc": "가볍지만 든든하게. 닭가슴살로 단백질까지.",
-    "id": "시저-샐러드"
+    "id": "시저-샐러드",
+    "family": "salad",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -157,7 +184,10 @@
     "method": "요리",
     "soup": false,
     "desc": "재료는 단순, 맛은 깊은 이탈리안 클래식.",
-    "id": "알리오-올리오"
+    "id": "알리오-올리오",
+    "family": "pasta-oil",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍛",
@@ -173,7 +203,10 @@
     "method": "요리",
     "soup": false,
     "desc": "진하고 풍부한 카레 한 그릇.",
-    "id": "카레라이스"
+    "id": "카레라이스",
+    "family": "curry-rice",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🌮",
@@ -189,7 +222,10 @@
     "method": "요리",
     "soup": false,
     "desc": "멕시칸 스타일의 손맛 한 입.",
-    "id": "타코"
+    "id": "타코",
+    "family": "burrito-taco",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -205,7 +241,10 @@
     "method": "외식",
     "soup": false,
     "desc": "신선한 회와 초밥의 정석.",
-    "id": "초밥"
+    "id": "초밥",
+    "family": "초밥",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥟",
@@ -221,7 +260,10 @@
     "method": "간단",
     "soup": false,
     "desc": "쫄깃한 만두피와 풍성한 속.",
-    "id": "만두"
+    "id": "만두",
+    "family": "dumpling",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥪",
@@ -237,7 +279,10 @@
     "method": "간단",
     "soup": false,
     "desc": "층층이 쌓인 든든한 카페 메뉴.",
-    "id": "클럽-샌드위치"
+    "id": "클럽-샌드위치",
+    "family": "sandwich",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍔",
@@ -253,7 +298,10 @@
     "method": "외식",
     "soup": false,
     "desc": "두툼한 패티와 신선한 야채.",
-    "id": "수제버거"
+    "id": "수제버거",
+    "family": "수제버거",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥘",
@@ -269,7 +317,10 @@
     "method": "요리",
     "soup": true,
     "desc": "집밥의 영원한 클래식. 푹 끓일수록 진해지는 맛.",
-    "id": "김치찌개"
+    "id": "김치찌개",
+    "family": "kimchi-stew",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍣",
@@ -285,7 +336,10 @@
     "method": "간단",
     "soup": false,
     "desc": "신선한 연어와 야채를 한 그릇에. 보기에도 예쁘다.",
-    "id": "연어-포케볼"
+    "id": "연어-포케볼",
+    "family": "연어-포케볼",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍕",
@@ -301,7 +355,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바질의 향, 토마토의 산미, 모짜렐라의 부드러움.",
-    "id": "마르게리타-피자"
+    "id": "마르게리타-피자",
+    "family": "마르게리타-피자",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -317,7 +374,10 @@
     "method": "요리",
     "soup": true,
     "desc": "구수한 된장 향이 퍼지는 정겨운 한 끼.",
-    "id": "된장찌개"
+    "id": "된장찌개",
+    "family": "된장찌개",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍖",
@@ -333,7 +393,10 @@
     "method": "외식",
     "soup": false,
     "desc": "기름이 자글자글 끓는 소리부터 행복.",
-    "id": "삼겹살"
+    "id": "삼겹살",
+    "family": "삼겹살",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍤",
@@ -349,7 +412,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바삭한 튀김옷 속 탱글한 새우.",
-    "id": "새우튀김"
+    "id": "새우튀김",
+    "family": "새우튀김",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -365,7 +431,10 @@
     "method": "요리",
     "soup": false,
     "desc": "진한 토마토 소스에 면을 듬뿍.",
-    "id": "토마토-파스타"
+    "id": "토마토-파스타",
+    "family": "토마토-파스타",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥩",
@@ -381,7 +450,10 @@
     "method": "요리",
     "soup": false,
     "desc": "미디엄 레어로 구운 두툼한 한 조각.",
-    "id": "스테이크"
+    "id": "스테이크",
+    "family": "스테이크",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌶️",
@@ -397,7 +469,10 @@
     "method": "외식",
     "soup": true,
     "desc": "얼얼하고 화끈한 사천식 한 그릇.",
-    "id": "마라탕"
+    "id": "마라탕",
+    "family": "마라탕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍱",
@@ -413,7 +488,10 @@
     "method": "요리",
     "soup": false,
     "desc": "달짝지근한 소고기 덮밥.",
-    "id": "규동"
+    "id": "규동",
+    "family": "rice-bowl-beef",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍗",
@@ -429,7 +507,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭한 튀김옷과 촉촉한 속살.",
-    "id": "치킨"
+    "id": "치킨",
+    "family": "치킨",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -445,7 +526,10 @@
     "method": "요리",
     "soup": true,
     "desc": "햄, 소시지, 라면이 어우러진 매콤한 찌개.",
-    "id": "부대찌개"
+    "id": "부대찌개",
+    "family": "부대찌개",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥟",
@@ -461,7 +545,10 @@
     "method": "외식",
     "soup": false,
     "desc": "한 입에 쏙 들어가는 정교한 중식.",
-    "id": "딤섬"
+    "id": "딤섬",
+    "family": "딤섬",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥗",
@@ -477,7 +564,10 @@
     "method": "간단",
     "soup": false,
     "desc": "페타치즈와 올리브의 지중해 향.",
-    "id": "그릭-샐러드"
+    "id": "그릭-샐러드",
+    "family": "salad",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍛",
@@ -493,7 +583,10 @@
     "method": "요리",
     "soup": false,
     "desc": "알록달록 야채와 고추장의 만남.",
-    "id": "비빔밥"
+    "id": "비빔밥",
+    "family": "bibimbap",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍜",
@@ -509,7 +602,10 @@
     "method": "외식",
     "soup": true,
     "desc": "진한 돈코츠 국물에 쫄깃한 면.",
-    "id": "라멘"
+    "id": "라멘",
+    "family": "라멘",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌯",
@@ -525,7 +621,10 @@
     "method": "간단",
     "soup": false,
     "desc": "토르티야에 가득 채운 한 입.",
-    "id": "부리또"
+    "id": "부리또",
+    "family": "burrito",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🦐",
@@ -541,7 +640,10 @@
     "method": "요리",
     "soup": false,
     "desc": "마늘 향 가득한 스페인식 새우.",
-    "id": "감바스"
+    "id": "감바스",
+    "family": "감바스",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥘",
@@ -557,7 +659,10 @@
     "method": "요리",
     "soup": true,
     "desc": "보들보들 순두부에 칼칼한 국물.",
-    "id": "순두부찌개"
+    "id": "순두부찌개",
+    "family": "순두부찌개",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍞",
@@ -573,7 +678,10 @@
     "method": "요리",
     "soup": false,
     "desc": "촉촉한 계란물에 적신 빵의 부드러움.",
-    "id": "프렌치-토스트"
+    "id": "프렌치-토스트",
+    "family": "프렌치-토스트",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥯",
@@ -589,7 +697,10 @@
     "method": "간단",
     "soup": false,
     "desc": "쫄깃한 베이글과 크림치즈, 연어의 환상 조합.",
-    "id": "베이글-샌드위치"
+    "id": "베이글-샌드위치",
+    "family": "sandwich",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥐",
@@ -605,7 +716,10 @@
     "method": "외식",
     "soup": false,
     "desc": "결결이 부서지는 버터의 풍미.",
-    "id": "크루아상"
+    "id": "크루아상",
+    "family": "크루아상",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍵",
@@ -621,7 +735,10 @@
     "method": "요리",
     "soup": true,
     "desc": "속이 안 좋을 때 부담 없이.",
-    "id": "미음"
+    "id": "미음",
+    "family": "미음",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥒",
@@ -637,7 +754,10 @@
     "method": "간단",
     "soup": false,
     "desc": "알록달록 영양이 한 그릇에.",
-    "id": "야채-스무디-보울"
+    "id": "야채-스무디-보울",
+    "family": "야채-스무디-보울",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍳",
@@ -653,7 +773,10 @@
     "method": "요리",
     "soup": false,
     "desc": "호화로운 브런치의 정석.",
-    "id": "에그-베네딕트"
+    "id": "에그-베네딕트",
+    "family": "에그-베네딕트",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🌯",
@@ -669,7 +792,10 @@
     "method": "요리",
     "soup": false,
     "desc": "든든하게 시작하는 든든한 한 끼.",
-    "id": "아침-부리또"
+    "id": "아침-부리또",
+    "family": "burrito",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍠",
@@ -685,7 +811,10 @@
     "method": "요리",
     "soup": false,
     "desc": "달콤하고 따뜻한 한국식 라떼.",
-    "id": "고구마-라떼"
+    "id": "고구마-라떼",
+    "family": "고구마-라떼",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥧",
@@ -701,7 +830,10 @@
     "method": "요리",
     "soup": false,
     "desc": "프랑스식 짭짤한 파이.",
-    "id": "키쉬"
+    "id": "키쉬",
+    "family": "키쉬",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍲",
@@ -717,7 +849,10 @@
     "method": "외식",
     "soup": true,
     "desc": "시원한 육수와 쫄깃한 면발.",
-    "id": "냉면"
+    "id": "냉면",
+    "family": "냉면",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -733,7 +868,10 @@
     "method": "요리",
     "soup": true,
     "desc": "굵직한 면발의 따뜻한 한 그릇.",
-    "id": "우동"
+    "id": "우동",
+    "family": "udon",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍛",
@@ -749,7 +887,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바삭한 튀김옷과 부드러운 고기.",
-    "id": "돈까스"
+    "id": "돈까스",
+    "family": "cutlet-rice",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍚",
@@ -765,7 +906,10 @@
     "method": "외식",
     "soup": true,
     "desc": "뜨끈한 국물에 밥 한 공기.",
-    "id": "국밥"
+    "id": "국밥",
+    "family": "국밥",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥟",
@@ -781,7 +925,10 @@
     "method": "요리",
     "soup": true,
     "desc": "손으로 썬 굵은 면발의 정겨움.",
-    "id": "칼국수"
+    "id": "칼국수",
+    "family": "칼국수",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🌭",
@@ -797,7 +944,10 @@
     "method": "간단",
     "soup": false,
     "desc": "간단하지만 만족스러운 한 입.",
-    "id": "핫도그"
+    "id": "핫도그",
+    "family": "핫도그",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍕",
@@ -813,7 +963,10 @@
     "method": "외식",
     "soup": false,
     "desc": "마라의 얼얼함이 중독적인 중식.",
-    "id": "마라샹궈"
+    "id": "마라샹궈",
+    "family": "마라샹궈",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -829,7 +982,10 @@
     "method": "요리",
     "soup": false,
     "desc": "크리미한 계란노른자의 진한 풍미.",
-    "id": "까르보나라"
+    "id": "까르보나라",
+    "family": "pasta-cream",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍱",
@@ -845,7 +1001,10 @@
     "method": "외식",
     "soup": false,
     "desc": "겉은 바삭, 속은 레어한 소고기 튀김.",
-    "id": "규카츠"
+    "id": "규카츠",
+    "family": "규카츠",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -861,7 +1020,10 @@
     "method": "외식",
     "soup": false,
     "desc": "다채로운 속재료의 김밥형 초밥.",
-    "id": "마키롤"
+    "id": "마키롤",
+    "family": "마키롤",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥗",
@@ -877,7 +1039,10 @@
     "method": "간단",
     "soup": false,
     "desc": "하와이안 스타일 한 그릇.",
-    "id": "포케볼"
+    "id": "포케볼",
+    "family": "포케볼",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥬",
@@ -893,7 +1058,10 @@
     "method": "외식",
     "soup": false,
     "desc": "온갖 쌈채소에 보쌈을 싸 먹는 정찬.",
-    "id": "쌈밥-정식"
+    "id": "쌈밥-정식",
+    "family": "쌈밥-정식",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍔",
@@ -909,7 +1077,10 @@
     "method": "외식",
     "soup": false,
     "desc": "녹진한 치즈가 흐르는 클래식.",
-    "id": "치즈버거"
+    "id": "치즈버거",
+    "family": "치즈버거",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍝",
@@ -925,7 +1096,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바질 향 가득한 그린 소스.",
-    "id": "페스토-파스타"
+    "id": "페스토-파스타",
+    "family": "pasta-oil",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥖",
@@ -941,7 +1115,10 @@
     "method": "외식",
     "soup": false,
     "desc": "베트남식 바삭 바게트 샌드위치.",
-    "id": "반미"
+    "id": "반미",
+    "family": "sandwich",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🌶️",
@@ -957,7 +1134,10 @@
     "method": "외식",
     "soup": false,
     "desc": "춘천식 매콤달콤 볶음.",
-    "id": "닭갈비"
+    "id": "닭갈비",
+    "family": "닭갈비",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍢",
@@ -973,7 +1153,10 @@
     "method": "요리",
     "soup": true,
     "desc": "추운 날 시원한 국물.",
-    "id": "어묵탕"
+    "id": "어묵탕",
+    "family": "어묵탕",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍤",
@@ -989,7 +1172,10 @@
     "method": "요리",
     "soup": false,
     "desc": "태국식 새콤달콤 볶음국수.",
-    "id": "팟타이"
+    "id": "팟타이",
+    "family": "팟타이",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -1005,7 +1191,10 @@
     "method": "외식",
     "soup": false,
     "desc": "쯔란 향 가득한 중국식 양고기 꼬치.",
-    "id": "양꼬치"
+    "id": "양꼬치",
+    "family": "양꼬치",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥘",
@@ -1021,7 +1210,10 @@
     "method": "외식",
     "soup": true,
     "desc": "쫄깃한 곱창과 진한 국물.",
-    "id": "곱창전골"
+    "id": "곱창전골",
+    "family": "곱창전골",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -1037,7 +1229,10 @@
     "method": "외식",
     "soup": false,
     "desc": "신선한 회의 본연의 맛.",
-    "id": "사시미"
+    "id": "사시미",
+    "family": "사시미",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -1053,7 +1248,10 @@
     "method": "요리",
     "soup": false,
     "desc": "층층이 쌓인 이탈리안 캐서롤.",
-    "id": "라자냐"
+    "id": "라자냐",
+    "family": "lasagna",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍲",
@@ -1069,7 +1267,10 @@
     "method": "외식",
     "soup": true,
     "desc": "뽀얀 사골 국물의 깊은 맛.",
-    "id": "설렁탕"
+    "id": "설렁탕",
+    "family": "설렁탕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌮",
@@ -1085,7 +1286,10 @@
     "method": "외식",
     "soup": false,
     "desc": "중동식 회전 구이 고기.",
-    "id": "케밥"
+    "id": "케밥",
+    "family": "케밥",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🐟",
@@ -1101,7 +1305,10 @@
     "method": "요리",
     "soup": false,
     "desc": "담백한 생선구이 한 마리.",
-    "id": "고등어구이"
+    "id": "고등어구이",
+    "family": "고등어구이",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🦞",
@@ -1117,7 +1324,10 @@
     "method": "외식",
     "soup": false,
     "desc": "특별한 날의 럭셔리 시푸드.",
-    "id": "랍스터"
+    "id": "랍스터",
+    "family": "랍스터",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍻",
@@ -1133,7 +1343,10 @@
     "method": "외식",
     "soup": false,
     "desc": "쫄깃한 돼지 족발.",
-    "id": "족발"
+    "id": "족발",
+    "family": "족발",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥢",
@@ -1149,7 +1362,10 @@
     "method": "외식",
     "soup": false,
     "desc": "춘장 향 가득한 중식의 클래식.",
-    "id": "짜장면"
+    "id": "짜장면",
+    "family": "짜장면",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -1165,7 +1381,10 @@
     "method": "외식",
     "soup": true,
     "desc": "매콤한 해물 국물의 자극.",
-    "id": "짬뽕"
+    "id": "짬뽕",
+    "family": "짬뽕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🦑",
@@ -1181,7 +1400,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭한 튀김에 새콤달콤 소스.",
-    "id": "탕수육"
+    "id": "탕수육",
+    "family": "탕수육",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍱",
@@ -1197,7 +1419,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭바삭 여러 가지 튀김 모듬.",
-    "id": "덴푸라-정식"
+    "id": "덴푸라-정식",
+    "family": "덴푸라-정식",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥟",
@@ -1213,7 +1438,10 @@
     "method": "외식",
     "soup": true,
     "desc": "담백한 육수에 살짝 데쳐먹는 고기.",
-    "id": "샤브샤브"
+    "id": "샤브샤브",
+    "family": "샤브샤브",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍕",
@@ -1229,7 +1457,10 @@
     "method": "외식",
     "soup": false,
     "desc": "쫄깃한 도우에 짭짤한 페퍼로니.",
-    "id": "페퍼로니-피자"
+    "id": "페퍼로니-피자",
+    "family": "페퍼로니-피자",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍙",
@@ -1245,7 +1476,10 @@
     "method": "요리",
     "soup": false,
     "desc": "한국식 도시락의 정수.",
-    "id": "김밥"
+    "id": "김밥",
+    "family": "김밥",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍢",
@@ -1261,7 +1495,10 @@
     "method": "요리",
     "soup": false,
     "desc": "쫄깃한 떡과 매콤 양념의 환상.",
-    "id": "떡볶이"
+    "id": "떡볶이",
+    "family": "떡볶이",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍢",
@@ -1277,7 +1514,10 @@
     "method": "외식",
     "soup": true,
     "desc": "얼큰한 국물에 푸짐한 순대.",
-    "id": "순대국"
+    "id": "순대국",
+    "family": "순대국",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥑",
@@ -1293,7 +1533,10 @@
     "method": "간단",
     "soup": false,
     "desc": "슈퍼푸드 가득한 보랏빛 한 그릇.",
-    "id": "아사이볼"
+    "id": "아사이볼",
+    "family": "아사이볼",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍵",
@@ -1309,7 +1552,10 @@
     "method": "외식",
     "soup": false,
     "desc": "더운 날 시원한 팥빙수.",
-    "id": "팥빙수"
+    "id": "팥빙수",
+    "family": "팥빙수",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -1325,7 +1571,10 @@
     "method": "외식",
     "soup": false,
     "desc": "성게알의 진한 풍미.",
-    "id": "우니동"
+    "id": "우니동",
+    "family": "우니동",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥒",
@@ -1341,7 +1590,10 @@
     "method": "요리",
     "soup": false,
     "desc": "쌀종이에 싸 먹는 신선한 한 입.",
-    "id": "월남쌈"
+    "id": "월남쌈",
+    "family": "월남쌈",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -1357,7 +1609,10 @@
     "method": "외식",
     "soup": true,
     "desc": "맑은 사골 국물에 갈비.",
-    "id": "갈비탕"
+    "id": "갈비탕",
+    "family": "갈비탕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥐",
@@ -1373,7 +1628,10 @@
     "method": "외식",
     "soup": false,
     "desc": "영국식 티타임의 동반자.",
-    "id": "스콘"
+    "id": "스콘",
+    "family": "스콘",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍮",
@@ -1389,7 +1647,10 @@
     "method": "외식",
     "soup": false,
     "desc": "부드러운 카라멜 푸딩 디저트.",
-    "id": "푸딩"
+    "id": "푸딩",
+    "family": "푸딩",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥗",
@@ -1405,7 +1666,10 @@
     "method": "간단",
     "soup": false,
     "desc": "미국식 푸짐한 샐러드.",
-    "id": "콥-샐러드"
+    "id": "콥-샐러드",
+    "family": "salad",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍲",
@@ -1421,7 +1685,10 @@
     "method": "외식",
     "soup": true,
     "desc": "얼큰한 매운맛 사골탕.",
-    "id": "육개장"
+    "id": "육개장",
+    "family": "육개장",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -1437,7 +1704,10 @@
     "method": "요리",
     "soup": false,
     "desc": "천천히 끓인 진한 미트소스.",
-    "id": "볼로네제"
+    "id": "볼로네제",
+    "family": "ragu-pasta",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍡",
@@ -1453,7 +1723,10 @@
     "method": "외식",
     "soup": false,
     "desc": "쫀득한 떡에 콩고물 듬뿍.",
-    "id": "경단"
+    "id": "경단",
+    "family": "경단",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌭",
@@ -1469,7 +1742,10 @@
     "method": "요리",
     "soup": false,
     "desc": "추억의 도시락 반찬.",
-    "id": "소시지-볶음"
+    "id": "소시지-볶음",
+    "family": "소시지-볶음",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍳",
@@ -1485,7 +1761,10 @@
     "method": "요리",
     "soup": false,
     "desc": "당근, 파 송송 든 부드러운 계란.",
-    "id": "계란말이"
+    "id": "계란말이",
+    "family": "계란말이",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🌮",
@@ -1501,7 +1780,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바삭한 또띠야에 녹진한 치즈.",
-    "id": "케사디야"
+    "id": "케사디야",
+    "family": "케사디야",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -1517,7 +1799,10 @@
     "method": "요리",
     "soup": false,
     "desc": "닭과 계란의 부드러운 덮밥.",
-    "id": "오야코동"
+    "id": "오야코동",
+    "family": "오야코동",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥚",
@@ -1533,7 +1818,10 @@
     "method": "간단",
     "soup": false,
     "desc": "폭신한 빵에 듬뿍 계란.",
-    "id": "에그-샌드위치"
+    "id": "에그-샌드위치",
+    "family": "sandwich",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🌶️",
@@ -1549,7 +1837,10 @@
     "method": "외식",
     "soup": false,
     "desc": "얼얼하게 매운 쭈꾸미 볶음.",
-    "id": "쭈꾸미-볶음"
+    "id": "쭈꾸미-볶음",
+    "family": "쭈꾸미-볶음",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -1565,7 +1856,10 @@
     "method": "외식",
     "soup": true,
     "desc": "시원하고 깊은 베트남 국물.",
-    "id": "베트남-쌀국수"
+    "id": "베트남-쌀국수",
+    "family": "베트남-쌀국수",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥟",
@@ -1581,7 +1875,10 @@
     "method": "간단",
     "soup": false,
     "desc": "바닥은 바삭, 위는 쫄깃.",
-    "id": "군만두"
+    "id": "군만두",
+    "family": "dumpling",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥗",
@@ -1597,7 +1894,10 @@
     "method": "간단",
     "soup": false,
     "desc": "크리미한 아보카도가 듬뿍.",
-    "id": "아보카도-샐러드"
+    "id": "아보카도-샐러드",
+    "family": "salad",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍤",
@@ -1613,7 +1913,10 @@
     "method": "외식",
     "soup": false,
     "desc": "식빵 사이 새우 튀김.",
-    "id": "멘보샤"
+    "id": "멘보샤",
+    "family": "멘보샤",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍔",
@@ -1629,7 +1932,10 @@
     "method": "간단",
     "soup": false,
     "desc": "간편하고 든든한 아침.",
-    "id": "아침-머핀"
+    "id": "아침-머핀",
+    "family": "아침-머핀",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -1645,7 +1951,10 @@
     "method": "요리",
     "soup": false,
     "desc": "진한 크림소스의 부드러움.",
-    "id": "크림-파스타"
+    "id": "크림-파스타",
+    "family": "pasta-cream",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥘",
@@ -1661,7 +1970,10 @@
     "method": "요리",
     "soup": false,
     "desc": "마늘 향 가득한 매콤한 새우 요리.",
-    "id": "알리오-감바스"
+    "id": "알리오-감바스",
+    "family": "알리오-감바스",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍚",
@@ -1677,7 +1989,10 @@
     "method": "외식",
     "soup": false,
     "desc": "정통 전주식 화려한 비빔밥.",
-    "id": "전주비빔밥"
+    "id": "전주비빔밥",
+    "family": "전주비빔밥",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍢",
@@ -1693,7 +2008,10 @@
     "method": "외식",
     "soup": true,
     "desc": "풍성한 재료의 끓이며 먹는 요리.",
-    "id": "전골"
+    "id": "전골",
+    "family": "전골",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥧",
@@ -1709,7 +2027,10 @@
     "method": "외식",
     "soup": false,
     "desc": "영국식 따끈한 고기 파이.",
-    "id": "미트파이"
+    "id": "미트파이",
+    "family": "미트파이",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥩",
@@ -1726,7 +2047,10 @@
     "method": "요리",
     "soup": false,
     "desc": "간장 베이스 불고기와 밥이 어우러진 안정적인 한식 덮밥.",
-    "id": "불고기덮밥"
+    "id": "불고기덮밥",
+    "family": "rice-bowl-beef",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍜",
@@ -1743,7 +2067,10 @@
     "method": "요리",
     "soup": false,
     "desc": "당면의 쫄깃함과 채소의 고소함이 밥과 잘 맞는 한식 메뉴.",
-    "id": "잡채밥"
+    "id": "잡채밥",
+    "family": "잡채밥",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🐷",
@@ -1760,7 +2087,10 @@
     "method": "외식",
     "soup": false,
     "desc": "부드러운 수육과 김치, 쌈 채소를 함께 먹는 포만감 높은 저녁 메뉴.",
-    "id": "보쌈정식"
+    "id": "보쌈정식",
+    "family": "보쌈정식",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥞",
@@ -1777,7 +2107,10 @@
     "method": "요리",
     "soup": false,
     "desc": "해물과 파의 향이 살아있는 바삭한 전 요리.",
-    "id": "해물파전"
+    "id": "해물파전",
+    "family": "해물파전",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍚",
@@ -1794,7 +2127,10 @@
     "method": "간단",
     "soup": false,
     "desc": "김치의 산미와 밥의 고소함이 빠르게 완성되는 실전형 한 끼.",
-    "id": "김치볶음밥"
+    "id": "김치볶음밥",
+    "family": "fried-rice",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍲",
@@ -1811,7 +2147,10 @@
     "method": "외식",
     "soup": true,
     "desc": "맑은 국물과 콩나물의 시원함이 아침 해장 메뉴로 좋은 선택.",
-    "id": "콩나물국밥"
+    "id": "콩나물국밥",
+    "family": "콩나물국밥",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍖",
@@ -1828,7 +2167,10 @@
     "method": "외식",
     "soup": true,
     "desc": "등뼈와 감자, 우거지가 들어간 깊고 매콤한 국물 요리.",
-    "id": "감자탕"
+    "id": "감자탕",
+    "family": "감자탕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍗",
@@ -1845,7 +2187,10 @@
     "method": "요리",
     "soup": true,
     "desc": "닭고기와 감자에 매콤달콤한 양념이 배는 가족형 저녁 메뉴.",
-    "id": "닭볶음탕"
+    "id": "닭볶음탕",
+    "family": "닭볶음탕",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🦑",
@@ -1862,7 +2207,10 @@
     "method": "요리",
     "soup": false,
     "desc": "오징어의 탄력과 고추장 양념이 강하게 살아나는 매운 볶음 메뉴.",
-    "id": "오징어볶음"
+    "id": "오징어볶음",
+    "family": "오징어볶음",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍵",
@@ -1875,11 +2223,14 @@
     "price": 7000,
     "type": "한식",
     "spicy": 0,
-    "weight": "중간",
+    "weight": "든든",
     "method": "요리",
     "soup": true,
     "desc": "쌀떡과 맑은 국물이 편안한 아침 식사로 좋은 메뉴.",
-    "id": "떡국"
+    "id": "떡국",
+    "family": "떡국",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥬",
@@ -1896,7 +2247,10 @@
     "method": "간단",
     "soup": false,
     "desc": "보리밥과 나물 중심의 담백한 비빔밥.",
-    "id": "보리비빔밥"
+    "id": "보리비빔밥",
+    "family": "bibimbap",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍚",
@@ -1913,7 +2267,10 @@
     "method": "외식",
     "soup": false,
     "desc": "뜨거운 돌솥의 누룽지 식감이 살아나는 든든한 비빔밥.",
-    "id": "돌솥비빔밥"
+    "id": "돌솥비빔밥",
+    "family": "돌솥비빔밥",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -1930,7 +2287,10 @@
     "method": "외식",
     "soup": true,
     "desc": "맑은 닭 육수와 고기가 들어간 담백한 국밥형 메뉴.",
-    "id": "닭곰탕"
+    "id": "닭곰탕",
+    "family": "닭곰탕",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -1947,7 +2307,10 @@
     "method": "요리",
     "soup": true,
     "desc": "발효 콩의 깊은 향과 구수함이 강한 전통 찌개.",
-    "id": "청국장"
+    "id": "청국장",
+    "family": "청국장",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -1964,7 +2327,10 @@
     "method": "외식",
     "soup": true,
     "desc": "고소한 콩국물과 차가운 면이 여름 점심에 잘 맞는 메뉴.",
-    "id": "콩국수"
+    "id": "콩국수",
+    "family": "콩국수",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -1981,7 +2347,10 @@
     "method": "외식",
     "soup": false,
     "desc": "메밀면의 구수함과 양념장의 산뜻함이 있는 면 요리.",
-    "id": "막국수"
+    "id": "막국수",
+    "family": "막국수",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🐙",
@@ -1998,7 +2367,10 @@
     "method": "외식",
     "soup": false,
     "desc": "낙지의 쫄깃함과 강한 매운 양념이 특징인 외식 메뉴.",
-    "id": "낙지볶음"
+    "id": "낙지볶음",
+    "family": "낙지볶음",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🦪",
@@ -2015,7 +2387,10 @@
     "method": "간단",
     "soup": false,
     "desc": "꼬막의 감칠맛과 양념장이 밥과 잘 어울리는 한 그릇.",
-    "id": "꼬막비빔밥"
+    "id": "꼬막비빔밥",
+    "family": "bibimbap",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -2032,7 +2407,10 @@
     "method": "요리",
     "soup": true,
     "desc": "단호박의 은은한 단맛이 부담 없는 아침 죽 메뉴.",
-    "id": "호박죽"
+    "id": "호박죽",
+    "family": "호박죽",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍲",
@@ -2049,7 +2427,10 @@
     "method": "요리",
     "soup": true,
     "desc": "수제비의 쫄깃함과 김치 국물의 산미가 어울리는 메뉴.",
-    "id": "김치수제비"
+    "id": "김치수제비",
+    "family": "김치수제비",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🌶️",
@@ -2066,7 +2447,10 @@
     "method": "요리",
     "soup": false,
     "desc": "두부와 고기, 마라 향이 밥과 강하게 어울리는 사천식 메뉴.",
-    "id": "마파두부덮밥"
+    "id": "마파두부덮밥",
+    "family": "마파두부덮밥",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍖",
@@ -2083,7 +2467,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭한 튀김과 새콤달콤한 소스가 특징인 중식 외식 메뉴.",
-    "id": "꿔바로우"
+    "id": "꿔바로우",
+    "family": "꿔바로우",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥘",
@@ -2100,7 +2487,10 @@
     "method": "외식",
     "soup": true,
     "desc": "마라 육수에 다양한 재료를 익혀 먹는 강한 향신료 중심 메뉴.",
-    "id": "훠궈"
+    "id": "훠궈",
+    "family": "훠궈",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2117,7 +2507,10 @@
     "method": "요리",
     "soup": false,
     "desc": "고소한 참깨와 매운 고추기름이 어우러지는 비빔면형 중식.",
-    "id": "탄탄면"
+    "id": "탄탄면",
+    "family": "탄탄면",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍚",
@@ -2134,7 +2527,10 @@
     "method": "간단",
     "soup": false,
     "desc": "센 불 향과 계란, 밥알의 고슬함이 핵심인 중식 기본 메뉴.",
-    "id": "중식-볶음밥"
+    "id": "중식-볶음밥",
+    "family": "fried-rice",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍜",
@@ -2151,7 +2547,10 @@
     "method": "외식",
     "soup": true,
     "desc": "걸쭉한 국물과 해산물이 들어가는 순한 중식 면 요리.",
-    "id": "울면"
+    "id": "울면",
+    "family": "울면",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🫑",
@@ -2168,7 +2567,10 @@
     "method": "요리",
     "soup": false,
     "desc": "피망과 고기를 강한 화력으로 볶아 꽃빵과 먹는 메뉴.",
-    "id": "고추잡채"
+    "id": "고추잡채",
+    "family": "고추잡채",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🐔",
@@ -2185,7 +2587,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭한 닭튀김에 새콤한 간장 소스를 더한 중식 요리.",
-    "id": "유린기"
+    "id": "유린기",
+    "family": "유린기",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🐔",
@@ -2202,7 +2607,10 @@
     "method": "외식",
     "soup": false,
     "desc": "고추와 닭튀김을 강하게 볶은 매운 중식 메뉴.",
-    "id": "라조기"
+    "id": "라조기",
+    "family": "라조기",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥟",
@@ -2219,7 +2627,10 @@
     "method": "외식",
     "soup": false,
     "desc": "얇은 피 안에 육즙이 들어 있는 상하이식 만두.",
-    "id": "샤오롱바오"
+    "id": "샤오롱바오",
+    "family": "샤오롱바오",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🦆",
@@ -2236,7 +2647,10 @@
     "method": "외식",
     "soup": false,
     "desc": "바삭한 오리 껍질과 전병, 소스 조합이 핵심인 고급 중식.",
-    "id": "북경오리"
+    "id": "북경오리",
+    "family": "북경오리",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🦞",
@@ -2253,7 +2667,10 @@
     "method": "외식",
     "soup": false,
     "desc": "강한 마라 양념으로 볶은 가재 요리.",
-    "id": "마라롱샤"
+    "id": "마라롱샤",
+    "family": "마라롱샤",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍚",
@@ -2270,7 +2687,10 @@
     "method": "요리",
     "soup": false,
     "desc": "새우, 햄, 계란, 채소가 들어간 대표적인 중식 볶음밥.",
-    "id": "양저우볶음밥"
+    "id": "양저우볶음밥",
+    "family": "fried-rice",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -2287,7 +2707,10 @@
     "method": "요리",
     "soup": true,
     "desc": "신맛과 매운맛이 함께 있는 걸쭉한 중식 수프.",
-    "id": "산라탕"
+    "id": "산라탕",
+    "family": "산라탕",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2304,7 +2727,10 @@
     "method": "외식",
     "soup": true,
     "desc": "소고기 육수와 면, 향신료가 들어간 든든한 중식 면 요리.",
-    "id": "우육면"
+    "id": "우육면",
+    "family": "우육면",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -2321,7 +2747,10 @@
     "method": "요리",
     "soup": false,
     "desc": "돈카츠와 달걀, 양파를 밥 위에 올린 일본식 덮밥.",
-    "id": "가츠동"
+    "id": "가츠동",
+    "family": "cutlet-rice",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍤",
@@ -2338,7 +2767,10 @@
     "method": "외식",
     "soup": false,
     "desc": "튀김을 밥 위에 올리고 달짝지근한 소스를 더한 덮밥.",
-    "id": "텐동"
+    "id": "텐동",
+    "family": "텐동",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2355,7 +2787,10 @@
     "method": "요리",
     "soup": false,
     "desc": "메밀면의 구수함이 살아나는 깔끔한 일식 면 요리.",
-    "id": "소바"
+    "id": "소바",
+    "family": "소바",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍜",
@@ -2372,7 +2807,10 @@
     "method": "요리",
     "soup": false,
     "desc": "소스 향과 볶은 면의 고소함이 특징인 일본식 볶음면.",
-    "id": "야키소바"
+    "id": "야키소바",
+    "family": "야키소바",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥞",
@@ -2389,7 +2827,10 @@
     "method": "요리",
     "soup": false,
     "desc": "양배추와 반죽, 소스가 어우러지는 일본식 부침 요리.",
-    "id": "오코노미야키"
+    "id": "오코노미야키",
+    "family": "오코노미야키",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🐙",
@@ -2406,7 +2847,10 @@
     "method": "외식",
     "soup": false,
     "desc": "문어가 들어간 둥근 간식형 일식 메뉴.",
-    "id": "타코야키"
+    "id": "타코야키",
+    "family": "타코야키",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍗",
@@ -2423,7 +2867,10 @@
     "method": "요리",
     "soup": false,
     "desc": "달짝지근한 닭꼬치 양념을 밥과 함께 먹는 덮밥.",
-    "id": "야키토리덮밥"
+    "id": "야키토리덮밥",
+    "family": "야키토리덮밥",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥘",
@@ -2440,7 +2887,10 @@
     "method": "외식",
     "soup": true,
     "desc": "소고기와 채소를 달짝한 간장 육수에 익혀 먹는 전골형 일식.",
-    "id": "스키야키"
+    "id": "스키야키",
+    "family": "스키야키",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -2457,7 +2907,10 @@
     "method": "요리",
     "soup": false,
     "desc": "일본식 카레에 돈카츠를 얹은 강한 포만감 메뉴.",
-    "id": "카츠카레"
+    "id": "카츠카레",
+    "family": "cutlet-rice",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2474,7 +2927,10 @@
     "method": "외식",
     "soup": true,
     "desc": "진한 찍먹 육수와 굵은 면이 특징인 라멘 계열 메뉴.",
-    "id": "츠케멘"
+    "id": "츠케멘",
+    "family": "츠케멘",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -2491,7 +2947,10 @@
     "method": "외식",
     "soup": false,
     "desc": "연어회를 밥 위에 올린 깔끔한 해산물 덮밥.",
-    "id": "사케동"
+    "id": "사케동",
+    "family": "사케동",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2508,7 +2967,10 @@
     "method": "요리",
     "soup": true,
     "desc": "부드러운 우동면과 소고기 토핑이 어울리는 따뜻한 면 요리.",
-    "id": "규니쿠-우동"
+    "id": "규니쿠-우동",
+    "family": "udon",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -2525,7 +2987,10 @@
     "method": "외식",
     "soup": true,
     "desc": "채소, 고기, 해산물을 함께 끓여 먹는 일본식 냄비 요리.",
-    "id": "나베"
+    "id": "나베",
+    "family": "나베",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍙",
@@ -2542,7 +3007,10 @@
     "method": "간단",
     "soup": false,
     "desc": "유부 안에 초밥을 넣은 가벼운 일식 메뉴.",
-    "id": "이나리즈시"
+    "id": "이나리즈시",
+    "family": "이나리즈시",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍣",
@@ -2559,7 +3027,10 @@
     "method": "외식",
     "soup": false,
     "desc": "초밥밥 위에 여러 해산물을 흩뿌린 일본식 회덮밥.",
-    "id": "치라시스시"
+    "id": "치라시스시",
+    "family": "치라시스시",
+    "homeSuitability": "outside",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -2576,7 +3047,10 @@
     "method": "요리",
     "soup": false,
     "desc": "고기 소스를 오래 끓여 깊은 맛을 내는 이탈리안 파스타.",
-    "id": "라구-파스타"
+    "id": "라구-파스타",
+    "family": "ragu-pasta",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍝",
@@ -2593,7 +3067,10 @@
     "method": "요리",
     "soup": false,
     "desc": "조개 육수와 올리브오일의 감칠맛이 살아나는 파스타.",
-    "id": "봉골레-파스타"
+    "id": "봉골레-파스타",
+    "family": "pasta-oil",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍚",
@@ -2610,7 +3087,10 @@
     "method": "요리",
     "soup": false,
     "desc": "쌀의 크리미한 질감과 버섯 향이 중심인 이탈리안 메뉴.",
-    "id": "버섯-리조또"
+    "id": "버섯-리조또",
+    "family": "버섯-리조또",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥔",
@@ -2627,7 +3107,10 @@
     "method": "요리",
     "soup": false,
     "desc": "감자 반죽의 부드러운 식감이 소스와 어울리는 메뉴.",
-    "id": "뇨키"
+    "id": "뇨키",
+    "family": "뇨키",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥗",
@@ -2644,7 +3127,10 @@
     "method": "간단",
     "soup": false,
     "desc": "닭가슴살과 채소 중심의 가벼운 단백질 메뉴.",
-    "id": "치킨-샐러드"
+    "id": "치킨-샐러드",
+    "family": "salad",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍝",
@@ -2661,7 +3147,10 @@
     "method": "요리",
     "soup": false,
     "desc": "바질 향과 크림 소스의 부드러움이 강한 파스타.",
-    "id": "바질-크림-파스타"
+    "id": "바질-크림-파스타",
+    "family": "pasta-cream",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🧅",
@@ -2678,7 +3167,10 @@
     "method": "요리",
     "soup": true,
     "desc": "양파의 단맛과 치즈 토스트가 어울리는 프랑스식 수프.",
-    "id": "프렌치-어니언-수프"
+    "id": "프렌치-어니언-수프",
+    "family": "프렌치-어니언-수프",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥣",
@@ -2695,7 +3187,10 @@
     "method": "요리",
     "soup": true,
     "desc": "조개와 감자, 크림이 들어간 부드러운 수프 메뉴.",
-    "id": "클램차우더"
+    "id": "클램차우더",
+    "family": "클램차우더",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍗",
@@ -2712,7 +3207,10 @@
     "method": "요리",
     "soup": false,
     "desc": "오븐에 구운 닭고기의 담백함과 허브 향이 중심인 메뉴.",
-    "id": "로스트-치킨"
+    "id": "로스트-치킨",
+    "family": "로스트-치킨",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍖",
@@ -2729,7 +3227,10 @@
     "method": "외식",
     "soup": false,
     "desc": "훈연 향과 달콤한 바베큐 소스가 강한 외식 메뉴.",
-    "id": "바베큐-립"
+    "id": "바베큐-립",
+    "family": "바베큐-립",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🧀",
@@ -2746,7 +3247,10 @@
     "method": "간단",
     "soup": false,
     "desc": "치즈와 버터향이 살아있는 간단한 브런치 메뉴.",
-    "id": "그릴드-치즈"
+    "id": "그릴드-치즈",
+    "family": "그릴드-치즈",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🍳",
@@ -2763,7 +3267,10 @@
     "method": "간단",
     "soup": false,
     "desc": "계란을 부드럽게 익혀 가볍게 먹는 아침 메뉴.",
-    "id": "오믈렛"
+    "id": "오믈렛",
+    "family": "오믈렛",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🧀",
@@ -2780,7 +3287,10 @@
     "method": "요리",
     "soup": false,
     "desc": "마카로니와 치즈 소스의 진한 맛이 중심인 컴포트 푸드.",
-    "id": "맥앤치즈"
+    "id": "맥앤치즈",
+    "family": "맥앤치즈",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -2797,7 +3307,10 @@
     "method": "요리",
     "soup": false,
     "desc": "시금치와 치즈, 파스타 시트를 층층이 쌓은 오븐 요리.",
-    "id": "시금치-라자냐"
+    "id": "시금치-라자냐",
+    "family": "lasagna",
+    "homeSuitability": "special",
+    "familiarity": "explore"
   },
   {
     "emoji": "🌯",
@@ -2814,7 +3327,10 @@
     "method": "간단",
     "soup": false,
     "desc": "시저 샐러드 재료를 또띠야에 말아 먹는 간편 메뉴.",
-    "id": "시저랩"
+    "id": "시저랩",
+    "family": "시저랩",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍚",
@@ -2831,7 +3347,10 @@
     "method": "요리",
     "soup": false,
     "desc": "달짝지근한 간장 향과 볶음밥 식감이 특징인 인도네시아 메뉴.",
-    "id": "나시고렝"
+    "id": "나시고렝",
+    "family": "fried-rice",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2848,7 +3367,10 @@
     "method": "요리",
     "soup": false,
     "desc": "매콤달콤한 소스에 볶은 인도네시아식 볶음면.",
-    "id": "미고렝"
+    "id": "미고렝",
+    "family": "미고렝",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍜",
@@ -2865,7 +3387,10 @@
     "method": "외식",
     "soup": false,
     "desc": "구운 돼지고기와 쌀국수, 느억맘 소스가 어울리는 베트남 메뉴.",
-    "id": "분짜"
+    "id": "분짜",
+    "family": "분짜",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥗",
@@ -2882,7 +3407,10 @@
     "method": "외식",
     "soup": false,
     "desc": "비빔 쌀국수와 소고기, 허브가 어우러진 산뜻한 베트남 메뉴.",
-    "id": "분보남보"
+    "id": "분보남보",
+    "family": "분보남보",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍛",
@@ -2899,7 +3427,10 @@
     "method": "요리",
     "soup": false,
     "desc": "토마토와 버터, 향신료가 부드럽게 어우러지는 인도식 커리.",
-    "id": "버터치킨-커리"
+    "id": "버터치킨-커리",
+    "family": "curry-rice",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🫓",
@@ -2916,7 +3447,10 @@
     "method": "외식",
     "soup": false,
     "desc": "난과 커리를 함께 먹는 인도식 외식 메뉴.",
-    "id": "난-세트"
+    "id": "난-세트",
+    "family": "난-세트",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🧆",
@@ -2933,7 +3467,10 @@
     "method": "간단",
     "soup": false,
     "desc": "병아리콩 튀김과 채소를 랩으로 먹는 중동식 메뉴.",
-    "id": "팔라펠-랩"
+    "id": "팔라펠-랩",
+    "family": "팔라펠-랩",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍳",
@@ -2950,7 +3487,10 @@
     "method": "요리",
     "soup": true,
     "desc": "토마토 소스에 달걀을 익혀 먹는 향신료 풍미의 아침 메뉴.",
-    "id": "샥슈카"
+    "id": "샥슈카",
+    "family": "샥슈카",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🧆",
@@ -2967,7 +3507,10 @@
     "method": "간단",
     "soup": false,
     "desc": "병아리콩 딥과 피타, 채소를 곁들이는 가벼운 세계음식.",
-    "id": "후무스-플레이트"
+    "id": "후무스-플레이트",
+    "family": "후무스-플레이트",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌯",
@@ -2984,7 +3527,10 @@
     "method": "요리",
     "soup": false,
     "desc": "또띠야에 속재료를 말고 매콤한 소스를 얹은 멕시칸 메뉴.",
-    "id": "엔칠라다"
+    "id": "엔칠라다",
+    "family": "엔칠라다",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🌮",
@@ -3001,7 +3547,10 @@
     "method": "간단",
     "soup": false,
     "desc": "아보카도와 살사, 또띠야의 산뜻함이 살아있는 타코.",
-    "id": "과카몰리-타코"
+    "id": "과카몰리-타코",
+    "family": "burrito-taco",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -3018,7 +3567,10 @@
     "method": "요리",
     "soup": false,
     "desc": "향신료에 재운 닭고기와 크리미한 소스가 어울리는 커리 메뉴.",
-    "id": "치킨-티카-마살라"
+    "id": "치킨-티카-마살라",
+    "family": "curry-rice",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍛",
@@ -3035,7 +3587,10 @@
     "method": "요리",
     "soup": true,
     "desc": "코코넛 밀크와 그린커리 페이스트가 만드는 태국식 매운 커리.",
-    "id": "그린커리"
+    "id": "그린커리",
+    "family": "curry-rice",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🦐",
@@ -3052,7 +3607,10 @@
     "method": "요리",
     "soup": true,
     "desc": "새우, 레몬그라스, 라임 향이 강한 태국식 새콤매콤 수프.",
-    "id": "똠얌꿍"
+    "id": "똠얌꿍",
+    "family": "똠얌꿍",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥙",
@@ -3069,7 +3627,10 @@
     "method": "외식",
     "soup": false,
     "desc": "구운 고기와 채소, 소스를 빵에 넣어 먹는 튀르키예식 메뉴.",
-    "id": "도너-케밥"
+    "id": "도너-케밥",
+    "family": "도너-케밥",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥗",
@@ -3086,7 +3647,10 @@
     "method": "간단",
     "soup": false,
     "desc": "채소와 바삭한 빵 조각, 산미 있는 드레싱이 특징인 중동식 샐러드.",
-    "id": "파투쉬-샐러드"
+    "id": "파투쉬-샐러드",
+    "family": "salad",
+    "homeSuitability": "possible",
+    "familiarity": "explore"
   },
   {
     "emoji": "🍜",
@@ -3103,7 +3667,10 @@
     "method": "외식",
     "soup": true,
     "desc": "코코넛 커리 국물과 쌀국수가 어우러지는 동남아 면 요리.",
-    "id": "락사"
+    "id": "락사",
+    "family": "락사",
+    "homeSuitability": "outside",
+    "familiarity": "explore"
   },
   {
     "emoji": "🥪",
@@ -3120,7 +3687,10 @@
     "method": "간단",
     "soup": false,
     "desc": "돼지고기, 햄, 치즈, 피클을 눌러 구운 쿠바식 샌드위치.",
-    "id": "쿠바-샌드위치"
+    "id": "쿠바-샌드위치",
+    "family": "sandwich",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -3143,7 +3713,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥣",
@@ -3166,7 +3739,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "common",
+    "familiarity": "common"
   },
   {
     "emoji": "🥣",
@@ -3189,7 +3765,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -3212,7 +3791,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -3235,7 +3817,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -3258,7 +3843,10 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥣",
@@ -3281,6 +3869,9 @@
       "p": 25,
       "c": 25,
       "f": 50
-    }
+    },
+    "family": "seaweed-soup",
+    "homeSuitability": "possible",
+    "familiarity": "familiar"
   }
 ]

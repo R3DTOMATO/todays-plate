@@ -267,6 +267,7 @@
       if (ans.mode === '배달' && m.method !== '외식') return false;
       if (ans.mode === '집밥' && !['간단','요리'].includes(m.method)) return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
+      if (!ans.time && ans.contextTime && ans.contextTime !== '아침' && isBreakfastOnlyMenu(m)) return false;
       if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && Number(m.price || 0) > Number(ans.budget)) return false;
       return true;
     }).length;
@@ -623,6 +624,69 @@
     `;
   }
 
+  // ─── Korean beta recommendation metadata ───
+  // 사용자에게 보이는 이름이 달라도 사실상 같은 음식 계열이면 리롤에서 함께 제외합니다.
+  const BREAKFAST_ONLY_NAMES = new Set([
+    '아보카도 토스트','오트밀 볼','스크램블 에그','바나나 팬케이크','그래놀라 요거트',
+    '프렌치 토스트','베이글 샌드위치','야채 스무디 보울','에그 베네딕트','고구마 라떼',
+    '키쉬','아사이볼','에그 샌드위치','아침 머핀','그릴드 치즈','오믈렛','아침 부리또','샥슈카'
+  ]);
+
+  function getMenuFamily(menu) {
+    if (!menu) return '';
+    return String(menu.family || menu.id || menu.name || '').trim();
+  }
+
+  function isBreakfastOnlyMenu(menu) {
+    return !!menu && BREAKFAST_ONLY_NAMES.has(menu.name);
+  }
+
+  function getHomeSuitability(menu) {
+    if (!menu) return 'possible';
+    if (menu.homeSuitability) return menu.homeSuitability;
+    if (menu.method === '외식') return 'outside';
+    if (Number(menu.cook || 0) >= 50) return 'special';
+    return 'possible';
+  }
+
+  function getMenuFamiliarity(menu) {
+    if (!menu) return 'explore';
+    if (menu.familiarity) return menu.familiarity;
+    if (['한식','일식','중식'].includes(menu.type)) return 'familiar';
+    return 'explore';
+  }
+
+  function selectDiverseRecommendationSet(scored, limit = 3) {
+    if (!Array.isArray(scored) || scored.length === 0) return [];
+    const selected = [scored[0]];
+    const usedFamilies = new Set([getMenuFamily(scored[0])]);
+    const usedTypes = new Set([scored[0].type]);
+    const topScore = Number(scored[0].score || 0);
+
+    // 대안 1은 점수 차가 크지 않은 범위에서 다른 음식 종류를 우선합니다.
+    const crossCuisine = scored.slice(1).find(menu => {
+      const family = getMenuFamily(menu);
+      return family && !usedFamilies.has(family) && !usedTypes.has(menu.type) && topScore - Number(menu.score || 0) <= 8;
+    });
+    if (crossCuisine && selected.length < limit) {
+      selected.push(crossCuisine);
+      usedFamilies.add(getMenuFamily(crossCuisine));
+      usedTypes.add(crossCuisine.type);
+    }
+
+    // 나머지는 점수 순서를 유지하되 같은 음식 계열은 중복시키지 않습니다.
+    for (const menu of scored.slice(1)) {
+      if (selected.length >= limit) break;
+      if (selected.includes(menu)) continue;
+      const family = getMenuFamily(menu);
+      if (family && usedFamilies.has(family)) continue;
+      selected.push(menu);
+      if (family) usedFamilies.add(family);
+      usedTypes.add(menu.type);
+    }
+    return selected;
+  }
+
   // ─── Questions ───
 
 
@@ -665,6 +729,9 @@
       menu.reasonTags = profile.reasonTags;
       menu.taste = profile.tastes;
       menu.restrictionTags = inferRestrictionTags(menu);
+      menu.family = getMenuFamily(menu);
+      menu.homeSuitability = getHomeSuitability(menu);
+      menu.familiarity = getMenuFamiliarity(menu);
     });
   }
   const questions = [
@@ -914,7 +981,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.1';
+  const APP_VERSION = 'korea-beta-v4.4';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -923,6 +990,7 @@
   let favorites = []; // {menuName, addedAt}
   let personalProfile = null;
   let temporaryExcluded = new Set();
+  let temporaryExcludedFamilies = new Set();
   let pendingMealPhoto = '';
   let selectedSatisfaction = '';
   let selectedEatAgain = '';
@@ -1511,6 +1579,11 @@
     return temporaryExcluded && temporaryExcluded.has(menuName);
   }
 
+  function isTemporarilyExcludedFamily(menu) {
+    const family = getMenuFamily(menu);
+    return !!family && temporaryExcludedFamilies && temporaryExcludedFamilies.has(family);
+  }
+
   function getRecentMenuNames(days = RECENT_EXCLUDE_DAYS) {
     const names = new Set();
     const cutoff = new Date(today);
@@ -1881,6 +1954,7 @@
     favorites = [];
     personalProfile = defaultPersonalProfile();
     temporaryExcluded = new Set();
+    temporaryExcludedFamilies = new Set();
     currentMenu = null;
     answers = {};
     history = [];
@@ -1924,6 +1998,7 @@
   function initDiary() {
     personalProfile = loadProfile();
     temporaryExcluded = new Set();
+    temporaryExcludedFamilies = new Set();
     diary = loadDiary();
     favorites = loadFavorites();
     renderToday();
@@ -1938,6 +2013,7 @@
       if (isBanned(m.name)) return false;
       if (violatesUserRestrictions(m)) return false;
       if (!includeTemporary && isTemporarilyExcluded(m.name)) return false;
+      if (!includeTemporary && isTemporarilyExcludedFamily(m)) return false;
       return true;
     };
     const strictPool = menus.filter(m => {
@@ -1968,6 +2044,7 @@
       if (ans.mode === '배달' && m.method !== '외식') return false;
       if (ans.mode === '집밥' && !['간단','요리'].includes(m.method)) return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
+      if (!ans.time && ans.contextTime && ans.contextTime !== '아침' && isBreakfastOnlyMenu(m)) return false;
       if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && Number(m.price || 0) > Number(ans.budget)) return false;
       return true;
     });
@@ -2049,18 +2126,45 @@
 
     if (ans.type && m.type === ans.type) score += 10;
     if (ans.time && m.time === ans.time) score += 7;
-    if (!ans.time && ans.contextTime && m.time === ans.contextTime) score += 5;
+    if (!ans.time && ans.contextTime && m.time === ans.contextTime) score += 10;
+    else if (!ans.time && ans.contextTime && m.time && m.time !== ans.contextTime) score -= 5;
     if (ans.weight && m.weight === ans.weight) score += 6;
     if (ans.soup !== undefined && ans.soup !== null && m.soup === ans.soup) score += 5;
     if (ans.method && m.method === ans.method) score += 5;
     if (ans.mode === '외식' && m.method === '외식') score += 8;
     if (ans.mode === '배달' && m.method === '외식') score += 7;
-    if (ans.mode === '집밥' && ['간단','요리'].includes(m.method)) score += 7;
+    if (ans.mode === '집밥' && ['간단','요리'].includes(m.method)) {
+      score += 7;
+      const homeSuitability = getHomeSuitability(m);
+      const familiarity = getMenuFamiliarity(m);
+      const cookMinutes = Number(m.cook || 0);
+
+      // '집에서 만들 수 있음'보다 '한국 사용자가 집밥으로 기대하는 메뉴'를 우선합니다.
+      if (homeSuitability === 'common') score += 11;
+      else if (homeSuitability === 'possible') score += 1;
+      else if (homeSuitability === 'special') score -= 12;
+
+      if (cookMinutes <= 15) score += 6;
+      else if (cookMinutes <= 30) score += 3;
+      else if (cookMinutes >= 60) score -= 12;
+      else if (cookMinutes >= 45) score -= 8;
+      else if (cookMinutes >= 35) score -= 3;
+
+      if (familiarity === 'common') score += 5;
+      else if (familiarity === 'explore') score -= 4;
+
+      // 음식 종류를 직접 고르지 않은 신규 세션에서 한국형 기본값을 적용합니다.
+      if (!ans.type) {
+        if (m.type === '한식') score += 10;
+        else if (['일식','중식'].includes(m.type)) score += 4;
+        else if (m.type === '세계음식') score -= 4;
+      }
+    }
     if (ans.mode === '편의점' && m.method === '간단' && m.price <= 7000) score += 9;
-    if (ans.need === 'light' && m.weight === '가벼움') score += 8;
-    if (ans.need === 'full' && m.weight === '든든') score += 8;
+    if (ans.need === 'light' && m.weight === '가벼움') score += 14;
+    if (ans.need === 'full' && m.weight === '든든') score += 14;
     if (ans.need === 'hangover' && m.soup && m.spicy <= 1) score += 9;
-    if (ans.need === 'spicy' && m.spicy >= 1) score += 8;
+    if (ans.need === 'spicy' && m.spicy >= 1) score += 14;
     if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && m.price <= Number(ans.budget)) score += 5;
     if (ans.preferEasy) {
       if (Number(m.cook || 0) <= 15) score += 7;
@@ -2085,7 +2189,9 @@
     score -= Math.min((stats.rejects || 0) * 1.2, 8);
     score += Math.min((stats.likes || 0) * 1.4, 8);
 
-    return Math.max(0, Math.min(99, score));
+    // 정렬에는 원점수를 유지합니다. 화면 표시는 toMatchPercent()에서 99%로 제한합니다.
+    // 이전에는 99점 상한 때문에 다수 메뉴가 동점이 되어 가나다순으로 선택되는 문제가 있었습니다.
+    return Math.max(0, score);
   }
 
   // ─── Resumable recommendation flow ───
@@ -2299,9 +2405,10 @@
     document.querySelector('.action-grid').style.display = '';
     document.querySelector('.runner-title').style.display = '';
 
-    const top = scored[0];
+    const recommendationSet = selectDiverseRecommendationSet(scored, 3);
+    const top = recommendationSet[0];
     currentMenu = top;
-    const runners = scored.slice(1, 3);
+    const runners = recommendationSet.slice(1);
     saveRecommendationDraft('result', { menuName: top.name });
     trackEvent('recommendation_result_viewed', { menuId: top.id || top.name, recommendationRank: 1, candidateCount: candidates.length, conditions: { ...answers } });
     [top, ...runners].forEach(m => recordMenuFeedback(m, 'shown'));
@@ -2414,7 +2521,9 @@
     }
     recordMenuFeedback(currentMenu, 'reject');
     temporaryExcluded.add(currentMenu.name);
-    trackEvent('menu_rejected', { menuId: currentMenu.id || currentMenu.name, menuType: currentMenu.type || '', reason });
+    const rejectedFamily = getMenuFamily(currentMenu);
+    if (rejectedFamily) temporaryExcludedFamilies.add(rejectedFamily);
+    trackEvent('menu_rejected', { menuId: currentMenu.id || currentMenu.name, menuType: currentMenu.type || '', menuFamily: rejectedFamily, reason });
     trackEvent('rejection_reason_selected', { menuId: currentMenu.id || currentMenu.name, reason });
     closeRejectReasonModal();
     showToast(`${labels[reason] || '다른 메뉴 요청'}을 반영했어요`);
@@ -2426,6 +2535,8 @@
     if (!confirm(`'${currentMenu.name}'을(를) 앞으로 추천에서 영구 제외할까요?`)) return;
     recordMenuFeedback(currentMenu, 'ban');
     temporaryExcluded.add(currentMenu.name);
+    const bannedFamily = getMenuFamily(currentMenu);
+    if (bannedFamily) temporaryExcludedFamilies.add(bannedFamily);
     showToast(`'${currentMenu.name}'은 앞으로 추천하지 않아요`);
     showResult();
   }
@@ -2436,6 +2547,7 @@
     answers = { contextTime: getCurrentMealTime() };
     history = [];
     temporaryExcluded = new Set();
+    temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'three_step', mealTime: answers.contextTime });
@@ -2451,6 +2563,7 @@
     if ((personalProfile?.preferredSituations || []).length === 1) answers.situation = personalProfile.preferredSituations[0];
     history = Object.keys(answers).map(key => ({ key, value: answers[key] }));
     temporaryExcluded = new Set();
+    temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'instant', mealTime });
