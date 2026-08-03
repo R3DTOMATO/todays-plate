@@ -9,10 +9,34 @@
     recipeSources: './data/recipe-sources.json'
   };
 
-  async function loadJsonFile(path) {
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`${path} 로드 실패: HTTP ${response.status}`);
-    return response.json();
+  const DATA_LOAD_TIMEOUT_MS = 15000;
+  const APP_DATA_STATE = {
+    core: 'loading',
+    supplemental: 'idle',
+    error: null,
+    warnings: []
+  };
+
+  async function loadJsonFile(path, options = {}) {
+    const timeoutMs = Number(options.timeoutMs || DATA_LOAD_TIMEOUT_MS);
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+    try {
+      const response = await fetch(path, {
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {})
+      });
+      if (!response.ok) throw new Error(`${path} 로드 실패: HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error(`${path} 로드 시간 초과 (${Math.round(timeoutMs / 1000)}초)`);
+      }
+      throw error;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 
   function mergeMenusWithRecipes(menuData, recipeData) {
@@ -33,33 +57,94 @@
     });
   }
 
+  function setCoreDataError(error) {
+    APP_DATA_STATE.core = 'error';
+    APP_DATA_STATE.error = String(error?.message || error || '메뉴 데이터 로드 실패');
+  }
+
+  function renderCoreDataError() {
+    const message = APP_DATA_STATE.error || '메뉴 데이터 파일을 불러오지 못했습니다.';
+    const markup = `
+      <div class="fatal-state data-load-error-state" role="alert">
+        <div class="fatal-state-mark">!</div>
+        <h1>음식 데이터를 불러오지 못했어요</h1>
+        <p>${escapeHtml(message)}</p>
+        <p class="form-notice">네트워크 연결을 확인하고 다시 시도해 주세요.</p>
+        <button type="button" onclick="location.reload()">다시 시도</button>
+      </div>`;
+
+    const home = document.getElementById('panel-home');
+    if (home) home.innerHTML = markup;
+
+    const explorer = document.getElementById('favoritesContent');
+    if (explorer) explorer.innerHTML = markup;
+  }
+
   async function loadAppData() {
     try {
-      const [menuData, recipeData, keywordData, sourceData] = await Promise.all([
-        loadJsonFile(DATA_PATHS.menus),
-        loadJsonFile(DATA_PATHS.recipes),
-        loadJsonFile(DATA_PATHS.restaurantKeywords),
-        loadJsonFile(DATA_PATHS.recipeSources)
-      ]);
-      menus = mergeMenusWithRecipes(menuData, recipeData);
-      DISH_TO_RESTAURANT_KEYWORDS = keywordData || {};
-      TRUSTED_RECIPE_SOURCES = (sourceData && sourceData.trusted) || {};
-      CURATED_RECIPE_SOURCES = (sourceData && sourceData.curated) || {};
-    } catch (error) {
-      console.error('앱 데이터 로드 실패:', error);
-      const home = document.getElementById('panel-home');
-      if (home) {
-        home.innerHTML = `
-          <div class="home">
-            <div class="empty-state">
-              <div class="empty-icon">⚠️</div>
-              <p class="empty-text">데이터 파일을 불러오지 못했습니다.<br>이 버전은 <strong>로컬 서버</strong>에서 실행해야 합니다.</p>
-              <p class="empty-text" style="font-size:12px;">터미널에서 <code>python -m http.server 5500</code> 실행 후 <code>http://localhost:5500</code>으로 접속하세요.</p>
-            </div>
-          </div>`;
+      // 메뉴 목록은 앱 전체에서 반드시 필요한 핵심 데이터입니다.
+      // 레시피·식당 키워드·출처 파일과 분리해, 보조 파일 하나가 실패해도
+      // 메뉴 추천과 음식 탐색은 정상적으로 열리도록 합니다.
+      const menuData = await loadJsonFile(DATA_PATHS.menus);
+      if (!Array.isArray(menuData) || menuData.length === 0) {
+        throw new Error('menus.json에 사용할 수 있는 메뉴가 없습니다.');
       }
+
+      menus = mergeMenusWithRecipes(menuData, {});
+      APP_DATA_STATE.core = 'ready';
+      APP_DATA_STATE.error = null;
+      return menuData;
+    } catch (error) {
+      console.error('핵심 메뉴 데이터 로드 실패:', error);
+      setCoreDataError(error);
+      renderCoreDataError();
       throw error;
     }
+  }
+
+  async function loadSupplementalAppData() {
+    APP_DATA_STATE.supplemental = 'loading';
+
+    const resources = [
+      ['recipes', DATA_PATHS.recipes],
+      ['restaurantKeywords', DATA_PATHS.restaurantKeywords],
+      ['recipeSources', DATA_PATHS.recipeSources]
+    ];
+    const settled = await Promise.allSettled(
+      resources.map(([, path]) => loadJsonFile(path, { timeoutMs: 20000 }))
+    );
+
+    const loaded = {};
+    const warnings = [];
+    settled.forEach((result, index) => {
+      const [name, path] = resources[index];
+      if (result.status === 'fulfilled') {
+        loaded[name] = result.value;
+      } else {
+        const message = `${path}: ${String(result.reason?.message || result.reason)}`;
+        warnings.push(message);
+        console.warn('보조 데이터 로드 실패 — 핵심 기능은 계속 사용합니다:', message);
+      }
+    });
+
+    if (loaded.recipes) {
+      menus = mergeMenusWithRecipes(menus, loaded.recipes);
+    }
+    if (loaded.restaurantKeywords && typeof loaded.restaurantKeywords === 'object') {
+      DISH_TO_RESTAURANT_KEYWORDS = loaded.restaurantKeywords;
+    }
+    if (loaded.recipeSources && typeof loaded.recipeSources === 'object') {
+      TRUSTED_RECIPE_SOURCES = loaded.recipeSources.trusted || {};
+      CURATED_RECIPE_SOURCES = loaded.recipeSources.curated || {};
+    }
+
+    APP_DATA_STATE.warnings = warnings;
+    APP_DATA_STATE.supplemental = warnings.length ? 'partial' : 'ready';
+
+    // 사용자가 이미 탐색 탭에 들어가 있어도 보조 데이터 완료 후 화면을 갱신합니다.
+    if (document.body.dataset.panel === 'favorites') renderFavorites();
+    if (document.body.dataset.panel === 'recipe') renderRecipe();
+    return { loaded, warnings };
   }
 
 
@@ -1114,7 +1199,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.8.1';
+  const APP_VERSION = 'korea-beta-v4.8.2';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -3973,11 +4058,18 @@
       if (subtitle) subtitle.textContent = '메뉴를 검색하고 상세정보를 확인한 뒤 찜할 수 있어요';
 
       if (!Array.isArray(menus) || menus.length === 0) {
+        if (APP_DATA_STATE.core === 'error') {
+          renderCoreDataError();
+          return false;
+        }
+
         c.innerHTML = `
           <div class="explorer-loading-shell" role="status" aria-live="polite">
             <div class="explorer-loading-title">음식 목록을 준비하고 있어요</div>
+            <p class="explorer-loading-copy">잠시 후에도 열리지 않으면 네트워크 연결을 확인해 주세요.</p>
             <div class="explorer-loading-bar"></div>
             <div class="explorer-loading-bar short"></div>
+            <button type="button" class="explorer-loading-retry" onclick="location.reload()">다시 불러오기</button>
           </div>`;
         return false;
       }
@@ -6173,6 +6265,15 @@
     renderToday();
     renderFavorites();
     renderAnalyticsConsentPrompt();
+
+    // 보조 데이터는 첫 화면을 막지 않고 뒤에서 불러옵니다.
+    // recipes.json 등이 느리거나 실패해도 메뉴 탐색과 추천은 계속 동작합니다.
+    loadSupplementalAppData().catch(error => {
+      APP_DATA_STATE.supplemental = 'partial';
+      APP_DATA_STATE.warnings.push(String(error?.message || error));
+      console.warn('보조 데이터 초기화 실패:', error);
+    });
+
     if (getAnalyticsConsent() === true) {
       trackEvent('app_open', { returning: visits > 1, mealRecordCount: diary.length, favoriteCount: favorites.length });
       if (visits > 1) trackEvent('user_returned', { previousUseCount: visits - 1 });
@@ -6187,16 +6288,8 @@
   }).catch(error => {
     console.error('앱 초기화 실패:', error);
     document.body.dataset.appReady = 'error';
-    const activePanel = document.querySelector('.panel.active') || document.getElementById('panel-home');
-    if (activePanel) {
-      activePanel.innerHTML = `
-        <div class="fatal-state" role="alert">
-          <div class="fatal-state-mark">!</div>
-          <h1>앱을 불러오지 못했어요</h1>
-          <p>네트워크 연결을 확인한 뒤 다시 시도해 주세요.</p>
-          <button type="button" onclick="location.reload()">다시 시도</button>
-        </div>`;
-    }
+    setCoreDataError(error);
+    renderCoreDataError();
   });
 
 

@@ -3220,7 +3220,8 @@ body { color: var(--text-primary); }
 .runner-photo,
 .fav-photo,
 .today-meal-photo,
-.diary-meal-photo {
+.diary-meal-photo,
+.explorer-menu-photo {
   position: relative;
   display: block;
   overflow: hidden;
@@ -3230,7 +3231,8 @@ body { color: var(--text-primary); }
 .runner-photo img,
 .fav-photo img,
 .today-meal-photo img,
-.diary-meal-photo img {
+.diary-meal-photo img,
+.explorer-menu-photo img {
   position: relative;
   z-index: 2;
   width: 100%;
@@ -3990,7 +3992,20 @@ body[data-panel="quiz"] .container {
   cursor:pointer; transition:transform .15s,border-color .15s,box-shadow .15s;
 }
 .explorer-menu-card:hover { transform:translateY(-1px); border-color:#d6d8dc; box-shadow:var(--shadow-sm); }
-.explorer-menu-photo { width:64px; height:64px; border-radius:14px; overflow:hidden; }
+.explorer-menu-photo {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface-subtle);
+}
+.explorer-menu-photo .menu-photo-fallback {
+  inset: 0;
+  font-size: 26px;
+}
 .explorer-menu-main { min-width:0; }
 .explorer-menu-title { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
 .explorer-menu-title strong { font-size:14px; }
@@ -4061,4 +4076,27 @@ body[data-panel="quiz"] .container {
 @keyframes explorerLoading {
   from { background-position: 100% 0; }
   to { background-position: -100% 0; }
+}
+
+
+/* v4.8.2 — keep explorer image fallbacks inside each menu thumbnail */
+.explorer-loading-copy {
+  margin: -8px 0 16px;
+  color: var(--text-secondary);
+  font: 500 11px/1.6 'Noto Sans KR', sans-serif;
+}
+.explorer-loading-retry {
+  min-height: 40px;
+  margin-top: 20px;
+  padding: 9px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--text-secondary);
+  font: 700 11px 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+}
+.data-load-error-state {
+  min-height: 320px;
+  margin: 18px;
 }

@@ -6,7 +6,7 @@ const css = fs.readFileSync('css/app.css', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 const checks = [
-  ['version', pkg.version === '4.8.1' && app.includes("korea-beta-v4.8.1") && html.includes('app.js?v=4.8.1')],
+  ['version', /^4\.8\.[1-9][0-9]*$/.test(pkg.version) && app.includes(`korea-beta-v${pkg.version}`) && html.includes(`app.js?v=${pkg.version}`)],
   ['static explorer shell', html.includes('explorer-loading-shell') && html.includes('favoritesContent')],
   ['explorer guarded render', app.includes('function renderExplorerError') && app.includes('try {') && app.includes("area:'explorer_render'")],
   ['favorites migration', app.includes('function normalizedFavoriteMenuNames') && app.includes("typeof item === 'string'")],

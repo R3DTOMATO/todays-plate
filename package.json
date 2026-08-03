@@ -1,6 +1,6 @@
 {
   "name": "todays-plate-beta-api",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "private": true,
   "type": "module",
   "engines": {
@@ -15,6 +15,7 @@
     "validate:v4.6": "node scripts/validate-nearby-v4.6.mjs",
     "validate:v4.7": "node scripts/validate-recommendation-v4.7.mjs",
     "validate:v4.8": "node scripts/validate-product-v4.8.mjs",
-    "validate:v4.8.1": "node scripts/validate-explorer-v4.8.1.mjs"
+    "validate:v4.8.1": "node scripts/validate-explorer-v4.8.1.mjs",
+    "validate:v4.8.2": "node scripts/validate-explorer-v4.8.2.mjs"
   }
 }
