@@ -9,9 +9,9 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-assert(/^4\.(?:7|8)\.0$/.test(pkg.version), 'package version must be v4.7 or newer');
-assert(/const APP_VERSION = 'korea-beta-v4\.(?:7|8)'/.test(app), 'APP_VERSION is not v4.7 or newer');
-assert(/app\.js\?v=4\.(?:7|8)\.0/.test(index), 'index cache version is not v4.7 or newer');
+assert(/^4\.(?:7|8)(?:\.\d+)?$/.test(pkg.version), 'package version must be v4.7 or newer');
+assert(/const APP_VERSION = 'korea-beta-v4\.(?:7|8)(?:\.\d+)?'/.test(app), 'APP_VERSION is not v4.7 or newer');
+assert(/app\.js\?v=4\.(?:7|8)(?:\.\d+)?/.test(index), 'index cache version is not v4.7 or newer');
 
 assert(app.includes("10000: { label:'약 1만 원', ceiling:12000"), '1만원 flexible tier missing');
 assert(app.includes("30000: { label:'약 3만 원', ceiling:33000"), '3만원 flexible tier missing');

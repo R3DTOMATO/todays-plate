@@ -1114,7 +1114,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.8';
+  const APP_VERSION = 'korea-beta-v4.8.1';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -3940,30 +3940,74 @@
       </article>`;
   }
 
-  function renderFavorites() {
+  function normalizedFavoriteMenuNames() {
+    const rows = Array.isArray(favorites) ? favorites : [];
+    return rows.map(item => {
+      if (typeof item === 'string') return item;
+      return item?.menuName || item?.name || '';
+    }).filter(Boolean);
+  }
+
+  function renderExplorerError(error) {
+    console.error('음식 탐색 화면 렌더링 실패:', error);
     const c = document.getElementById('favoritesContent');
     if (!c) return;
-    const subtitle = document.getElementById('favSubtitle');
-    if (subtitle) subtitle.textContent = '메뉴를 검색하고 상세정보를 확인한 뒤 찜할 수 있어요';
-
-    const filtered = filteredExplorerMenus();
-    const types = ['전체','한식','중식','일식','양식','세계음식'];
-    const favoriteMenus = favorites.map(item => findMenuByName(item.menuName)).filter(Boolean);
     c.innerHTML = `
-      <section class="menu-explorer-search">
-        <label for="menuExplorerSearch">음식 검색</label>
-        <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" oninput="updateExplorerQuery(this.value)">
-        <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
-      </section>
-      <section class="explorer-results-section">
-        <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
-        <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
-        ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
-      </section>
-      <section class="explorer-favorites-section">
-        <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
-        ${favoriteMenus.length ? `<div class="explorer-menu-list">${favoriteMenus.map(renderExplorerMenuCard).join('')}</div>` : '<p class="empty-text compact-copy">검색 결과의 ♡ 버튼을 누르면 여기에 저장됩니다.</p>'}
-      </section>`;
+      <div class="explorer-error-state" role="alert">
+        <div class="fatal-state-mark">!</div>
+        <strong>음식 탐색을 불러오지 못했어요</strong>
+        <p>페이지를 새로고침하지 않아도 다시 시도할 수 있습니다.</p>
+        <button type="button" class="empty-cta" onclick="renderFavorites()">다시 불러오기</button>
+      </div>`;
+    try {
+      trackEvent('app_error', { area:'explorer_render', message:String(error?.message || error) });
+    } catch (_) {}
+  }
+
+  function renderFavorites() {
+    const c = document.getElementById('favoritesContent');
+    if (!c) return false;
+
+    try {
+      const subtitle = document.getElementById('favSubtitle');
+      if (subtitle) subtitle.textContent = '메뉴를 검색하고 상세정보를 확인한 뒤 찜할 수 있어요';
+
+      if (!Array.isArray(menus) || menus.length === 0) {
+        c.innerHTML = `
+          <div class="explorer-loading-shell" role="status" aria-live="polite">
+            <div class="explorer-loading-title">음식 목록을 준비하고 있어요</div>
+            <div class="explorer-loading-bar"></div>
+            <div class="explorer-loading-bar short"></div>
+          </div>`;
+        return false;
+      }
+
+      const filtered = filteredExplorerMenus();
+      const types = ['전체','한식','중식','일식','양식','세계음식'];
+      const favoriteMenus = normalizedFavoriteMenuNames()
+        .map(menuName => findMenuByName(menuName))
+        .filter(Boolean);
+
+      c.innerHTML = `
+        <section class="menu-explorer-search">
+          <label for="menuExplorerSearch">음식 검색</label>
+          <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" oninput="updateExplorerQuery(this.value)">
+          <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
+        </section>
+        <section class="explorer-results-section">
+          <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
+          <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
+          ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
+        </section>
+        <section class="explorer-favorites-section">
+          <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
+          ${favoriteMenus.length ? `<div class="explorer-menu-list">${favoriteMenus.map(renderExplorerMenuCard).join('')}</div>` : '<p class="empty-text compact-copy">검색 결과의 ♡ 버튼을 누르면 여기에 저장됩니다.</p>'}
+        </section>`;
+      return true;
+    } catch (error) {
+      renderExplorerError(error);
+      return false;
+    }
   }
 
 
@@ -4036,25 +4080,46 @@
   }
 
   // ─── Panel switching ───
+  function resetPanelScroll(nextPanel) {
+    const scrollTargets = [
+      document.scrollingElement,
+      document.documentElement,
+      document.body,
+      document.querySelector('.container'),
+      nextPanel,
+      nextPanel?.querySelector('.sub-panel'),
+    ].filter(Boolean);
+
+    scrollTargets.forEach(target => {
+      try {
+        target.scrollTop = 0;
+        target.scrollLeft = 0;
+      } catch (_) {}
+    });
+
+    try { window.scrollTo({ top:0, left:0, behavior:'auto' }); }
+    catch (_) { try { window.scrollTo(0, 0); } catch (_) {} }
+  }
+
   function switchPanel(name, updateNav = true) {
-    const targetPanel = document.getElementById('panel-' + name);
-    if (!targetPanel) {
+    let nextPanel = document.getElementById('panel-' + name);
+    if (!nextPanel) {
       console.error('존재하지 않는 패널:', name);
-      showToast('화면을 열지 못했습니다. 홈으로 이동합니다.');
       name = 'home';
+      nextPanel = document.getElementById('panel-home');
+      showToast('화면을 열지 못해 홈으로 이동했습니다.');
     }
-    const nextPanel = document.getElementById('panel-' + name);
+    if (!nextPanel) return false;
+
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     nextPanel.classList.add('active');
     document.body.dataset.panel = name;
 
-    // 긴 화면에서 다른 탭으로 이동했을 때 이전 스크롤 위치가 남아
-    // 새 화면의 하단부터 보이는 문제를 방지합니다.
-    requestAnimationFrame(() => {
-      const scroller = document.scrollingElement || document.documentElement;
-      if (scroller) scroller.scrollTop = 0;
-      window.scrollTo(0, 0);
-    });
+    // 모바일 브라우저에서 긴 화면의 스크롤 위치가 새 탭에 남는 경우가 있어
+    // 문서·본문·앱 컨테이너·패널을 모두 명시적으로 맨 위로 이동합니다.
+    resetPanelScroll(nextPanel);
+    requestAnimationFrame(() => resetPanelScroll(nextPanel));
+    setTimeout(() => resetPanelScroll(nextPanel), 60);
 
     if (updateNav) {
       const navMap = { home:'home', quiz:'home', result:'home', recipe:'home', nearby:'nearby', favorites:'favorites', profile:'profile', debug:'home', recipeqa:'home', diary:'diary' };
@@ -4088,13 +4153,15 @@
       }
     }
     if (name === 'home') { updateHomeContext(); renderToday(); }
+    return true;
   }
 
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
+      const opened = switchPanel(item.dataset.panel, false);
+      if (!opened) return;
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
-      switchPanel(item.dataset.panel, false);
     });
   });
 
@@ -6104,6 +6171,7 @@
     localStorage.setItem(STORAGE.visitCount, String(visits));
     updateHomeContext();
     renderToday();
+    renderFavorites();
     renderAnalyticsConsentPrompt();
     if (getAnalyticsConsent() === true) {
       trackEvent('app_open', { returning: visits > 1, mealRecordCount: diary.length, favoriteCount: favorites.length });

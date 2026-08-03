@@ -5,7 +5,6 @@ const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
 
 const requiredAppFragments = [
-  "const APP_VERSION = 'korea-beta-v4.8'",
   "title: '어떤 종류의 음식이 좋아요?'",
   "key: 'type'",
   "if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;",
@@ -22,10 +21,16 @@ const requiredHtmlFragments = [
   'id="recordMenuSuggestions"',
   '<h2 class="sub-title">음식 탐색</h2>',
   '<span class="nav-label">탐색</span>',
-  './js/app.js?v=4.8.0',
 ];
 
 const failures = [];
+
+if (!/const APP_VERSION = 'korea-beta-v4\.8(?:\.1)?'/.test(app)) {
+  failures.push('app.js missing compatible v4.8 app version');
+}
+if (!/\.\/js\/app\.js\?v=4\.8(?:\.1)?/.test(html)) {
+  failures.push('index.html missing compatible v4.8 app cache version');
+}
 for (const fragment of requiredAppFragments) {
   if (!app.includes(fragment)) failures.push(`app.js missing: ${fragment}`);
 }

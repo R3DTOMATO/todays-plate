@@ -252,7 +252,13 @@
     <div class="sub-panel">
       <h2 class="sub-title">음식 탐색</h2>
       <p class="sub-subtitle" id="favSubtitle">메뉴를 검색하고 상세정보를 확인해 보세요</p>
-      <div id="favoritesContent"></div>
+      <div id="favoritesContent">
+        <div class="explorer-loading-shell" role="status" aria-live="polite">
+          <div class="explorer-loading-title">음식 목록을 준비하고 있어요</div>
+          <div class="explorer-loading-bar"></div>
+          <div class="explorer-loading-bar short"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -496,6 +502,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=4.8.0" defer></script>
+<script src="./js/app.js?v=4.8.1" defer></script>
 </body>
 </html>
