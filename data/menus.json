@@ -301,7 +301,7 @@
     "id": "수제버거",
     "family": "수제버거",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥘",
@@ -567,7 +567,7 @@
     "id": "그릭-샐러드",
     "family": "salad",
     "homeSuitability": "possible",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍛",
@@ -719,7 +719,7 @@
     "id": "크루아상",
     "family": "크루아상",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍵",
@@ -1080,7 +1080,7 @@
     "id": "치즈버거",
     "family": "치즈버거",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍝",
@@ -1251,7 +1251,7 @@
     "id": "라자냐",
     "family": "lasagna",
     "homeSuitability": "special",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍲",
@@ -1460,7 +1460,7 @@
     "id": "페퍼로니-피자",
     "family": "페퍼로니-피자",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍙",
@@ -1631,7 +1631,7 @@
     "id": "스콘",
     "family": "스콘",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🍮",
@@ -1650,7 +1650,7 @@
     "id": "푸딩",
     "family": "푸딩",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥗",
@@ -1859,7 +1859,7 @@
     "id": "베트남-쌀국수",
     "family": "베트남-쌀국수",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🥟",
@@ -3230,7 +3230,7 @@
     "id": "바베큐-립",
     "family": "바베큐-립",
     "homeSuitability": "outside",
-    "familiarity": "explore"
+    "familiarity": "familiar"
   },
   {
     "emoji": "🧀",

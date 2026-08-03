@@ -135,6 +135,45 @@
     OTHER: { label:'기타 지역', flag:'🌏', cuisine:'세계음식' }
   };
 
+  // ─── Flexible budget tiers ───
+  // 메뉴 가격은 매장·지역에 따라 달라질 수 있으므로 선택 금액을 절대 상한으로 쓰지 않습니다.
+  // 화면에는 1·3·5만원의 이해하기 쉬운 구간을 보여주고, 실제 후보는 소폭의 여유 범위까지 허용합니다.
+  const BUDGET_TIERS = {
+    10000: { label:'약 1만 원', ceiling:12000, hint:'최대 1만 2천 원 정도' },
+    30000: { label:'약 3만 원', ceiling:33000, hint:'최대 3만 3천 원 정도' },
+    50000: { label:'약 5만 원', ceiling:55000, hint:'최대 5만 5천 원 정도' }
+  };
+
+  function normalizeBudgetTarget(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    if (amount <= 10000) return 10000;
+    if (amount <= 30000) return 30000;
+    if (amount <= 50000) return 50000;
+    return null;
+  }
+
+  function getBudgetTier(value) {
+    const normalized = normalizeBudgetTarget(value);
+    return normalized ? BUDGET_TIERS[normalized] : null;
+  }
+
+  function getBudgetCeiling(value) {
+    const tier = getBudgetTier(value);
+    return tier ? tier.ceiling : Number.POSITIVE_INFINITY;
+  }
+
+  function budgetLabel(value) {
+    const tier = getBudgetTier(value);
+    return tier ? tier.label : '가격 상관없음';
+  }
+
+  function isWithinBudget(price, value) {
+    if (value === null || value === undefined) return true;
+    return Number(price || 0) <= getBudgetCeiling(value);
+  }
+
   function detectHomeCountry() {
     try {
       const locale = String((navigator.languages && navigator.languages[0]) || navigator.language || '').replace('_', '-');
@@ -322,7 +361,7 @@
       if (ans.mode === '집밥' && !['간단','요리'].includes(m.method)) return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
       if (!ans.time && ans.contextTime && ans.contextTime !== '아침' && isBreakfastOnlyMenu(m)) return false;
-      if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && Number(m.price || 0) > Number(ans.budget)) return false;
+      if (!isWithinBudget(m.price, ans.budget)) return false;
       return true;
     }).length;
   }
@@ -710,47 +749,68 @@
     return 'explore';
   }
 
-  function selectDiverseRecommendationSet(scored, limit = 3) {
+  function selectDiverseRecommendationSet(scored, limit = 3, ans = {}) {
     if (!Array.isArray(scored) || scored.length === 0) return [];
-    const selected = [scored[0]];
-    const usedFamilies = new Set([getMenuFamily(scored[0])]);
-    const usedTypes = new Set([scored[0].type]);
-    const topScore = Number(scored[0].score || 0);
 
-    // 대안 1은 점수 차가 크지 않은 범위에서 다른 음식 종류를 우선합니다.
-    const crossCuisine = scored.slice(1).find(menu => {
+    const selected = [];
+    const usedFamilies = new Set();
+    const addMenu = menu => {
+      if (!menu || selected.length >= limit || selected.includes(menu)) return false;
       const family = getMenuFamily(menu);
-      return family && !usedFamilies.has(family) && !usedTypes.has(menu.type) && topScore - Number(menu.score || 0) <= 8;
-    });
-    if (crossCuisine && selected.length < limit) {
-      selected.push(crossCuisine);
-      usedFamilies.add(getMenuFamily(crossCuisine));
-      usedTypes.add(crossCuisine.type);
-    }
-
-    // 나머지는 점수 순서를 유지하되 같은 음식 계열은 중복시키지 않습니다.
-    for (const menu of scored.slice(1)) {
-      if (selected.length >= limit) break;
-      if (selected.includes(menu)) continue;
-      const family = getMenuFamily(menu);
-      if (family && usedFamilies.has(family)) continue;
+      if (family && usedFamilies.has(family)) return false;
       selected.push(menu);
       if (family) usedFamilies.add(family);
-      usedTypes.add(menu.type);
+      return true;
+    };
+
+    const homeCuisine = getHomeCuisineType();
+    const useMarketBalance = !hasExplicitCuisinePreference(ans);
+    const topScore = Number(scored[0].score || 0);
+
+    // 명시적 음식 종류가 없을 때는 현지 일상식 2개 + 익숙한 타 문화 메뉴 1개를 기본 구성으로 둡니다.
+    if (useMarketBalance) {
+      const localMenus = scored.filter(menu =>
+        menu.type === homeCuisine &&
+        getMenuFamiliarity(menu) !== 'explore' &&
+        topScore - Number(menu.score || 0) <= (ans.mode === '집밥' ? 30 : 18)
+      );
+      localMenus.slice(0, 2).forEach(addMenu);
+
+      const familiarAlternative = scored.find(menu =>
+        menu.type !== homeCuisine &&
+        getMenuFamiliarity(menu) !== 'explore'
+      );
+      addMenu(familiarAlternative);
     }
-    return selected;
+
+    // 시장 기본 구성이 불가능하거나 사용자가 음식 종류를 직접 골랐다면 점수 순서를 우선합니다.
+    for (const menu of scored) {
+      if (selected.length >= limit) break;
+      addMenu(menu);
+    }
+
+    return selected.slice(0, limit);
   }
 
 
-  function prioritizeHomeCuisineForHomeMode(scored, ans = {}) {
+  function prioritizeMarketCuisine(scored, ans = {}) {
     if (!Array.isArray(scored) || !scored.length) return [];
-    if (ans.mode !== '집밥' || ans.type) return scored;
+    if (hasExplicitCuisinePreference(ans)) return scored;
+
     const homeCuisine = getHomeCuisineType();
-    const localTop = scored.find(menu => menu.type === homeCuisine);
+    const localTop = scored.find(menu =>
+      menu.type === homeCuisine &&
+      getMenuFamiliarity(menu) !== 'explore'
+    );
     if (!localTop || scored[0] === localTop) return scored;
-    // 대표 메뉴는 국가 기준 집밥으로 고정하고, 대안에서는 다른 음식 문화를 허용합니다.
+
+    const scoreGap = Number(scored[0].score || 0) - Number(localTop.score || 0);
+    const allowedGap = ans.mode === '집밥' ? 30 : 18;
+    if (scoreGap > allowedGap) return scored;
+
     return [localTop, ...scored.filter(menu => menu !== localTop)];
   }
+
 
   // ─── Questions ───
 
@@ -814,12 +874,12 @@
         { emoji:'🍲', text:'해장·국물', hint:'따뜻하고 편안하게', value:'hangover' },
         { emoji:'🌶️', text:'매콤하게', hint:'기분 좋은 자극', value:'spicy' }
       ] },
-    { step: 3, total: 3, title: '한 끼 예산은 어느 정도예요?', sub: '메뉴의 평균 가격을 기준으로 추천합니다', key: 'budget', grid: 2,
+    { step: 3, total: 3, title: '한 끼 예산은 어느 정도예요?', sub: '가격 차이를 고려해 선택 금액보다 조금 넓게 추천합니다', key: 'budget', grid: 2,
       options: [
-        { emoji:'₩', text:'7천 원 이하', hint:'가성비 우선', value:7000 },
-        { emoji:'₩', text:'1만 원 이하', hint:'일상적인 한 끼', value:10000 },
-        { emoji:'₩', text:'1만 5천 원 이하', hint:'선택 폭 넓게', value:15000 },
-        { emoji:'∞', text:'상관없어요', hint:'가격보다 메뉴 우선', value:null }
+        { emoji:'₩', text:'약 1만 원', hint:'최대 1만 2천 원 정도', value:10000 },
+        { emoji:'₩₩', text:'약 3만 원', hint:'최대 3만 3천 원 정도', value:30000 },
+        { emoji:'₩₩₩', text:'약 5만 원', hint:'최대 5만 5천 원 정도', value:50000 },
+        { emoji:'∞', text:'가격 상관없음', hint:'가격보다 메뉴 우선', value:null }
       ] },
   ];
   questions.forEach((q, idx) => { q.step = idx + 1; q.total = questions.length; });
@@ -1046,7 +1106,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.6';
+  const APP_VERSION = 'korea-beta-v4.7';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -1216,7 +1276,7 @@
       ['가벼움','가볍게'], ['중간','적당히'], ['든든','든든하게']
     ],
     budgetMax: [
-      [7000,'7천원 이하'], [10000,'1만원 이하'], [15000,'1.5만원 이하'], [25000,'2.5만원 이하'], [null,'상관없음']
+      [10000,'약 1만원'], [30000,'약 3만원'], [50000,'약 5만원'], [null,'가격 상관없음']
     ],
     preferredSituations: [
       ['혼밥','혼밥'], ['친구와','친구와'], ['배달','배달'], ['집밥','집밥'], ['비오는날','비 오는 날'], ['운동후','운동 후'], ['속편한식사','속 편한 식사'], ['시간없을때','시간 없을 때']
@@ -1358,7 +1418,7 @@
     merged.excludedIngredients = Array.isArray(merged.excludedIngredients) ? merged.excludedIngredients : [];
     merged.dietRestrictions = Array.isArray(merged.dietRestrictions) ? merged.dietRestrictions : [];
     merged.preferredSituations = Array.isArray(merged.preferredSituations) ? merged.preferredSituations : [];
-    merged.budgetMax = Number.isFinite(Number(merged.budgetMax)) ? Number(merged.budgetMax) : null;
+    merged.budgetMax = normalizeBudgetTarget(merged.budgetMax);
     merged.defaultWeight = ['가벼움','중간','든든'].includes(merged.defaultWeight) ? merged.defaultWeight : null;
     merged.feedbackStats = { ...base.feedbackStats, ...(merged.feedbackStats || {}) };
     merged.menuStats = merged.menuStats && typeof merged.menuStats === 'object' ? merged.menuStats : {};
@@ -1389,7 +1449,7 @@
     const labels = {
       외식:'외식', 배달:'배달', 집밥:'집밥', 편의점:'편의점',
       light:'가볍게', full:'든든하게', hangover:'해장·국물', spicy:'매콤하게',
-      7000:'7천 원 이하', 10000:'1만 원 이하', 15000:'1만 5천 원 이하'
+      10000:'약 1만 원', 30000:'약 3만 원', 50000:'약 5만 원'
     };
     return labels[value] || ONBOARDING_LABELS[value] || String(value);
   }
@@ -1447,7 +1507,7 @@
       <div class="onboard-section">
         <div class="onboard-label">Step 07</div>
         <div class="onboard-title">1끼 예산</div>
-        <p class="onboard-help">예산을 선택하면 초과 메뉴는 추천 후보에서 제외됩니다.</p>
+        <p class="onboard-help">선택 금액을 기준으로 하되 매장별 가격 차이를 고려해 조금 여유 있게 추천합니다.</p>
         ${renderChoiceButtons('budgetMax', ONBOARDING_OPTIONS.budgetMax, false, true)}
       </div>
       <div class="onboard-section">
@@ -1595,7 +1655,7 @@
     const tags = ensureRestrictionTags(menu);
     const excluded = [...(personalProfile.allergens || []), ...(personalProfile.excludedIngredients || [])];
     if (excluded.some(tag => tags.includes(tag))) return true;
-    if (personalProfile.budgetMax && Number(menu.price || 0) > personalProfile.budgetMax) return true;
+    if (personalProfile.budgetMax && !isWithinBudget(menu.price, personalProfile.budgetMax)) return true;
     const diets = personalProfile.dietRestrictions || [];
     if (diets.includes('vegan') && (tags.includes('animal') || tags.includes('egg') || tags.includes('dairy'))) return true;
     if (diets.includes('vegetarian') && (tags.includes('pork') || tags.includes('beef') || tags.includes('chicken') || tags.includes('seafood') || tags.includes('shrimp'))) return true;
@@ -1611,7 +1671,7 @@
     (personalProfile.allergens || []).forEach(v => items.push(`알레르기 ${labelForOption(v).replace(' 제외','')}`));
     (personalProfile.excludedIngredients || []).forEach(v => items.push(labelForOption(v)));
     (personalProfile.dietRestrictions || []).forEach(v => items.push(labelForOption(v)));
-    if (personalProfile.budgetMax) items.push(`예산 ${Number(personalProfile.budgetMax).toLocaleString()}원 이하`);
+    if (personalProfile.budgetMax) items.push(`예산 ${budgetLabel(personalProfile.budgetMax)}`);
     return items;
   }
 
@@ -1812,12 +1872,12 @@
     if (ans.method && menu.method === ans.method) reasons.push(`오늘의 조리 방식 '${ans.method}'에 맞습니다.`);
     if (ans.mode) reasons.push(`${labelForOption(ans.mode)} 상황에서 실행하기 쉬운 메뉴입니다.`);
     if (ans.need) reasons.push(`현재 원하는 '${labelForOption(ans.need)}' 조건에 맞습니다.`);
-    if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget))) reasons.push(`평균 가격이 ${Number(ans.budget).toLocaleString()}원 이하입니다.`);
+    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`평균 가격이 ${budgetLabel(ans.budget)} 범위에 들어옵니다.`);
     if (ans.spicy) reasons.push(`맵기 선호를 반영해 ${spiceLabel(menu)} 메뉴를 골랐습니다.`);
     if (ans.situation && menuHasSituation(menu, ans.situation)) reasons.push(`오늘 상황 '${labelForOption(ans.situation)}'과 어울리는 메뉴로 판단했습니다.`);
     if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`온보딩에서 ${menu.type}을 선호한다고 설정해 기본 가중치를 더했습니다.`);
     if (!ans.weight && personalProfile?.defaultWeight && menu.weight === personalProfile.defaultWeight) reasons.push(`평소 선호 포만감 '${personalProfile.defaultWeight}'과 맞습니다.`);
-    if (personalProfile?.budgetMax) reasons.push(`예산 ${Number(personalProfile.budgetMax).toLocaleString()}원 이하 조건을 통과했습니다.`);
+    if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 조건을 통과했습니다.`);
     const restrictions = restrictionSummary();
     if (restrictions.length) reasons.push(`제외 조건(${restrictions.slice(0,3).join(', ')}${restrictions.length > 3 ? ' 외' : ''})에 걸리는 메뉴는 후보에서 제외했습니다.`);
 
@@ -1933,7 +1993,7 @@
           ${(personalProfile.allergens || []).map(x => `<span class="settings-pill safety">알레르기 ${escapeHtml(labelForOption(x).replace(' 제외',''))}</span>`).join('')}
           ${(personalProfile.excludedIngredients || []).map(x => `<span class="settings-pill">${escapeHtml(labelForOption(x))}</span>`).join('')}
           ${(personalProfile.dietRestrictions || []).map(x => `<span class="settings-pill">${escapeHtml(labelForOption(x))}</span>`).join('')}
-          ${personalProfile.budgetMax ? `<span class="settings-pill">예산 ${Number(personalProfile.budgetMax).toLocaleString()}원 이하</span>` : '<span class="settings-pill">예산 제한 없음</span>'}
+          ${personalProfile.budgetMax ? `<span class="settings-pill">예산 ${budgetLabel(personalProfile.budgetMax)}</span>` : '<span class="settings-pill">가격 상관없음</span>'}
           ${personalProfile.defaultWeight ? `<span class="settings-pill">기본 포만감 ${escapeHtml(personalProfile.defaultWeight)}</span>` : ''}
         </div>
         <button class="empty-cta" style="margin-top:12px;" onclick="openOnboarding(true)">입맛 설정 수정</button>
@@ -2124,7 +2184,7 @@
       if (ans.mode === '집밥' && !['간단','요리'].includes(m.method)) return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
       if (!ans.time && ans.contextTime && ans.contextTime !== '아침' && isBreakfastOnlyMenu(m)) return false;
-      if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && Number(m.price || 0) > Number(ans.budget)) return false;
+      if (!isWithinBudget(m.price, ans.budget)) return false;
       return true;
     });
   }
@@ -2145,7 +2205,7 @@
     if (ans.method) messages.push(`${ans.method} 조건 유지`);
     if (ans.mode) messages.push(`${labelForOption(ans.mode)} 방식 유지`);
     if (ans.need) messages.push(`${labelForOption(ans.need)} 상태 유지`);
-    if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget))) messages.push(`${Number(ans.budget).toLocaleString()}원 이하 예산 유지`);
+    if (ans.budget !== null && ans.budget !== undefined) messages.push(`${budgetLabel(ans.budget)} 예산 유지`);
     if (ans.situation) messages.push(`상황 ${labelForOption(ans.situation)} 점수 반영`);
     return messages;
   }
@@ -2193,10 +2253,54 @@
 
   function preferencePresetBonus(menu, ans = {}) {
     let bonus = 0;
-    if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) bonus += 4;
+    const preferredTypes = personalProfile?.preferredTypes || [];
+    if (!ans.type && preferredTypes.length) {
+      bonus += preferredTypes.includes(menu.type) ? 10 : -3;
+    }
     if (!ans.weight && personalProfile?.defaultWeight && menu.weight === personalProfile.defaultWeight) bonus += 3;
-    if (personalProfile?.budgetMax && menu.price <= personalProfile.budgetMax) bonus += 2;
+    if (personalProfile?.budgetMax) {
+      if (Number(menu.price || 0) <= Number(personalProfile.budgetMax)) bonus += 2;
+      else if (isWithinBudget(menu.price, personalProfile.budgetMax)) bonus += 0.5;
+    }
     return bonus;
+  }
+
+
+  function hasExplicitCuisinePreference(ans = {}) {
+    return Boolean(ans.type) || Boolean((personalProfile?.preferredTypes || []).length);
+  }
+
+  function marketCuisineBonus(menu, ans = {}) {
+    if (!menu || ans.type) return 0;
+    const preferredTypes = personalProfile?.preferredTypes || [];
+    if (preferredTypes.length) return 0;
+
+    const homeCuisine = getHomeCuisineType();
+    const familiarity = getMenuFamiliarity(menu);
+    let bonus = 0;
+
+    // 음식 종류를 고르지 않은 첫 사용자에게는 현재 시장의 일상식을 기본값으로 둡니다.
+    if (menu.type === homeCuisine) bonus += ans.mode === '집밥' ? 20 : 14;
+    else if (getHomeCountryCode() === 'KR' && ['일식','중식'].includes(menu.type)) bonus += 3;
+    else if (getHomeCountryCode() === 'KR' && menu.type === '양식') bonus -= 2;
+    else if (getHomeCountryCode() === 'KR' && menu.type === '세계음식') bonus -= 6;
+    else bonus -= 2;
+
+    // 생소한 메뉴는 사용자가 세계음식/양식을 명시하거나 학습된 선호가 생기기 전까지 후순위입니다.
+    if (familiarity === 'common') bonus += 3;
+    else if (familiarity === 'familiar') bonus += 1;
+    else if (familiarity === 'explore') bonus -= 10;
+
+    return bonus;
+  }
+
+  function applyMarketFamiliarityFilter(scored, ans = {}) {
+    if (!Array.isArray(scored) || scored.length < 3) return scored || [];
+    if (hasExplicitCuisinePreference(ans)) return scored;
+
+    const familiar = scored.filter(menu => getMenuFamiliarity(menu) !== 'explore');
+    // 익숙한 후보가 충분할 때만 생소한 메뉴를 기본 결과 3개에서 제외합니다.
+    return familiar.length >= 3 ? familiar : scored;
   }
 
   function scoreMenu(m, ans = {}) {
@@ -2232,19 +2336,18 @@
       if (familiarity === 'common') score += 5;
       else if (familiarity === 'explore') score -= 4;
 
-      // 음식 종류를 직접 고르지 않았다면 사용자의 집밥 기준 국가를 적용합니다.
-      if (!ans.type) {
-        const homeCuisine = getHomeCuisineType();
-        if (m.type === homeCuisine) score += 18;
-        else score -= 5;
-      }
+      // 국가별 집밥 기준은 marketCuisineBonus()에서 전체 추천에 일관되게 적용합니다.
     }
     if (ans.mode === '편의점' && m.method === '간단' && m.price <= 7000) score += 9;
     if (ans.need === 'light' && m.weight === '가벼움') score += 14;
     if (ans.need === 'full' && m.weight === '든든') score += 14;
     if (ans.need === 'hangover' && m.soup && m.spicy <= 1) score += 9;
     if (ans.need === 'spicy' && m.spicy >= 1) score += 14;
-    if (ans.budget !== null && ans.budget !== undefined && Number.isFinite(Number(ans.budget)) && m.price <= Number(ans.budget)) score += 5;
+    if (ans.budget !== null && ans.budget !== undefined) {
+      const targetBudget = normalizeBudgetTarget(ans.budget);
+      if (targetBudget && Number(m.price || 0) <= targetBudget) score += 5;
+      else if (targetBudget && isWithinBudget(m.price, targetBudget)) score += 1;
+    }
     if (ans.preferEasy) {
       if (Number(m.cook || 0) <= 15) score += 7;
       else if (Number(m.cook || 0) >= 35) score -= 6;
@@ -2259,6 +2362,7 @@
 
     score += getPersonalBonus(m, ans) * 7;
     score += cuisinePreferenceBonus(m);
+    score += marketCuisineBonus(m, ans);
     score += varietyBonus(m);
     score += situationBonus(m, ans);
     score += preferencePresetBonus(m, ans);
@@ -2296,6 +2400,9 @@
       const raw = localStorage.getItem(STORAGE.recommendationDraft);
       if (!raw) return null;
       const draft = JSON.parse(raw);
+      if (draft.answers && Object.prototype.hasOwnProperty.call(draft.answers, 'budget')) {
+        draft.answers.budget = normalizeBudgetTarget(draft.answers.budget);
+      }
       const ageMs = Date.now() - new Date(draft.updatedAt || 0).getTime();
       if (!Number.isFinite(ageMs) || ageMs > 12 * 60 * 60 * 1000) {
         localStorage.removeItem(STORAGE.recommendationDraft);
@@ -2399,7 +2506,7 @@
       situation: { 혼밥:'혼밥', 친구와:'친구와', 배달:'배달', 집밥:'집밥', 비오는날:'비 오는 날', 운동후:'운동 후', 속편한식사:'속 편한 식사', 시간없을때:'시간 없음' },
       mode: { 외식:'외식', 배달:'배달', 집밥:'집밥', 편의점:'편의점' },
       need: { light:'가볍게', full:'든든하게', hangover:'해장·국물', spicy:'매콤하게' },
-      budget: { 7000:'7천 원 이하', 10000:'1만 원 이하', 15000:'1만 5천 원 이하' },
+      budget: { 10000:'약 1만 원', 30000:'약 3만 원', 50000:'약 5만 원' },
     };
     Object.keys(answers).forEach(key => {
       const val = answers[key];
@@ -2452,8 +2559,9 @@
   // ─── Show Result ───
   function showResult() {
     const candidates = filterMenusSoft(answers);
-    const scored = candidates.map(m => ({ ...m, score: scoreMenu(m, answers) }));
+    let scored = candidates.map(m => ({ ...m, score: scoreMenu(m, answers) }));
     scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'ko'));
+    scored = applyMarketFamiliarityFilter(scored, answers);
     trackEvent('recommendation_completed', { candidateCount: scored.length, answers: { ...answers } });
 
     if (scored.length === 0) {
@@ -2484,7 +2592,7 @@
     document.querySelector('.action-grid').style.display = '';
     document.querySelector('.runner-title').style.display = '';
 
-    const recommendationSet = selectDiverseRecommendationSet(prioritizeHomeCuisineForHomeMode(scored, answers), 3);
+    const recommendationSet = selectDiverseRecommendationSet(prioritizeMarketCuisine(scored, answers), 3, answers);
     const top = recommendationSet[0];
     currentMenu = top;
     const runners = recommendationSet.slice(1);
@@ -2587,7 +2695,7 @@
     if (reason === 'hard_to_find') answers.preferCommon = true;
     if (reason === 'too_expensive') {
       const currentPrice = Number(currentMenu.price || 0);
-      const nextBudget = [7000, 10000, 15000].filter(limit => limit < currentPrice).pop();
+      const nextBudget = [10000, 30000, 50000].filter(limit => limit < currentPrice).pop();
       if (nextBudget) answers.budget = !Number.isFinite(Number(answers.budget)) ? nextBudget : Math.min(Number(answers.budget), nextBudget);
     }
 
@@ -3565,7 +3673,7 @@
       menuId: currentMenu.id || currentMenu.name,
       mealTime: selectedMealTime,
       mealMethod: record.method,
-      amountRange: amount === null ? 'not_provided' : amount <= 7000 ? 'under_7000' : amount <= 10000 ? 'under_10000' : amount <= 15000 ? 'under_15000' : 'over_15000',
+      amountRange: amount === null ? 'not_provided' : amount <= 10000 ? 'under_10000' : amount <= 30000 ? 'under_30000' : amount <= 50000 ? 'under_50000' : 'over_50000',
       satisfaction: record.satisfaction || 'not_provided',
       eatAgain: record.eatAgain || 'not_provided',
       hasPhoto: Boolean(record.photoDataUrl),
