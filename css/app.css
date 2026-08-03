@@ -4100,3 +4100,35 @@ body[data-panel="quiz"] .container {
   min-height: 320px;
   margin: 18px;
 }
+
+
+/* v4.8.4 — readable light nearby card and IME-safe explorer UI */
+.nearby-search-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf8 100%);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+.nearby-search-card .nearby-label {
+  color: var(--accent-hover);
+}
+.nearby-search-card .nearby-title {
+  color: var(--text-primary);
+}
+.nearby-search-card .nearby-chip {
+  border-color: #ffd2c7;
+  background: var(--accent-tint);
+  color: #8f3826;
+}
+.nearby-search-card .nearby-tier {
+  border-top-color: var(--border-subtle);
+}
+.nearby-search-card .nearby-tier span:first-child {
+  color: var(--accent-hover);
+}
+.nearby-search-card .nearby-tier strong {
+  color: var(--text-primary);
+}
+.nearby-search-card .nearby-tier small,
+.nearby-search-card .manual-location-help {
+  color: var(--text-secondary);
+}

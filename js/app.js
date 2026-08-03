@@ -1199,7 +1199,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.8.2';
+  const APP_VERSION = 'korea-beta-v4.8.4';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -3964,20 +3964,53 @@
 
   let explorerQuery = '';
   let explorerCuisine = '전체';
+  let explorerInputComposing = false;
+  let explorerSearchTimer = null;
 
   function setExplorerCuisine(type) {
     explorerCuisine = type;
-    renderFavorites();
+    updateExplorerCuisineButtons();
+    renderExplorerResults();
   }
 
-  function updateExplorerQuery(value) {
+  function updateExplorerCuisineButtons() {
+    document.querySelectorAll('[data-explorer-cuisine]').forEach(button => {
+      button.classList.toggle('selected', button.dataset.explorerCuisine === explorerCuisine);
+    });
+  }
+
+  function updateExplorerQuery(value, options = {}) {
     explorerQuery = String(value || '');
-    renderFavorites();
+    if (options.composing || explorerInputComposing) return;
+
+    clearTimeout(explorerSearchTimer);
+    explorerSearchTimer = setTimeout(() => {
+      renderExplorerResults();
+    }, 90);
+  }
+
+  function bindExplorerSearchInput() {
     const input = document.getElementById('menuExplorerSearch');
-    if (input) {
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-    }
+    if (!input || input.dataset.imeBound === 'true') return;
+
+    input.dataset.imeBound = 'true';
+
+    input.addEventListener('compositionstart', () => {
+      explorerInputComposing = true;
+    });
+
+    input.addEventListener('compositionend', event => {
+      explorerInputComposing = false;
+      explorerQuery = String(event.target.value || '');
+      clearTimeout(explorerSearchTimer);
+      renderExplorerResults();
+    });
+
+    input.addEventListener('input', event => {
+      updateExplorerQuery(event.target.value, {
+        composing: event.isComposing === true
+      });
+    });
   }
 
   function toggleFavoriteByName(menuName, event) {
@@ -3986,7 +4019,7 @@
     if (!menu) return;
     currentMenu = menu;
     toggleFavorite();
-    renderFavorites();
+    renderExplorerResults();
   }
 
   function openMenuFromExplorer(menuName) {
@@ -4049,6 +4082,28 @@
     } catch (_) {}
   }
 
+  function renderExplorerResults() {
+    const resultSection = document.getElementById('explorerResultsSection');
+    const favoriteSection = document.getElementById('explorerFavoritesSection');
+    if (!resultSection || !favoriteSection) return false;
+
+    const filtered = filteredExplorerMenus();
+    const favoriteMenus = normalizedFavoriteMenuNames()
+      .map(menuName => findMenuByName(menuName))
+      .filter(Boolean);
+
+    resultSection.innerHTML = `
+      <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
+      <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
+      ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}`;
+
+    favoriteSection.innerHTML = `
+      <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
+      ${favoriteMenus.length ? `<div class="explorer-menu-list">${favoriteMenus.map(renderExplorerMenuCard).join('')}</div>` : '<p class="empty-text compact-copy">검색 결과의 ♡ 버튼을 누르면 여기에 저장됩니다.</p>'}`;
+
+    return true;
+  }
+
   function renderFavorites() {
     const c = document.getElementById('favoritesContent');
     if (!c) return false;
@@ -4074,27 +4129,19 @@
         return false;
       }
 
-      const filtered = filteredExplorerMenus();
       const types = ['전체','한식','중식','일식','양식','세계음식'];
-      const favoriteMenus = normalizedFavoriteMenuNames()
-        .map(menuName => findMenuByName(menuName))
-        .filter(Boolean);
-
       c.innerHTML = `
         <section class="menu-explorer-search">
           <label for="menuExplorerSearch">음식 검색</label>
-          <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" oninput="updateExplorerQuery(this.value)">
-          <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
+          <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" autocomplete="off" enterkeyhint="search">
+          <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" data-explorer-cuisine="${type}" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
         </section>
-        <section class="explorer-results-section">
-          <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
-          <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
-          ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
-        </section>
-        <section class="explorer-favorites-section">
-          <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
-          ${favoriteMenus.length ? `<div class="explorer-menu-list">${favoriteMenus.map(renderExplorerMenuCard).join('')}</div>` : '<p class="empty-text compact-copy">검색 결과의 ♡ 버튼을 누르면 여기에 저장됩니다.</p>'}
-        </section>`;
+        <section class="explorer-results-section" id="explorerResultsSection"></section>
+        <section class="explorer-favorites-section" id="explorerFavoritesSection"></section>`;
+
+      bindExplorerSearchInput();
+      updateExplorerCuisineButtons();
+      renderExplorerResults();
       return true;
     } catch (error) {
       renderExplorerError(error);
@@ -5582,7 +5629,7 @@
     const q = buildPlaceQueries(menu);
     return `
       <div class="nearby-search-card">
-        <div class="nearby-label">Menu-first Place Search</div>
+        <div class="nearby-label">메뉴 우선 식당 검색</div>
         <div class="nearby-title">메뉴명을 바꾸지 않고 검색합니다</div>
         <div class="nearby-chip-row">
           ${q.exact.slice(0, 5).map(x => `<span class="nearby-chip">${escapeHtml(x)}</span>`).join('')}
