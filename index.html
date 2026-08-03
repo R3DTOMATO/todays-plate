@@ -250,8 +250,8 @@
   <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-favorites">
     <div class="sub-panel">
-      <h2 class="sub-title">찜한 메뉴</h2>
-      <p class="sub-subtitle" id="favSubtitle">언젠가 먹어보고 싶은 메뉴 모음</p>
+      <h2 class="sub-title">음식 탐색</h2>
+      <p class="sub-subtitle" id="favSubtitle">메뉴를 검색하고 상세정보를 확인해 보세요</p>
       <div id="favoritesContent"></div>
     </div>
   </div>
@@ -302,8 +302,8 @@
     <button class="nav-item active" data-panel="home" aria-label="홈">
       <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5v9a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M9 21v-6h6v6"/></svg></span><span class="nav-label">홈</span>
     </button>
-    <button class="nav-item" data-panel="favorites" aria-label="찜한 메뉴">
-      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg></span><span class="nav-label">찜</span>
+    <button class="nav-item" data-panel="favorites" aria-label="음식 탐색">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg></span><span class="nav-label">탐색</span>
     </button>
     <button class="nav-item" data-panel="nearby" aria-label="주변 식당">
       <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="nav-label">주변</span>
@@ -323,6 +323,13 @@
   <div class="modal record-modal" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
     <div class="modal-title" id="recordModalTitle">식사 기록</div>
     <p class="modal-sub" id="recordModalDish">먹은 메뉴와 실제 경험을 남겨주세요.</p>
+
+    <label class="form-field record-menu-field">
+      <span>먹은 음식</span>
+      <input id="recordMenuName" type="search" maxlength="80" autocomplete="off" placeholder="음식 이름 검색 또는 직접 입력" oninput="handleRecordMenuInput(this.value)">
+    </label>
+    <div class="record-menu-suggestions" id="recordMenuSuggestions"></div>
+    <p class="form-notice record-menu-notice">목록에 없는 음식도 입력한 이름 그대로 저장할 수 있습니다.</p>
 
     <label class="form-field">
       <span>날짜와 시간</span>
@@ -489,6 +496,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=4.7.0" defer></script>
+<script src="./js/app.js?v=4.8.0" defer></script>
 </body>
 </html>

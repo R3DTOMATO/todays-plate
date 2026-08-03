@@ -860,21 +860,29 @@
     });
   }
   const questions = [
-    { step: 1, total: 3, title: '오늘은 어떻게 먹을까요?', sub: '식사 방식에 맞는 메뉴부터 좁혀드릴게요', key: 'mode', grid: 2,
+    { step: 1, total: 4, title: '오늘은 어떻게 먹을까요?', sub: '식사 방식에 맞는 메뉴부터 좁혀드릴게요', key: 'mode', grid: 2,
       options: [
         { emoji:'🍽️', text:'외식', hint:'가까운 식당에서', value:'외식' },
         { emoji:'🛵', text:'배달', hint:'주문하기 좋은 메뉴', value:'배달' },
         { emoji:'🏠', text:'집밥', hint:'직접 간단히 만들기', value:'집밥' },
         { emoji:'🏪', text:'편의점', hint:'빠르고 부담 없이', value:'편의점' }
       ] },
-    { step: 2, total: 3, title: '지금 어떤 메뉴가 당겨요?', sub: '오늘의 배고픔과 컨디션을 알려주세요', key: 'need', grid: 2,
+    { step: 2, total: 4, title: '어떤 종류의 음식이 좋아요?', sub: '원하는 음식 종류가 있으면 정확히 맞춰드릴게요', key: 'type', grid: 2,
+      options: [
+        { emoji:'🇰🇷', text:'한식', hint:'밥·국·찌개·구이', value:'한식' },
+        { emoji:'🇨🇳', text:'중식', hint:'면·볶음·중화요리', value:'중식' },
+        { emoji:'🇯🇵', text:'일식', hint:'초밥·덮밥·면요리', value:'일식' },
+        { emoji:'🍝', text:'양식', hint:'파스타·피자·샐러드', value:'양식' },
+        { emoji:'🌏', text:'세계음식', hint:'동남아·멕시칸·인도 등', value:'세계음식' }
+      ] },
+    { step: 3, total: 4, title: '지금 어떤 메뉴가 당겨요?', sub: '오늘의 배고픔과 컨디션을 알려주세요', key: 'need', grid: 2,
       options: [
         { emoji:'🥗', text:'가볍게', hint:'부담 적은 한 끼', value:'light' },
         { emoji:'🍚', text:'든든하게', hint:'배부르게 먹기', value:'full' },
         { emoji:'🍲', text:'해장·국물', hint:'따뜻하고 편안하게', value:'hangover' },
         { emoji:'🌶️', text:'매콤하게', hint:'기분 좋은 자극', value:'spicy' }
       ] },
-    { step: 3, total: 3, title: '한 끼 예산은 어느 정도예요?', sub: '가격 차이를 고려해 선택 금액보다 조금 넓게 추천합니다', key: 'budget', grid: 2,
+    { step: 4, total: 4, title: '한 끼 예산은 어느 정도예요?', sub: '가격 차이를 고려해 선택 금액보다 조금 넓게 추천합니다', key: 'budget', grid: 2,
       options: [
         { emoji:'₩', text:'약 1만 원', hint:'최대 1만 2천 원 정도', value:10000 },
         { emoji:'₩₩', text:'약 3만 원', hint:'최대 3만 3천 원 정도', value:30000 },
@@ -1106,7 +1114,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.7';
+  const APP_VERSION = 'korea-beta-v4.8';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -1305,6 +1313,12 @@
       memo: String(d.memo || '').slice(0, 300),
       photoDataUrl: String(d.photoDataUrl || ''),
       menuName: d.menu?.name || d.menuName || '',
+      menuSnapshot: d.menu ? {
+        id: d.menu.id || '', name: d.menu.name || '', emoji: d.menu.emoji || '🍽️',
+        type: d.menu.type || '직접입력', time: d.menu.time || d.time || '',
+        method: d.menu.method || '', kcal: Number(d.menu.kcal || 0), price: Number(d.menu.price || 0),
+        desc: d.menu.desc || ''
+      } : null,
       createdAt: d.createdAt || new Date().toISOString(),
     }));
   }
@@ -1338,13 +1352,31 @@
     return d.toISOString();
   }
 
+  function buildCustomDiaryMenu(name, snapshot = {}) {
+    const safeName = String(name || snapshot.name || '').trim();
+    return {
+      id: snapshot.id || `custom-${safeName.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-')}`,
+      name: safeName,
+      emoji: snapshot.emoji || '🍽️',
+      type: snapshot.type || '직접입력',
+      time: snapshot.time || getCurrentMealTime(),
+      method: snapshot.method || '직접입력',
+      kcal: Number(snapshot.kcal || 0),
+      price: Number(snapshot.price || 0),
+      desc: snapshot.desc || '사용자가 직접 기록한 음식입니다.',
+      ingredients: [], steps: [], nutrition: { p:0, c:0, f:0 },
+      isCustomDiaryMenu: true,
+    };
+  }
+
   function loadDiary() {
     try {
       const raw = localStorage.getItem(STORAGE.diary) || localStorage.getItem(STORAGE.legacyDiary);
       if (!raw) return [];
       const rows = JSON.parse(raw);
       const normalized = (Array.isArray(rows) ? rows : []).map(d => {
-        const menu = findMenuByName(d.menuName || d.menu?.name);
+        const menuName = d.menuName || d.menu?.name || d.menuSnapshot?.name;
+        const menu = findMenuByName(menuName) || (menuName ? buildCustomDiaryMenu(menuName, d.menuSnapshot || d.menu || {}) : null);
         if (!menu) return null;
         return {
           id: d.id || makeId('meal'),
@@ -1477,7 +1509,7 @@
       <div class="onboard-section">
         <div class="onboard-label">Step 02</div>
         <div class="onboard-title">자주 끌리는 음식 스타일</div>
-        <p class="onboard-help">선택한 카테고리는 바로 추천에서 가중치로 반영됩니다. 자세히 고르기에서 따로 고르면 그 조건이 더 우선입니다.</p>
+        <p class="onboard-help">선택한 카테고리만 기본 추천 범위에 포함합니다. 메뉴 추천에서 음식 종류를 직접 고르면 그 선택이 우선합니다.</p>
         ${renderChoiceButtons('preferredTypes', ONBOARDING_OPTIONS.preferredTypes, true)}
       </div>
       <div class="onboard-section">
@@ -1650,6 +1682,16 @@
     `;
   }
 
+  function isDietFriendlyMenu(menu) {
+    const tags = ensureRestrictionTags(menu || {});
+    const text = `${menu?.name || ''} ${menu?.desc || ''}`.toLowerCase();
+    const dessertOrBakery = ['스콘','크루아상','푸딩','빙수','케이크','쿠키','도넛','와플','팬케이크','머핀','라떼','디저트'].some(word => text.includes(word));
+    if (Number(menu?.kcal || 0) > 600) return false;
+    if (tags.includes('fried')) return false;
+    if (dessertOrBakery) return false;
+    return true;
+  }
+
   function violatesUserRestrictions(menu) {
     if (!personalProfile) personalProfile = loadProfile();
     const tags = ensureRestrictionTags(menu);
@@ -1661,7 +1703,7 @@
     if (diets.includes('vegetarian') && (tags.includes('pork') || tags.includes('beef') || tags.includes('chicken') || tags.includes('seafood') || tags.includes('shrimp'))) return true;
     if (diets.includes('lowCarb') && (menu.nutrition?.c || 0) >= 50) return true;
     if (diets.includes('highProtein') && (menu.nutrition?.p || 0) < 25) return true;
-    if (diets.includes('diet') && Number(menu.kcal || 0) > 650) return true;
+    if (diets.includes('diet') && !isDietFriendlyMenu(menu)) return true;
     return false;
   }
 
@@ -1671,6 +1713,7 @@
     (personalProfile.allergens || []).forEach(v => items.push(`알레르기 ${labelForOption(v).replace(' 제외','')}`));
     (personalProfile.excludedIngredients || []).forEach(v => items.push(labelForOption(v)));
     (personalProfile.dietRestrictions || []).forEach(v => items.push(labelForOption(v)));
+    if ((personalProfile.preferredTypes || []).length) items.push(`음식 종류 ${(personalProfile.preferredTypes || []).join('·')}`);
     if (personalProfile.budgetMax) items.push(`예산 ${budgetLabel(personalProfile.budgetMax)}`);
     return items;
   }
@@ -1875,7 +1918,7 @@
     if (ans.budget !== null && ans.budget !== undefined) reasons.push(`평균 가격이 ${budgetLabel(ans.budget)} 범위에 들어옵니다.`);
     if (ans.spicy) reasons.push(`맵기 선호를 반영해 ${spiceLabel(menu)} 메뉴를 골랐습니다.`);
     if (ans.situation && menuHasSituation(menu, ans.situation)) reasons.push(`오늘 상황 '${labelForOption(ans.situation)}'과 어울리는 메뉴로 판단했습니다.`);
-    if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`온보딩에서 ${menu.type}을 선호한다고 설정해 기본 가중치를 더했습니다.`);
+    if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에서 선택한 ${menu.type} 범위 안에서 추천했습니다.`);
     if (!ans.weight && personalProfile?.defaultWeight && menu.weight === personalProfile.defaultWeight) reasons.push(`평소 선호 포만감 '${personalProfile.defaultWeight}'과 맞습니다.`);
     if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 조건을 통과했습니다.`);
     const restrictions = restrictionSummary();
@@ -2169,6 +2212,10 @@
   function filterMenus(ans, poolOptions = {}) {
     const pool = getAvailableMenuPool(poolOptions);
     return pool.filter(m => {
+      const preferredTypes = personalProfile?.preferredTypes || [];
+      // 내 입맛에서 선택한 음식 종류는 단순 가중치가 아니라 기본 허용 범위입니다.
+      // 추천 질문에서 음식 종류를 직접 고르면 그 선택이 입맛 기본값보다 우선합니다.
+      if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;
       if (ans.time && m.time !== ans.time) return false;
       if (ans.type && m.type !== ans.type) return false;
       if (ans.weight && m.weight !== ans.weight) return false;
@@ -2198,6 +2245,7 @@
   function getStrictMissMessages(ans = {}) {
     const messages = [];
     if (ans.type) messages.push(`${ans.type} 조건 유지`);
+    else if ((personalProfile?.preferredTypes || []).length) messages.push(`내 입맛 음식 종류 ${(personalProfile.preferredTypes || []).join('·')} 유지`);
     if (ans.time) messages.push(`${ans.time} 시간대 유지`);
     if (ans.weight) messages.push(`${ans.weight} 포만감 유지`);
     if (ans.soup !== undefined && ans.soup !== null) messages.push(ans.soup ? '국물 있음 유지' : '국물 없음 유지');
@@ -2737,7 +2785,7 @@
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     saveRecommendationDraft('quiz');
-    trackEvent('recommendation_started', { flow: 'three_step', mealTime: answers.contextTime });
+    trackEvent('recommendation_started', { flow: 'four_step', mealTime: answers.contextTime });
     switchPanel('quiz', false);
     renderQuestion();
   }
@@ -3458,12 +3506,16 @@
   function renderDiary() {
     const c = document.getElementById('diaryContent');
     if (!c) return;
+    const recordStarter = `
+      <section class="diary-record-starter">
+        <div><strong>오늘 먹은 음식이 있나요?</strong><p>추천받지 않은 음식도 검색하거나 직접 입력해 기록할 수 있어요.</p></div>
+        <button class="empty-cta" type="button" onclick="openDirectRecordModal()">+ 음식 기록하기</button>
+      </section>`;
     if (diary.length === 0) {
-      c.innerHTML = `
-        <div class="empty-state">
+      c.innerHTML = recordStarter + `
+        <div class="empty-state compact-empty">
           <div class="empty-icon">📓</div>
-          <p class="empty-text">아직 기록된 식사가 없어요<br>예시 기록 없이 바로 시작할 수 있습니다.</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 추천받기</button>
+          <p class="empty-text">아직 기록된 식사가 없어요.<br>방금 먹은 메뉴부터 직접 남겨보세요.</p>
         </div>`;
       return;
     }
@@ -3473,7 +3525,7 @@
       byDate[record.date].push(record);
     });
     const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
-    c.innerHTML = renderDiaryInsights() + dates.map(dateStr => {
+    c.innerHTML = recordStarter + renderDiaryInsights() + dates.map(dateStr => {
       const date = new Date(dateStr);
       const todayKey = new Date().toDateString();
       const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
@@ -3489,6 +3541,56 @@
 
   // ─── Record Modal ───
   let selectedMealTime = null;
+  let recordMenuSelection = null;
+
+  function menuSearchText(menu) {
+    return `${menu?.name || ''} ${menu?.en || ''} ${menu?.type || ''} ${menu?.desc || ''} ${(menu?.ingredients || []).map(ingredientName).join(' ')}`.toLowerCase();
+  }
+
+  function findMenuByLooseName(value) {
+    const query = String(value || '').trim().toLowerCase();
+    if (!query) return null;
+    return menus.find(menu => menu.name.toLowerCase() === query || String(menu.en || '').toLowerCase() === query) || null;
+  }
+
+  function recordMenuSuggestions(query = '') {
+    const normalized = String(query || '').trim().toLowerCase();
+    const source = normalized ? menus.filter(menu => menuSearchText(menu).includes(normalized)) : menus;
+    return [...source]
+      .sort((a, b) => getMenuFamiliarity(a) === getMenuFamiliarity(b) ? a.name.localeCompare(b.name, 'ko') : (getMenuFamiliarity(a) === 'common' ? -1 : 1))
+      .slice(0, 8);
+  }
+
+  function renderRecordMenuSuggestions(query = '') {
+    const box = document.getElementById('recordMenuSuggestions');
+    if (!box) return;
+    const results = recordMenuSuggestions(query);
+    box.innerHTML = results.map(menu => `
+      <button type="button" class="record-menu-suggestion ${recordMenuSelection?.name === menu.name ? 'selected' : ''}" onclick="selectRecordMenu('${escapeJsString(menu.name)}')">
+        <span>${menu.emoji || '🍽️'}</span><strong>${escapeHtml(menu.name)}</strong><small>${escapeHtml(menu.type)}</small>
+      </button>`).join('');
+  }
+
+  function selectRecordMenu(menuName) {
+    const menu = findMenuByName(menuName);
+    if (!menu) return;
+    recordMenuSelection = menu;
+    const input = document.getElementById('recordMenuName');
+    if (input) input.value = menu.name;
+    renderRecordMenuSuggestions(menu.name);
+    document.getElementById('recordModalDish').innerHTML = `<strong>${escapeHtml(menu.name)}</strong> 식사 경험을 기록합니다.`;
+  }
+
+  function handleRecordMenuInput(value) {
+    recordMenuSelection = findMenuByLooseName(value);
+    renderRecordMenuSuggestions(value);
+    const label = document.getElementById('recordModalDish');
+    if (label) label.textContent = recordMenuSelection ? `${recordMenuSelection.name} 식사 경험을 기록합니다.` : '목록에 없는 음식은 입력한 이름 그대로 저장됩니다.';
+  }
+
+  function openDirectRecordModal() {
+    openRecordModal(null, true);
+  }
 
   function toLocalDateTimeInputValue(date = new Date()) {
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -3506,8 +3608,8 @@
     document.querySelectorAll(`#${id} button`).forEach(button => button.classList.remove('selected'));
   }
 
-  function openRecordModal() {
-    if (!currentMenu) { showToast('먼저 메뉴를 골라주세요'); return; }
+  function openRecordModal(menu = currentMenu, direct = false) {
+    recordMenuSelection = menu || null;
     selectedMealTime = answers?.contextTime || answers?.time || getCurrentMealTime();
     selectedSatisfaction = '';
     selectedEatAgain = '';
@@ -3515,9 +3617,13 @@
     recordSaving = false;
 
     const modal = document.getElementById('recordModal');
-    document.getElementById('recordModalDish').innerHTML = `<strong>${escapeHtml(currentMenu.name)}</strong>을(를) 실제로 먹은 기록을 남겨주세요.`;
+    const menuInput = document.getElementById('recordMenuName');
+    menuInput.value = recordMenuSelection?.name || '';
+    document.getElementById('recordModalDish').innerHTML = recordMenuSelection
+      ? `<strong>${escapeHtml(recordMenuSelection.name)}</strong>을(를) 실제로 먹은 기록을 남겨주세요.`
+      : '먹은 음식을 검색하거나 이름을 직접 입력해 주세요.';
     document.getElementById('recordDateTime').value = toLocalDateTimeInputValue(new Date());
-    document.getElementById('recordMethod').value = defaultRecordMethod(currentMenu);
+    document.getElementById('recordMethod').value = defaultRecordMethod(recordMenuSelection);
     document.getElementById('recordAmount').value = '';
     document.getElementById('recordMemo').value = '';
     document.getElementById('recordPhoto').value = '';
@@ -3529,8 +3635,10 @@
     const submitButton = document.getElementById('recordSubmitBtn');
     submitButton.disabled = false;
     submitButton.textContent = '기록하기';
+    renderRecordMenuSuggestions(menuInput.value);
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
+    if (direct) setTimeout(() => menuInput.focus(), 80);
   }
 
   function closeRecordModal() {
@@ -3614,7 +3722,14 @@
   });
 
   async function confirmRecord() {
-    if (recordSaving || !selectedMealTime || !currentMenu) return;
+    if (recordSaving || !selectedMealTime) return;
+    const inputMenuName = document.getElementById('recordMenuName').value.trim();
+    if (!inputMenuName) {
+      showToast('먹은 음식 이름을 입력해 주세요');
+      document.getElementById('recordMenuName').focus();
+      return;
+    }
+    const selectedMenu = recordMenuSelection || findMenuByLooseName(inputMenuName) || buildCustomDiaryMenu(inputMenuName);
     const dateTimeValue = document.getElementById('recordDateTime').value;
     const dateTime = new Date(dateTimeValue);
     if (!dateTimeValue || Number.isNaN(dateTime.getTime())) {
@@ -3644,7 +3759,7 @@
       eatAgain: selectedEatAgain,
       memo: document.getElementById('recordMemo').value.trim().slice(0, 300),
       photoDataUrl: pendingMealPhoto,
-      menu: currentMenu,
+      menu: selectedMenu,
       createdAt: new Date().toISOString(),
     };
 
@@ -3660,9 +3775,10 @@
       return;
     }
 
-    if (decidedMenuName !== currentMenu.name) {
-      recordMenuFeedback(currentMenu, 'accept', selectedMealTime);
-      decidedMenuName = currentMenu.name;
+    const knownMenu = findMenuByName(selectedMenu.name);
+    if (knownMenu && decidedMenuName !== knownMenu.name) {
+      recordMenuFeedback(knownMenu, 'accept', selectedMealTime);
+      decidedMenuName = knownMenu.name;
     }
     clearRecommendationDraft();
     closeRecordModal();
@@ -3670,7 +3786,8 @@
     renderDiary();
     renderProfile();
     trackEvent('meal_record_created', {
-      menuId: currentMenu.id || currentMenu.name,
+      menuId: selectedMenu.id || selectedMenu.name,
+      customMenu: Boolean(selectedMenu.isCustomDiaryMenu),
       mealTime: selectedMealTime,
       mealMethod: record.method,
       amountRange: amount === null ? 'not_provided' : amount <= 10000 ? 'under_10000' : amount <= 30000 ? 'under_30000' : amount <= 50000 ? 'under_50000' : 'over_50000',
@@ -3679,7 +3796,7 @@
       hasPhoto: Boolean(record.photoDataUrl),
       hasMemo: Boolean(record.memo),
     });
-    showToast(`'${currentMenu.name}' 식사 기록을 저장했어요`);
+    showToast(`'${selectedMenu.name}' 식사 기록을 저장했어요`);
     recordSaving = false;
 
     if (!personalProfile.onboardingDone && diary.length === 1) {
@@ -3760,43 +3877,93 @@
     switchPanel('recipe');
   }
 
+  let explorerQuery = '';
+  let explorerCuisine = '전체';
+
+  function setExplorerCuisine(type) {
+    explorerCuisine = type;
+    renderFavorites();
+  }
+
+  function updateExplorerQuery(value) {
+    explorerQuery = String(value || '');
+    renderFavorites();
+    const input = document.getElementById('menuExplorerSearch');
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }
+
+  function toggleFavoriteByName(menuName, event) {
+    if (event) event.stopPropagation();
+    const menu = findMenuByName(menuName);
+    if (!menu) return;
+    currentMenu = menu;
+    toggleFavorite();
+    renderFavorites();
+  }
+
+  function openMenuFromExplorer(menuName) {
+    const menu = findMenuByName(menuName);
+    if (!menu) return;
+    currentMenu = menu;
+    answers = {};
+    showResultForMenu(menu);
+    trackEvent('menu_explorer_opened', { menuId: menu.id || menu.name, menuType: menu.type });
+  }
+
+  function filteredExplorerMenus() {
+    const query = explorerQuery.trim().toLowerCase();
+    return menus.filter(menu => {
+      if (explorerCuisine !== '전체' && menu.type !== explorerCuisine) return false;
+      if (query && !menuSearchText(menu).includes(query)) return false;
+      return true;
+    }).sort((a, b) => {
+      const favoriteGap = Number(isFavorited(b.name)) - Number(isFavorited(a.name));
+      if (favoriteGap) return favoriteGap;
+      const familiarRank = { common:0, familiar:1, explore:2 };
+      return (familiarRank[getMenuFamiliarity(a)] ?? 3) - (familiarRank[getMenuFamiliarity(b)] ?? 3) || a.name.localeCompare(b.name, 'ko');
+    });
+  }
+
+  function renderExplorerMenuCard(menu) {
+    return `
+      <article class="explorer-menu-card" onclick="openMenuFromExplorer('${escapeJsString(menu.name)}')">
+        ${renderMenuPhoto(menu, 'explorer-menu-photo')}
+        <div class="explorer-menu-main">
+          <div class="explorer-menu-title"><strong>${escapeHtml(menu.name)}</strong><span>${escapeHtml(menu.type)}</span></div>
+          <p>${escapeHtml(menu.desc || '')}</p>
+          <small>${Number(menu.kcal || 0).toLocaleString()}kcal · 약 ${Number(menu.price || 0).toLocaleString()}원 · ${Number(menu.cook || 0) ? `${Number(menu.cook)}분` : '매장 이용'}</small>
+        </div>
+        <button class="explorer-fav-btn ${isFavorited(menu.name) ? 'selected' : ''}" type="button" onclick="toggleFavoriteByName('${escapeJsString(menu.name)}', event)" aria-label="${isFavorited(menu.name) ? '찜 해제' : '찜하기'}">${isFavorited(menu.name) ? '♥' : '♡'}</button>
+      </article>`;
+  }
+
   function renderFavorites() {
     const c = document.getElementById('favoritesContent');
-    document.getElementById('favSubtitle').textContent =
-      favorites.length > 0 ? `${favorites.length}개의 메뉴를 찜해두셨어요` : '언젠가 먹어보고 싶은 메뉴 모음';
+    if (!c) return;
+    const subtitle = document.getElementById('favSubtitle');
+    if (subtitle) subtitle.textContent = '메뉴를 검색하고 상세정보를 확인한 뒤 찜할 수 있어요';
 
-    if (favorites.length === 0) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">♡</div>
-          <p class="empty-text">아직 찜한 메뉴가 없어요<br>마음에 드는 메뉴를 발견하면<br>♡ 버튼으로 저장해보세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-
-    c.innerHTML = favorites.map(f => {
-      const m = findMenuByName(f.menuName);
-      if (!m) return '';
-      const added = new Date(f.addedAt);
-      const dateStr = `${months[added.getMonth()]} ${added.getDate()}`;
-      return `
-        <div class="fav-card" onclick="pickFavorite('${m.name}')">
-          ${renderMenuPhoto(m, 'fav-photo')}
-          <div class="fav-info">
-            <div class="fav-name">${m.name}</div>
-            <div class="fav-meta">
-              <span>${m.time}</span>
-              <span>· ${m.kcal}kcal</span>
-              <span>· ~${m.price.toLocaleString()}원</span>
-            </div>
-            <div class="fav-date">${dateStr} 저장</div>
-          </div>
-          <button class="fav-remove" onclick="removeFavorite('${m.name}', event)" title="찜 해제">×</button>
-        </div>
-      `;
-    }).join('');
+    const filtered = filteredExplorerMenus();
+    const types = ['전체','한식','중식','일식','양식','세계음식'];
+    const favoriteMenus = favorites.map(item => findMenuByName(item.menuName)).filter(Boolean);
+    c.innerHTML = `
+      <section class="menu-explorer-search">
+        <label for="menuExplorerSearch">음식 검색</label>
+        <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" oninput="updateExplorerQuery(this.value)">
+        <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
+      </section>
+      <section class="explorer-results-section">
+        <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
+        <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
+        ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
+      </section>
+      <section class="explorer-favorites-section">
+        <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
+        ${favoriteMenus.length ? `<div class="explorer-menu-list">${favoriteMenus.map(renderExplorerMenuCard).join('')}</div>` : '<p class="empty-text compact-copy">검색 결과의 ♡ 버튼을 누르면 여기에 저장됩니다.</p>'}
+      </section>`;
   }
 
 
@@ -5927,6 +6094,7 @@
   async function initApp() {
     await loadAppData();
     sanitizeMenuDatabase();
+    normalizeCuisineCategories();
     window.__curatedCoverageReport = getCuratedCoverageReport();
     enrichMenusForRecommendation();
     initDiary();
