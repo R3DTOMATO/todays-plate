@@ -59,13 +59,22 @@ function eligible(menu, answers, excludedFamilies = new Set()) {
   return true;
 }
 
-function diverseTop(scored, limit = 3) {
+function diverseTop(scored, limit = 3, answers = {}) {
   if (!scored.length) return [];
-  const selected = [scored[0]];
-  const families = new Set([scored[0].menu.family]);
-  const types = new Set([scored[0].menu.type]);
-  const topScore = scored[0].score;
-  const crossCuisine = scored.slice(1).find(item => !families.has(item.menu.family) && !types.has(item.menu.type) && topScore - item.score <= 8);
+  const matchesNeed = item => {
+    const menu = item.menu;
+    if (answers.need === 'light') return menu.weight === '가벼움';
+    if (answers.need === 'full') return menu.weight === '든든';
+    if (answers.need === 'hangover') return menu.soup && menu.spicy <= 1;
+    if (answers.need === 'spicy') return menu.spicy >= 1;
+    return true;
+  };
+  const first = scored.find(item => matchesNeed(item) && item.menu.type === '한식') || scored.find(matchesNeed) || scored[0];
+  const selected = [first];
+  const families = new Set([first.menu.family]);
+  const types = new Set([first.menu.type]);
+  const topScore = first.score;
+  const crossCuisine = scored.find(item => item !== first && !families.has(item.menu.family) && !types.has(item.menu.type) && topScore - item.score <= 8);
   if (crossCuisine) {
     selected.push(crossCuisine);
     families.add(crossCuisine.menu.family);
@@ -101,7 +110,7 @@ for (const contextTime of ['아침', '점심', '저녁', '야식']) {
       .filter(menu => eligible(menu, answers))
       .map(menu => ({ menu, score: score(menu, answers) }))
       .sort((a, b) => b.score - a.score || a.menu.name.localeCompare(b.menu.name, 'ko'));
-    const top = diverseTop(scored);
+    const top = diverseTop(scored, 3, answers);
     assert(top.length === 3, `${contextTime}/${need}: 추천 후보 3개 미만`);
     assert(new Set(top.map(item => item.menu.family)).size === top.length, `${contextTime}/${need}: 같은 메뉴 계열 중복`);
     if (contextTime !== '아침') {

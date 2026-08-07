@@ -4132,3 +4132,32 @@ body[data-panel="quiz"] .container {
 .nearby-search-card .manual-location-help {
   color: var(--text-secondary);
 }
+
+
+/* v4.9 — release hardening, record editing, explorer history and app status */
+.diary-record-actions { display:flex; flex-direction:column; gap:6px; align-self:center; }
+.diary-record-edit,
+.diary-record-delete { min-width:48px; min-height:34px; padding:6px 9px; border:1px solid var(--border-subtle); border-radius:10px; background:#fff; color:var(--text-secondary); font:700 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
+.diary-record-edit { color:#3f596f; background:#f7fafc; }
+.diary-record-delete { color:#a14538; background:#fff8f6; }
+.photo-remove-btn { margin-top:8px; min-height:36px; padding:7px 12px; border:1px solid #ffd2c7; border-radius:10px; background:#fff8f6; color:#a14538; font:700 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
+.explorer-search-row { display:grid; grid-template-columns:minmax(0,1fr) 60px; gap:8px; }
+.explorer-search-row > button { border:0; border-radius:12px; background:var(--text-primary); color:#fff; font:750 11px 'Noto Sans KR',sans-serif; cursor:pointer; }
+.explorer-history-section { margin-top:10px; }
+.explorer-history-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+.explorer-history-head strong { font:750 10px 'Noto Sans KR',sans-serif; color:var(--text-secondary); }
+.explorer-history-head button,
+.explorer-recent-viewed .explorer-section-head button { border:0; background:transparent; color:var(--text-secondary); font:650 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
+.explorer-history-chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+.explorer-history-chips button { flex:0 0 auto; min-height:32px; padding:6px 10px; border:1px solid var(--border-subtle); border-radius:999px; background:#fff; color:var(--text-secondary); font:650 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
+.explorer-recent-viewed { margin-top:22px; padding-top:18px; border-top:1px solid var(--border-subtle); }
+.explorer-menu-list.compact .explorer-menu-card:nth-child(n+5) { display:none; }
+.app-status-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.app-status-grid > div { padding:10px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-soft); }
+.app-status-grid span { display:block; margin-bottom:4px; color:var(--text-secondary); font:650 9px 'Noto Sans KR',sans-serif; }
+.app-status-grid strong { font:750 11px/1.4 'Noto Sans KR',sans-serif; overflow-wrap:anywhere; }
+.status-ok { color:#1d7a50; } .status-error { color:#a14538; } .status-checking { color:#8f6420; }
+.last-error-box { display:grid; gap:3px; margin-top:10px; padding:10px; border:1px solid #ffd7cf; border-radius:12px; background:#fff8f6; }
+.last-error-box span { color:var(--text-secondary); font-size:9px; } .last-error-box strong { color:#a14538; font:800 11px 'JetBrains Mono',monospace; } .last-error-box small { color:var(--text-secondary); font:500 9px/1.4 'Noto Sans KR',sans-serif; }
+.app-health-refresh { margin-top:10px; }
+@media (max-width:520px) { .app-status-grid { grid-template-columns:1fr; } .diary-record-actions { flex-direction:row; grid-column:2 / -1; justify-self:end; } }

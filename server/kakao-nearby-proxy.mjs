@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { appendFile, mkdir } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,6 +7,7 @@ const PORT = Number(process.env.PORT || 8787);
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || '';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
+const RETENTION_DAYS = Math.max(30, Number(process.env.DATA_RETENTION_DAYS || 90));
 const ALLOWED_ORIGINS = new Set(
   (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500')
     .split(',')
@@ -18,6 +19,9 @@ const requestBuckets = new Map();
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = Number(process.env.RATE_LIMIT_PER_MINUTE || 120);
 const MAX_BODY_BYTES = 256 * 1024;
+const MAX_DEDUPE_IDS = 50_000;
+const seenEventIds = new Set();
+const seenFeedbackIds = new Set();
 
 function isOriginAllowed(origin) {
   return !origin || ALLOWED_ORIGINS.has(origin);
@@ -104,9 +108,78 @@ async function readJsonBody(req) {
   }
 }
 
+function monthKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const safe = Number.isNaN(date.getTime()) ? new Date() : date;
+  return `${safe.getUTCFullYear()}-${String(safe.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthlyFilename(kind, value = new Date()) {
+  return `${kind}-${monthKey(value)}.jsonl`;
+}
+
+function keepBounded(set, value) {
+  if (!value || set.has(value)) return;
+  set.add(value);
+  if (set.size <= MAX_DEDUPE_IDS) return;
+  const removeCount = Math.max(1, Math.floor(MAX_DEDUPE_IDS * 0.1));
+  const iterator = set.values();
+  for (let i = 0; i < removeCount; i += 1) {
+    const next = iterator.next();
+    if (next.done) break;
+    set.delete(next.value);
+  }
+}
+
 async function appendJsonLine(filename, payload) {
   await mkdir(DATA_DIR, { recursive: true });
   await appendFile(resolve(DATA_DIR, filename), `${JSON.stringify(payload)}\n`, { encoding: 'utf8', mode: 0o600 });
+}
+
+async function readJsonLinesIfExists(filename) {
+  try {
+    const text = await readFile(resolve(DATA_DIR, filename), 'utf8');
+    return text.split(/\r?\n/).filter(Boolean).flatMap((line) => {
+      try { return [JSON.parse(line)]; } catch { return []; }
+    });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
+async function warmDedupeSets() {
+  const now = new Date();
+  const previous = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const files = [
+    'events.jsonl', 'feedback.jsonl',
+    monthlyFilename('events', now), monthlyFilename('events', previous),
+    monthlyFilename('feedback', now), monthlyFilename('feedback', previous),
+  ];
+  for (const filename of [...new Set(files)]) {
+    const rows = await readJsonLinesIfExists(filename);
+    for (const row of rows) {
+      if (row.eventId) keepBounded(seenEventIds, cleanString(row.eventId, 100));
+      if (row.id) keepBounded(seenFeedbackIds, cleanString(row.id, 100));
+    }
+  }
+}
+
+async function cleanupExpiredData() {
+  await mkdir(DATA_DIR, { recursive: true });
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const names = await readdir(DATA_DIR);
+  const removed = [];
+  for (const name of names) {
+    const match = /^(events|feedback)-(\d{4})-(\d{2})\.jsonl$/.exec(name);
+    if (!match) continue;
+    const [, , year, month] = match;
+    const nextMonth = Date.UTC(Number(year), Number(month), 1);
+    if (nextMonth >= cutoff) continue;
+    await rm(resolve(DATA_DIR, name), { force: true });
+    removed.push(name);
+  }
+  return removed;
 }
 
 async function kakaoRequest(path, params) {
@@ -139,7 +212,7 @@ async function handleNearby(requestUrl, res, origin) {
   const sort = requestUrl.searchParams.get('sort') === 'distance' ? 'distance' : 'accuracy';
 
   if (query.length < 2 || !Number.isFinite(x) || !Number.isFinite(y)) {
-    return sendJson(res, 400, { error: 'invalid_parameters' }, origin);
+    return sendJson(res, 400, { error: 'invalid_parameters', errorCode: 'NEARBY_PARAM_001' }, origin);
   }
 
   const params = new URLSearchParams({ query, x: String(x), y: String(y), radius: String(radius), size: String(size), page: String(page), sort });
@@ -152,7 +225,7 @@ async function handleNearby(requestUrl, res, origin) {
 
 async function handleResolveLocation(requestUrl, res, origin) {
   const query = cleanString(requestUrl.searchParams.get('query'), 120);
-  if (query.length < 2) return sendJson(res, 400, { error: 'invalid_query' }, origin);
+  if (query.length < 2) return sendJson(res, 400, { error: 'invalid_query', errorCode: 'LOCATION_QUERY_001' }, origin);
 
   let payload = await kakaoRequest('/v2/local/search/address.json', new URLSearchParams({ query, size: '1' }));
   let doc = Array.isArray(payload.documents) ? payload.documents[0] : null;
@@ -167,7 +240,7 @@ async function handleResolveLocation(requestUrl, res, origin) {
   const lat = Number(doc?.y);
   const lng = Number(doc?.x);
   if (!doc || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return sendJson(res, 404, { error: 'location_not_found' }, origin);
+    return sendJson(res, 404, { error: 'location_not_found', errorCode: 'LOCATION_NOT_FOUND_001' }, origin);
   }
   return sendJson(res, 200, { lat, lng, label: cleanString(label || query, 160) }, origin, 'private, max-age=300');
 }
@@ -178,16 +251,20 @@ async function handleEvents(req, res, origin) {
   if (!events.length) return sendJson(res, 400, { error: 'events_required' }, origin);
 
   let accepted = 0;
+  let duplicates = 0;
+  let invalid = 0;
   for (const raw of events) {
-    if (!raw || typeof raw !== 'object') continue;
+    if (!raw || typeof raw !== 'object') { invalid += 1; continue; }
     const name = cleanString(raw.name || raw.eventName, 80);
     const eventId = cleanString(raw.eventId, 100);
     const anonymousUserId = cleanString(raw.anonymousUserId, 100);
     const sessionId = cleanString(raw.sessionId, 100);
-    if (!name || !eventId || !anonymousUserId || !sessionId) continue;
+    if (!name || !eventId || !anonymousUserId || !sessionId) { invalid += 1; continue; }
+    if (seenEventIds.has(eventId)) { duplicates += 1; continue; }
+
     const rawTimestamp = raw.occurredAt || raw.timestamp;
     const timestamp = Number.isFinite(Date.parse(rawTimestamp)) ? new Date(rawTimestamp).toISOString() : new Date().toISOString();
-    await appendJsonLine('events.jsonl', {
+    const record = {
       eventId,
       name,
       anonymousUserId,
@@ -198,11 +275,13 @@ async function handleEvents(req, res, origin) {
       firstVisit: Boolean(raw.firstVisit),
       previousUseCount: parseNumber(raw.previousUseCount, { min: 0, max: 1_000_000, fallback: 0 }),
       properties: sanitizeProperties(raw.properties || {}),
-    });
+    };
+    await appendJsonLine(monthlyFilename('events', timestamp), record);
+    keepBounded(seenEventIds, eventId);
     accepted += 1;
   }
-  if (!accepted) return sendJson(res, 400, { error: 'no_valid_events' }, origin);
-  return sendJson(res, 202, { accepted }, origin);
+  if (!accepted && !duplicates) return sendJson(res, 400, { error: 'no_valid_events', invalid }, origin);
+  return sendJson(res, 202, { accepted, duplicates, invalid, received: events.length }, origin);
 }
 
 async function handleFeedback(req, res, origin) {
@@ -211,8 +290,9 @@ async function handleFeedback(req, res, origin) {
   const type = cleanString(body.type, 80);
   const message = cleanString(body.message, 4000);
   if (!type || !message) return sendJson(res, 400, { error: 'type_and_message_required' }, origin);
+  if (seenFeedbackIds.has(id)) return sendJson(res, 202, { accepted: true, duplicate: true, feedbackId: id }, origin);
 
-  await appendJsonLine('feedback.jsonl', {
+  const record = {
     id,
     type,
     message,
@@ -224,14 +304,16 @@ async function handleFeedback(req, res, origin) {
     appVersion: cleanString(body.appVersion, 60),
     context: sanitizeProperties(body.context || {}),
     status: 'received',
-  });
-  return sendJson(res, 202, { accepted: true, feedbackId: id }, origin);
+  };
+  await appendJsonLine(monthlyFilename('feedback', record.receivedAt), record);
+  keepBounded(seenFeedbackIds, id);
+  return sendJson(res, 202, { accepted: true, duplicate: false, feedbackId: id }, origin);
 }
 
 const server = createServer(async (req, res) => {
   const origin = String(req.headers.origin || '');
 
-  if (!isOriginAllowed(origin)) return sendJson(res, 403, { error: 'origin_not_allowed' });
+  if (!isOriginAllowed(origin)) return sendJson(res, 403, { error: 'origin_not_allowed', errorCode: 'CORS_001' });
 
   if (req.method === 'OPTIONS') {
     if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
@@ -243,7 +325,7 @@ const server = createServer(async (req, res) => {
   }
 
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
-  if (rateLimit(ip)) return sendJson(res, 429, { error: 'rate_limit_exceeded' }, origin);
+  if (rateLimit(ip)) return sendJson(res, 429, { error: 'rate_limit_exceeded', errorCode: 'RATE_LIMIT_001' }, origin);
 
   const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
@@ -251,25 +333,40 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && requestUrl.pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true,
+        version: '4.9.0',
         kakaoConfigured: Boolean(KAKAO_REST_API_KEY),
         eventCollection: true,
         feedbackCollection: true,
+        storageMode: 'monthly-jsonl',
+        retentionDays: RETENTION_DAYS,
       }, origin, 'no-store');
     }
     if (req.method === 'GET' && requestUrl.pathname === '/api/nearby') return await handleNearby(requestUrl, res, origin);
     if (req.method === 'GET' && requestUrl.pathname === '/api/resolve-location') return await handleResolveLocation(requestUrl, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/events') return await handleEvents(req, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
-    return sendJson(res, 404, { error: 'not_found' }, origin);
+    return sendJson(res, 404, { error: 'not_found', errorCode: 'ROUTE_404' }, origin);
   } catch (error) {
     const status = Number(error?.statusCode) || 500;
-    const payload = { error: cleanString(error?.message || 'internal_error', 100) };
+    const payload = { error: cleanString(error?.message || 'internal_error', 100), errorCode: status >= 500 ? 'SERVER_001' : 'REQUEST_001' };
     if (error?.detail) payload.detail = cleanString(error.detail, 240);
     return sendJson(res, status, payload, origin);
   }
 });
 
+await mkdir(DATA_DIR, { recursive: true });
+await cleanupExpiredData();
+await warmDedupeSets();
+
+setInterval(() => {
+  const cutoff = Date.now() - WINDOW_MS * 2;
+  for (const [ip, bucket] of requestBuckets) {
+    if (bucket.startedAt < cutoff) requestBuckets.delete(ip);
+  }
+}, 5 * 60_000).unref();
+
 server.listen(PORT, () => {
-  console.log(`Today's Plate beta API listening on http://localhost:${PORT}`);
+  console.log(`Today's Plate beta API v4.9.0 listening on http://localhost:${PORT}`);
   console.log(`Data directory: ${DATA_DIR}`);
+  console.log(`Retention: ${RETENTION_DAYS} days`);
 });

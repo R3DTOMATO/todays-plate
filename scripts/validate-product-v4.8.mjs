@@ -25,10 +25,10 @@ const requiredHtmlFragments = [
 
 const failures = [];
 
-if (!/const APP_VERSION = 'korea-beta-v4\.8(?:\.[0-9]+)?'/.test(app)) {
+if (!/const APP_VERSION = 'korea-beta-v4\.(?:8|9)(?:\.[0-9]+)?'/.test(app)) {
   failures.push('app.js missing compatible v4.8 app version');
 }
-if (!/\.\/js\/app\.js\?v=4\.8(?:\.[0-9]+)?/.test(html)) {
+if (!/\.\/js\/app\.js\?v=4\.(?:8|9)(?:\.[0-9]+)?/.test(html)) {
   failures.push('index.html missing compatible v4.8 app cache version');
 }
 for (const fragment of requiredAppFragments) {

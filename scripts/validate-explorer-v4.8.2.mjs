@@ -12,9 +12,9 @@ const check = (name, condition) => {
   if (!condition) process.exitCode = 1;
 };
 
-check('package version is 4.8.2', pkg.version === '4.8.2');
-check('cache-busting script version is 4.8.2', html.includes('app.js?v=4.8.2'));
-check('runtime app version is 4.8.2', app.includes("korea-beta-v4.8.2"));
+check('package version is 4.8.2 or newer', /^4\.(?:8\.(?:[2-9]|[1-9][0-9]+)|9\.[0-9]+)$/.test(pkg.version));
+check('cache-busting script version is current', html.includes(`app.js?v=${pkg.version}`));
+check('runtime app version is current', app.includes(`korea-beta-v${pkg.version}`));
 check(
   'explorer thumbnail participates in positioned shared photo wrapper',
   /\.top-pick-photo,[\s\S]*?\.explorer-menu-photo\s*\{[\s\S]*?position:\s*relative/.test(css)

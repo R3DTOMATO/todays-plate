@@ -1,9 +1,9 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = resolve(process.env.DATA_DIR || resolve(HERE, 'data'));
+const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
 
 async function readJsonLines(filename) {
   try {
@@ -15,6 +15,23 @@ async function readJsonLines(filename) {
     if (error?.code === 'ENOENT') return [];
     throw error;
   }
+}
+
+async function readAll(kind) {
+  let names = [];
+  try { names = await readdir(DATA_DIR); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  const pattern = new RegExp(`^${kind}(?:-\\d{4}-\\d{2})?\\.jsonl$`);
+  const files = names.filter((name) => pattern.test(name)).sort();
+  const rows = (await Promise.all(files.map(readJsonLines))).flat();
+  const key = kind === 'events' ? 'eventId' : 'id';
+  const seen = new Set();
+  return rows.filter((row) => {
+    const id = row?.[key];
+    if (!id) return true;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 }
 
 function countBy(items, getKey) {
@@ -30,8 +47,8 @@ function percent(numerator, denominator) {
   return denominator ? Number(((numerator / denominator) * 100).toFixed(1)) : 0;
 }
 
-const events = await readJsonLines('events.jsonl');
-const feedback = await readJsonLines('feedback.jsonl');
+const events = await readAll('events');
+const feedback = await readAll('feedback');
 const byName = countBy(events, (event) => event.name);
 const uniqueUsers = new Set(events.map((event) => event.anonymousUserId).filter(Boolean));
 const uniqueSessions = new Set(events.map((event) => event.sessionId).filter(Boolean));
@@ -73,11 +90,12 @@ const report = {
     recipeViews: byName.recipe_viewed || 0,
     favorites: byName.menu_favorited || 0,
     alternativeSelections: byName.alternative_menu_selected || 0,
+    mealRecordUpdates: byName.meal_record_updated || 0,
   },
   rejectionReasons: countBy(rejectionEvents, (event) => event.properties?.reason),
   eventsByName: byName,
   feedbackByType: countBy(feedback, (item) => item.type),
-  errorsByName: countBy(errors, (event) => event.name),
+  errorsByCode: countBy(errors, (event) => event.properties?.errorCode),
 };
 
 console.log(JSON.stringify(report, null, 2));

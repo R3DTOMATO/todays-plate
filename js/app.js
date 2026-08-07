@@ -60,6 +60,7 @@
   function setCoreDataError(error) {
     APP_DATA_STATE.core = 'error';
     APP_DATA_STATE.error = String(error?.message || error || '메뉴 데이터 로드 실패');
+    recordClientError('DATA_MENU_001', error, { area:'core_data' });
   }
 
   function renderCoreDataError() {
@@ -851,6 +852,20 @@
     const homeCuisine = getHomeCuisineType();
     const useMarketBalance = !hasExplicitCuisinePreference(ans);
     const topScore = Number(scored[0].score || 0);
+    const matchesNeed = menu => {
+      if (ans.need === 'light') return menu.weight === '가벼움';
+      if (ans.need === 'full') return menu.weight === '든든';
+      if (ans.need === 'hangover') return Boolean(menu.soup) && Number(menu.spicy || 0) <= 1;
+      if (ans.need === 'spicy') return Number(menu.spicy || 0) >= 1;
+      return true;
+    };
+
+    // 사용자가 현재 원하는 상태를 명시했다면 해당 조건을 만족하는 메뉴를 대표 결과로 우선합니다.
+    if (ans.need) {
+      const needMatchedLocal = scored.find(menu => matchesNeed(menu) && (!useMarketBalance || menu.type === homeCuisine));
+      const needMatchedAny = scored.find(matchesNeed);
+      addMenu(needMatchedLocal || needMatchedAny);
+    }
 
     // 명시적 음식 종류가 없을 때는 현지 일상식 2개 + 익숙한 타 문화 메뉴 1개를 기본 구성으로 둡니다.
     if (useMarketBalance) {
@@ -1199,7 +1214,9 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.8.4';
+  const APP_VERSION = 'korea-beta-v4.9.0';
+  const APP_RELEASE_DATE = '2026-08-07';
+  const APP_DATA_VERSION = 'menus-197-v4.9';
   let currentStep = 0;
   let answers = {};
   let history = [];
@@ -1213,8 +1230,20 @@
   let selectedSatisfaction = '';
   let selectedEatAgain = '';
   let recordSaving = false;
+  let editingRecordId = '';
   let decidedMenuName = '';
+  let explorerSearchCommitTimer = null;
   const RECENT_EXCLUDE_DAYS = 3;
+  const API_HEALTH_TTL_MS = 5 * 60 * 1000;
+  let apiHealthState = {
+    status: 'idle',
+    checkedAt: '',
+    kakaoConfigured: null,
+    eventCollection: null,
+    feedbackCollection: null,
+    retentionDays: null,
+    errorCode: ''
+  };
 
   // ─── localStorage keys ───
   const STORAGE = {
@@ -1232,6 +1261,9 @@
     recommendationDraft: 'todaysplate_recommendation_draft_v1',
     rejectReasons: 'todaysplate_reject_reasons_v1',
     feedbackQueue: 'todaysplate_feedback_queue_v1',
+    recentSearches: 'todaysplate_recent_searches_v1',
+    recentViewed: 'todaysplate_recent_viewed_v1',
+    apiHealth: 'todaysplate_api_health_v1',
   };
 
   const API_BASE_URL = (() => {
@@ -1241,6 +1273,63 @@
     try { return nearby ? new URL(nearby, window.location.href).origin : ''; }
     catch (_) { return ''; }
   })();
+
+  function loadCachedApiHealth() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE.apiHealth) || 'null');
+      if (cached && typeof cached === 'object') apiHealthState = { ...apiHealthState, ...cached };
+    } catch (_) {}
+  }
+
+  function apiHealthLabel() {
+    const labels = {
+      ok:'정상 연결', checking:'확인 중', error:'연결 실패', not_configured:'서버 주소 미설정', idle:'확인 전'
+    };
+    return labels[apiHealthState.status] || '상태 확인 필요';
+  }
+
+  async function checkApiHealth(force = false) {
+    if (!API_BASE_URL) {
+      apiHealthState = { ...apiHealthState, status:'not_configured', checkedAt:new Date().toISOString(), errorCode:'API_CONFIG_001' };
+      localStorage.setItem(STORAGE.apiHealth, JSON.stringify(apiHealthState));
+      if (document.body.dataset.panel === 'profile') renderProfile();
+      return apiHealthState;
+    }
+    const checkedAt = Date.parse(apiHealthState.checkedAt || 0);
+    if (!force && apiHealthState.status === 'ok' && Date.now() - checkedAt < API_HEALTH_TTL_MS) return apiHealthState;
+
+    apiHealthState = { ...apiHealthState, status:'checking', errorCode:'' };
+    if (document.body.dataset.panel === 'profile') renderProfile();
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/health`, { cache:'no-store', ...(controller ? { signal:controller.signal } : {}) });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      apiHealthState = {
+        status:'ok',
+        checkedAt:new Date().toISOString(),
+        kakaoConfigured:Boolean(payload.kakaoConfigured),
+        eventCollection:Boolean(payload.eventCollection),
+        feedbackCollection:Boolean(payload.feedbackCollection),
+        retentionDays:Number(payload.retentionDays || 0) || null,
+        errorCode:''
+      };
+    } catch (error) {
+      apiHealthState = {
+        ...apiHealthState,
+        status:'error',
+        checkedAt:new Date().toISOString(),
+        errorCode:'API_HEALTH_001'
+      };
+      recordClientError('API_HEALTH_001', error, { area:'api_health' });
+    } finally {
+      if (timer) clearTimeout(timer);
+      try { localStorage.setItem(STORAGE.apiHealth, JSON.stringify(apiHealthState)); } catch (_) {}
+      if (document.body.dataset.panel === 'profile') renderProfile();
+    }
+    return apiHealthState;
+  }
 
   function makeId(prefix = 'id') {
     if (window.crypto?.randomUUID) return `${prefix}_${window.crypto.randomUUID()}`;
@@ -1405,6 +1494,7 @@
         desc: d.menu.desc || ''
       } : null,
       createdAt: d.createdAt || new Date().toISOString(),
+      updatedAt: d.updatedAt || '',
     }));
   }
 
@@ -1425,6 +1515,7 @@
         } catch (_) { /* 다음 오래된 사진 제거 */ }
       }
       console.warn('diary save failed', error);
+      recordClientError('STORAGE_DIARY_001', error, { area:'diary_save' });
       return false;
     }
   }
@@ -1476,6 +1567,7 @@
           photoDataUrl: String(d.photoDataUrl || ''),
           menu,
           createdAt: d.createdAt || d.dateTime || new Date().toISOString(),
+          updatedAt: d.updatedAt || '',
         };
       }).filter(Boolean).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
       if (!localStorage.getItem(STORAGE.diary) && normalized.length) {
@@ -1984,40 +2076,27 @@
   }
 
   function getRecommendationReasons(menu, ans = {}, candidateCount = null) {
-    const profile = getMenuProfile(menu);
-    const stats = personalProfile?.menuStats?.[menu.name] || {};
-    const mealTime = ans.time || ans.contextTime || getCurrentMealTime();
-    const timeHit = personalProfile?.timePatterns?.[mealTime]?.[menu.name] || 0;
-    const recentNames = getRecentMenuNames();
     const reasons = [];
-
-    if (ans.time && menu.time === ans.time) reasons.push(`${ans.time} 시간대 조건과 맞습니다.`);
-    else if (!ans.time && menu.time === mealTime) reasons.push(`현재 시간 기준 ${mealTime} 메뉴로 자연스럽습니다.`);
-    else reasons.push(`시간대는 강제로 제한하지 않고, 선택한 식사 방식과 예산을 우선 반영했습니다.`);
-
-    if (ans.type && menu.type === ans.type) reasons.push(`선택한 ${ans.type} 카테고리와 정확히 일치합니다.`);
-    if (ans.weight && menu.weight === ans.weight) reasons.push(`원한 포만감인 '${ans.weight}' 범주에 맞습니다.`);
-    if (ans.method && menu.method === ans.method) reasons.push(`오늘의 조리 방식 '${ans.method}'에 맞습니다.`);
-    if (ans.mode) reasons.push(`${labelForOption(ans.mode)} 상황에서 실행하기 쉬운 메뉴입니다.`);
-    if (ans.need) reasons.push(`현재 원하는 '${labelForOption(ans.need)}' 조건에 맞습니다.`);
-    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`평균 가격이 ${budgetLabel(ans.budget)} 범위에 들어옵니다.`);
-    if (ans.spicy) reasons.push(`맵기 선호를 반영해 ${spiceLabel(menu)} 메뉴를 골랐습니다.`);
-    if (ans.situation && menuHasSituation(menu, ans.situation)) reasons.push(`오늘 상황 '${labelForOption(ans.situation)}'과 어울리는 메뉴로 판단했습니다.`);
-    if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에서 선택한 ${menu.type} 범위 안에서 추천했습니다.`);
-    if (!ans.weight && personalProfile?.defaultWeight && menu.weight === personalProfile.defaultWeight) reasons.push(`평소 선호 포만감 '${personalProfile.defaultWeight}'과 맞습니다.`);
-    if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 조건을 통과했습니다.`);
+    const mealTime = ans.time || ans.contextTime || getCurrentMealTime();
     const restrictions = restrictionSummary();
-    if (restrictions.length) reasons.push(`제외 조건(${restrictions.slice(0,3).join(', ')}${restrictions.length > 3 ? ' 외' : ''})에 걸리는 메뉴는 후보에서 제외했습니다.`);
 
-    if ((stats.likes || 0) > 0) reasons.push(`이전에 긍정 반응을 ${stats.likes}회 남긴 메뉴라 가중치가 붙었습니다.`);
-    if (timeHit > 0) reasons.push(`${mealTime} 시간대에 비슷한 선택이 ${timeHit}회 있어 패턴 점수를 반영했습니다.`);
-    if (isFavorited(menu.name)) reasons.push('찜한 메뉴라 선호 점수를 추가했습니다.');
-    if (recentNames.size > 0) reasons.push(`오늘/어제 먹은 메뉴 ${recentNames.size}개는 자동 제외했습니다.`);
-    if (profile.situations.includes('시간없을때')) reasons.push('조리 부담이 낮아 빠르게 결정하기 좋습니다.');
-    if (profile.moods.includes('회복형')) reasons.push('국물감이 있어 컨디션 회복형 식사로 적합합니다.');
-    if (candidateCount !== null) reasons.push(`전체 ${menus.length}개 메뉴 중 조건을 정확히 만족한 ${candidateCount}개 후보만 비교했습니다.`);
+    if (ans.type && menu.type === ans.type) reasons.push(`선택한 ${ans.type} 조건에 맞아요.`);
+    else if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에 저장한 ${menu.type} 범위에서 골랐어요.`);
+    else if (ans.mode === '집밥' && menu.type === getHomeCuisineType()) reasons.push(`${getHomeCountryInfo().label} 기준 집밥으로 익숙한 ${menu.type}이에요.`);
 
-    return [...new Set(reasons)].slice(0, 6);
+    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`예상 가격이 ${budgetLabel(ans.budget)} 범위에 들어와요.`);
+    else if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 안에서 골랐어요.`);
+
+    if (ans.need) reasons.push(`지금 원하는 ‘${labelForOption(ans.need)}’ 느낌과 맞아요.`);
+    else if (ans.weight && menu.weight === ans.weight) reasons.push(`원한 포만감인 ‘${ans.weight}’에 맞아요.`);
+    else if (ans.time && menu.time === ans.time) reasons.push(`${ans.time}에 어울리는 메뉴예요.`);
+    else if (!ans.time && menu.time === mealTime) reasons.push(`현재 ${mealTime} 시간대에 자연스러운 메뉴예요.`);
+
+    if (restrictions.length && reasons.length < 3) reasons.push('알레르기·제외 재료 조건을 통과한 메뉴예요.');
+    if (getRecentMenuNames().size > 0 && reasons.length < 3) reasons.push('최근 먹은 메뉴와 같은 계열은 제외했어요.');
+    if (candidateCount !== null && reasons.length < 3) reasons.push(`${candidateCount}개 후보 중 조건이 가장 잘 맞았어요.`);
+
+    return [...new Set(reasons)].slice(0, 3);
   }
 
   function renderRecommendationReasonCard(menu, ans = {}, candidateCount = null) {
@@ -2172,6 +2251,21 @@
         `).join('')}</div>` : '<p class="empty-text" style="padding:8px 0; margin:0;">다른 추천을 누르면 거부 신호가 쌓입니다.</p>'}
       </div>
 
+      <div class="profile-section app-status-section">
+        <div class="profile-label">앱 상태</div>
+        <div class="profile-title">버전과 연결 상태</div>
+        <div class="app-status-grid">
+          <div><span>앱 버전</span><strong>${escapeHtml(APP_VERSION.replace('korea-beta-',''))}</strong></div>
+          <div><span>메뉴 데이터</span><strong>${menus.length.toLocaleString()}개 · ${escapeHtml(APP_DATA_VERSION)}</strong></div>
+          <div><span>네트워크</span><strong>${navigator.onLine ? '온라인' : '오프라인'}</strong></div>
+          <div><span>API 서버</span><strong class="status-${escapeHtml(apiHealthState.status)}">${escapeHtml(apiHealthLabel())}</strong></div>
+          <div><span>Kakao 검색</span><strong>${apiHealthState.kakaoConfigured === true ? '설정됨' : apiHealthState.kakaoConfigured === false ? '키 확인 필요' : '확인 전'}</strong></div>
+          <div><span>보조 데이터</span><strong>${escapeHtml(APP_DATA_STATE.supplemental === 'ready' ? '정상' : APP_DATA_STATE.supplemental === 'partial' ? '일부 제한' : '확인 중')}</strong></div>
+        </div>
+        ${lastClientError ? `<div class="last-error-box"><span>최근 오류 코드</span><strong>${escapeHtml(lastClientError.code || 'CLIENT_UNKNOWN')}</strong><small>${escapeHtml(lastClientError.message || '')}</small></div>` : '<p class="form-notice">이 기기에서 기록된 최근 실행 오류가 없습니다.</p>'}
+        <button class="profile-action app-health-refresh" type="button" onclick="checkApiHealth(true)">연결 상태 다시 확인</button>
+      </div>
+
       <button class="retry-btn danger-soft" onclick="resetPreferenceOnly()">개인화 취향만 초기화</button>
     `;
   }
@@ -2195,6 +2289,7 @@
   function showResultForMenu(menu) {
     if (!menu) return;
     currentMenu = menu;
+    rememberViewedMenu(menu.name);
     const topEl = document.getElementById('topPick');
     const score = scoreMenu(menu, answers || {});
     document.querySelector('.action-grid').style.display = '';
@@ -3584,7 +3679,10 @@
           <small>${escapeHtml(satisfactionText)} · ${escapeHtml(againText)}</small>
           ${record.memo ? `<p class="diary-record-note">${escapeHtml(record.memo)}</p>` : ''}
         </div>
-        <button class="diary-record-delete" type="button" onclick="deleteMealRecord('${escapeJsString(record.id)}')">삭제</button>
+        <div class="diary-record-actions">
+          <button class="diary-record-edit" type="button" onclick="editMealRecord('${escapeJsString(record.id)}')">수정</button>
+          <button class="diary-record-delete" type="button" onclick="deleteMealRecord('${escapeJsString(record.id)}')">삭제</button>
+        </div>
       </article>`;
   }
 
@@ -3693,43 +3791,86 @@
     document.querySelectorAll(`#${id} button`).forEach(button => button.classList.remove('selected'));
   }
 
-  function openRecordModal(menu = currentMenu, direct = false) {
-    recordMenuSelection = menu || null;
-    selectedMealTime = answers?.contextTime || answers?.time || getCurrentMealTime();
-    selectedSatisfaction = '';
-    selectedEatAgain = '';
+  function setSegmentedValue(id, value) {
+    document.querySelectorAll(`#${id} button`).forEach(button => button.classList.toggle('selected', button.dataset.value === value));
+  }
+
+  function renderPendingPhotoPreview() {
+    const preview = document.getElementById('recordPhotoPreview');
+    const removeButton = document.getElementById('recordPhotoRemoveBtn');
+    if (!preview || !removeButton) return;
+    if (pendingMealPhoto) {
+      preview.innerHTML = `<img src="${pendingMealPhoto}" alt="선택한 음식 사진 미리보기">`;
+      preview.hidden = false;
+      removeButton.hidden = false;
+    } else {
+      preview.hidden = true;
+      preview.innerHTML = '';
+      removeButton.hidden = true;
+    }
+  }
+
+  function removePendingMealPhoto() {
     pendingMealPhoto = '';
+    const input = document.getElementById('recordPhoto');
+    if (input) input.value = '';
+    renderPendingPhotoPreview();
+    showToast('기록에서 사진을 제외했어요');
+  }
+
+  function openRecordModal(menu = currentMenu, direct = false, recordId = '') {
+    const existing = recordId ? diary.find(item => item.id === recordId) : null;
+    editingRecordId = existing?.id || '';
+    recordMenuSelection = existing?.menu || menu || null;
+    selectedMealTime = existing?.time || answers?.contextTime || answers?.time || getCurrentMealTime();
+    selectedSatisfaction = existing?.satisfaction || '';
+    selectedEatAgain = existing?.eatAgain || '';
+    pendingMealPhoto = existing?.photoDataUrl || '';
     recordSaving = false;
 
     const modal = document.getElementById('recordModal');
     const menuInput = document.getElementById('recordMenuName');
+    document.getElementById('recordModalTitle').textContent = existing ? '식사 기록 수정' : '식사 기록';
     menuInput.value = recordMenuSelection?.name || '';
     document.getElementById('recordModalDish').innerHTML = recordMenuSelection
-      ? `<strong>${escapeHtml(recordMenuSelection.name)}</strong>을(를) 실제로 먹은 기록을 남겨주세요.`
+      ? `<strong>${escapeHtml(recordMenuSelection.name)}</strong> 식사 경험을 ${existing ? '수정합니다.' : '기록합니다.'}`
       : '먹은 음식을 검색하거나 이름을 직접 입력해 주세요.';
-    document.getElementById('recordDateTime').value = toLocalDateTimeInputValue(new Date());
-    document.getElementById('recordMethod').value = defaultRecordMethod(recordMenuSelection);
-    document.getElementById('recordAmount').value = '';
-    document.getElementById('recordMemo').value = '';
+    document.getElementById('recordDateTime').value = toLocalDateTimeInputValue(existing ? new Date(existing.dateTime) : new Date());
+    document.getElementById('recordMethod').value = existing?.method || defaultRecordMethod(recordMenuSelection);
+    document.getElementById('recordAmount').value = existing?.amount ?? '';
+    document.getElementById('recordMemo').value = existing?.memo || '';
     document.getElementById('recordPhoto').value = '';
-    document.getElementById('recordPhotoPreview').hidden = true;
-    document.getElementById('recordPhotoPreview').innerHTML = '';
     resetSegmentedInput('recordSatisfaction');
     resetSegmentedInput('recordEatAgain');
+    setSegmentedValue('recordSatisfaction', selectedSatisfaction);
+    setSegmentedValue('recordEatAgain', selectedEatAgain);
     document.querySelectorAll('.meal-time-btn').forEach(button => button.classList.toggle('selected', button.dataset.time === selectedMealTime));
+    renderPendingPhotoPreview();
     const submitButton = document.getElementById('recordSubmitBtn');
     submitButton.disabled = false;
-    submitButton.textContent = '기록하기';
+    submitButton.textContent = existing ? '수정 저장' : '기록하기';
     renderRecordMenuSuggestions(menuInput.value);
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
     if (direct) setTimeout(() => menuInput.focus(), 80);
   }
 
+  function editMealRecord(recordId) {
+    const record = diary.find(item => item.id === recordId);
+    if (!record) {
+      recordClientError('DIARY_EDIT_404', new Error('record_not_found'), { recordId });
+      showToast('수정할 기록을 찾지 못했어요');
+      return;
+    }
+    openRecordModal(record.menu, false, recordId);
+  }
+
   function closeRecordModal() {
     const modal = document.getElementById('recordModal');
     modal.classList.remove('show');
     modal.setAttribute('aria-hidden', 'true');
+    editingRecordId = '';
+    recordSaving = false;
   }
 
   document.querySelectorAll('.meal-time-btn').forEach(button => {
@@ -3758,7 +3899,7 @@
 
   async function compressMealPhoto(file) {
     if (!file || !file.type.startsWith('image/')) return '';
-    if (file.size > 12 * 1024 * 1024) throw new Error('사진은 12MB 이하만 선택할 수 있어요.');
+    if (file.size > 15 * 1024 * 1024) throw new Error('사진은 15MB 이하만 선택할 수 있어요.');
     const dataUrl = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
@@ -3771,37 +3912,46 @@
       img.onerror = () => reject(new Error('사진 형식을 처리하지 못했습니다.'));
       img.src = dataUrl;
     });
-    const maxSide = 960;
-    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(image.width * scale));
-    canvas.height = Math.max(1, Math.round(image.height * scale));
-    const context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    let compressed = canvas.toDataURL('image/jpeg', 0.72);
-    if (compressed.length > 480_000) compressed = canvas.toDataURL('image/jpeg', 0.55);
-    if (compressed.length > 650_000) throw new Error('사진을 충분히 줄이지 못했습니다. 다른 사진을 선택해 주세요.');
+
+    const maxSide = 1280;
+    let scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    let quality = 0.82;
+    let compressed = '';
+    const targetLength = 520_000;
+    for (let attempt = 0; attempt < 9; attempt += 1) {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext('2d', { alpha:false });
+      if (!context) throw new Error('사진 압축 기능을 사용할 수 없습니다.');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const webp = canvas.toDataURL('image/webp', quality);
+      compressed = webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', quality);
+      if (compressed.length <= targetLength) break;
+      if (quality > 0.48) quality -= 0.1;
+      else scale *= 0.86;
+    }
+    if (compressed.length > 650_000) throw new Error('사진 용량을 충분히 줄이지 못했습니다. 다른 사진을 선택해 주세요.');
     return compressed;
   }
 
   document.getElementById('recordPhoto').addEventListener('change', async event => {
     const file = event.target.files?.[0];
-    const preview = document.getElementById('recordPhotoPreview');
     if (!file) {
       pendingMealPhoto = '';
-      preview.hidden = true;
-      preview.innerHTML = '';
+      renderPendingPhotoPreview();
       return;
     }
     try {
       pendingMealPhoto = await compressMealPhoto(file);
-      preview.innerHTML = `<img src="${pendingMealPhoto}" alt="선택한 음식 사진 미리보기">`;
-      preview.hidden = false;
+      renderPendingPhotoPreview();
     } catch (error) {
       pendingMealPhoto = '';
       event.target.value = '';
-      preview.hidden = true;
-      preview.innerHTML = '';
+      renderPendingPhotoPreview();
+      recordClientError('PHOTO_PROCESS_001', error, { fileType:file.type, fileSize:file.size });
       showToast(error.message || '사진을 처리하지 못했습니다');
     }
   });
@@ -3833,8 +3983,11 @@
     submitButton.disabled = true;
     submitButton.textContent = '저장 중…';
 
+    const existingIndex = editingRecordId ? diary.findIndex(item => item.id === editingRecordId) : -1;
+    const existing = existingIndex >= 0 ? diary[existingIndex] : null;
+    const previousDiary = diary.slice();
     const record = {
-      id: makeId('meal'),
+      id: existing?.id || makeId('meal'),
       date: dateTime.toDateString(),
       dateTime: dateTime.toISOString(),
       time: selectedMealTime,
@@ -3845,23 +3998,25 @@
       memo: document.getElementById('recordMemo').value.trim().slice(0, 300),
       photoDataUrl: pendingMealPhoto,
       menu: selectedMenu,
-      createdAt: new Date().toISOString(),
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      updatedAt: existing ? new Date().toISOString() : ''
     };
 
-    diary.unshift(record);
+    if (existingIndex >= 0) diary.splice(existingIndex, 1, record);
+    else diary.unshift(record);
     diary.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     const saved = saveDiary();
     if (!saved) {
-      diary = diary.filter(item => item.id !== record.id);
+      diary = previousDiary;
       recordSaving = false;
       submitButton.disabled = false;
-      submitButton.textContent = '다시 저장';
+      submitButton.textContent = existing ? '다시 수정 저장' : '다시 저장';
       showToast('기록을 저장하지 못했습니다. 입력 내용은 화면에 남아 있어요.');
       return;
     }
 
     const knownMenu = findMenuByName(selectedMenu.name);
-    if (knownMenu && decidedMenuName !== knownMenu.name) {
+    if (!existing && knownMenu && decidedMenuName !== knownMenu.name) {
       recordMenuFeedback(knownMenu, 'accept', selectedMealTime);
       decidedMenuName = knownMenu.name;
     }
@@ -3870,7 +4025,7 @@
     renderToday();
     renderDiary();
     renderProfile();
-    trackEvent('meal_record_created', {
+    trackEvent(existing ? 'meal_record_updated' : 'meal_record_created', {
       menuId: selectedMenu.id || selectedMenu.name,
       customMenu: Boolean(selectedMenu.isCustomDiaryMenu),
       mealTime: selectedMealTime,
@@ -3881,10 +4036,10 @@
       hasPhoto: Boolean(record.photoDataUrl),
       hasMemo: Boolean(record.memo),
     });
-    showToast(`'${selectedMenu.name}' 식사 기록을 저장했어요`);
+    showToast(existing ? `'${selectedMenu.name}' 기록을 수정했어요` : `'${selectedMenu.name}' 식사 기록을 저장했어요`);
     recordSaving = false;
 
-    if (!personalProfile.onboardingDone && diary.length === 1) {
+    if (!existing && !personalProfile.onboardingDone && diary.length === 1) {
       setTimeout(() => showToast('내 입맛에서 선호 음식과 제외 재료를 설정할 수 있어요'), 900);
     }
   }
@@ -3962,6 +4117,59 @@
     switchPanel('recipe');
   }
 
+  function readRecentStringList(storageKey) {
+    try {
+      const rows = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      return Array.isArray(rows) ? rows.filter(Boolean).map(String) : [];
+    } catch (_) { return []; }
+  }
+
+  function writeRecentStringList(storageKey, rows, limit = 10) {
+    try { localStorage.setItem(storageKey, JSON.stringify([...new Set(rows.filter(Boolean))].slice(0, limit))); }
+    catch (error) { recordClientError('STORAGE_RECENT_001', error, { storageKey }); }
+  }
+
+  function rememberExplorerSearch(value) {
+    const query = String(value || '').trim();
+    if (query.length < 2) return;
+    const rows = readRecentStringList(STORAGE.recentSearches).filter(item => item !== query);
+    writeRecentStringList(STORAGE.recentSearches, [query, ...rows], 8);
+    renderExplorerHistorySection();
+  }
+
+  function rememberViewedMenu(menuName) {
+    const name = String(menuName || '').trim();
+    if (!name) return;
+    const rows = readRecentStringList(STORAGE.recentViewed).filter(item => item !== name);
+    writeRecentStringList(STORAGE.recentViewed, [name, ...rows], 10);
+    if (document.body.dataset.panel === 'favorites') renderExplorerResults();
+  }
+
+  function clearExplorerHistory(kind = 'all') {
+    if (kind === 'search' || kind === 'all') localStorage.removeItem(STORAGE.recentSearches);
+    if (kind === 'viewed' || kind === 'all') localStorage.removeItem(STORAGE.recentViewed);
+    renderExplorerHistorySection();
+    renderExplorerResults();
+    showToast('탐색 기록을 삭제했어요');
+  }
+
+  function applyRecentExplorerSearch(value) {
+    explorerQuery = String(value || '');
+    const input = document.getElementById('menuExplorerSearch');
+    if (input) input.value = explorerQuery;
+    renderExplorerResults();
+    rememberExplorerSearch(explorerQuery);
+  }
+
+  function renderExplorerHistorySection() {
+    const box = document.getElementById('explorerHistorySection');
+    if (!box) return;
+    const recent = readRecentStringList(STORAGE.recentSearches);
+    box.innerHTML = recent.length ? `
+      <div class="explorer-history-head"><strong>최근 검색</strong><button type="button" onclick="clearExplorerHistory('search')">삭제</button></div>
+      <div class="explorer-history-chips">${recent.map(query => `<button type="button" onclick="applyRecentExplorerSearch('${escapeJsString(query)}')">${escapeHtml(query)}</button>`).join('')}</div>` : '';
+  }
+
   let explorerQuery = '';
   let explorerCuisine = '전체';
   let explorerInputComposing = false;
@@ -4011,6 +4219,14 @@
         composing: event.isComposing === true
       });
     });
+
+    input.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.isComposing) return;
+      event.preventDefault();
+      rememberExplorerSearch(input.value);
+      input.blur();
+    });
+    input.addEventListener('blur', () => rememberExplorerSearch(input.value));
   }
 
   function toggleFavoriteByName(menuName, event) {
@@ -4027,6 +4243,7 @@
     if (!menu) return;
     currentMenu = menu;
     answers = {};
+    rememberViewedMenu(menu.name);
     showResultForMenu(menu);
     trackEvent('menu_explorer_opened', { menuId: menu.id || menu.name, menuType: menu.type });
   }
@@ -4091,11 +4308,16 @@
     const favoriteMenus = normalizedFavoriteMenuNames()
       .map(menuName => findMenuByName(menuName))
       .filter(Boolean);
+    const recentViewedMenus = readRecentStringList(STORAGE.recentViewed)
+      .map(menuName => findMenuByName(menuName))
+      .filter(Boolean)
+      .slice(0, 8);
 
     resultSection.innerHTML = `
       <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
       <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
-      ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}`;
+      ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
+      ${recentViewedMenus.length ? `<div class="explorer-recent-viewed"><div class="explorer-section-head"><strong>최근 본 음식</strong><button type="button" onclick="clearExplorerHistory('viewed')">삭제</button></div><div class="explorer-menu-list compact">${recentViewedMenus.map(renderExplorerMenuCard).join('')}</div></div>` : ''}`;
 
     favoriteSection.innerHTML = `
       <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
@@ -4133,13 +4355,15 @@
       c.innerHTML = `
         <section class="menu-explorer-search">
           <label for="menuExplorerSearch">음식 검색</label>
-          <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" autocomplete="off" enterkeyhint="search">
+          <div class="explorer-search-row"><input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" autocomplete="off" enterkeyhint="search"><button type="button" onclick="rememberExplorerSearch(document.getElementById('menuExplorerSearch').value)">검색</button></div>
           <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" data-explorer-cuisine="${type}" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
+          <div id="explorerHistorySection" class="explorer-history-section"></div>
         </section>
         <section class="explorer-results-section" id="explorerResultsSection"></section>
         <section class="explorer-favorites-section" id="explorerFavoritesSection"></section>`;
 
       bindExplorerSearchInput();
+      renderExplorerHistorySection();
       updateExplorerCuisineButtons();
       renderExplorerResults();
       return true;
@@ -4271,7 +4495,10 @@
     if (name === 'recipe') renderRecipe();
     if (name === 'nearby') renderNearby();
     if (name === 'favorites') renderFavorites();
-    if (name === 'profile') renderProfile();
+    if (name === 'profile') {
+      renderProfile();
+      checkApiHealth().catch(() => {});
+    }
     if (name === 'debug') renderRecommendationTest();
     if (name === 'recipeqa') renderRecipeQA();
     if (name === 'diary') {
@@ -6116,18 +6343,27 @@
 
   // ─── Beta feedback, privacy and consent ───
   let lastClientError = null;
-  window.addEventListener('error', event => {
+
+  function recordClientError(code, error, context = {}) {
+    const normalizedCode = String(code || 'CLIENT_UNKNOWN').slice(0, 64);
     lastClientError = {
-      message: String(event.message || 'client_error').slice(0, 240),
-      source: String(event.filename || '').split('/').pop().slice(0, 100),
-      line: Number(event.lineno || 0),
-      occurredAt: new Date().toISOString(),
+      code: normalizedCode,
+      message: String(error?.message || error || 'unknown_error').slice(0, 240),
+      context: sanitizeAnalyticsProperties(context),
+      occurredAt: new Date().toISOString()
     };
-    trackEvent('client_error', { errorCode: 'window_error', source: lastClientError.source, line: lastClientError.line });
+    trackEvent('client_error', { errorCode: normalizedCode, ...sanitizeAnalyticsProperties(context) });
+    return lastClientError;
+  }
+
+  window.addEventListener('error', event => {
+    recordClientError('UI_RUNTIME_001', event.error || new Error(event.message || 'client_error'), {
+      source:String(event.filename || '').split('/').pop().slice(0,100),
+      line:Number(event.lineno || 0)
+    });
   });
   window.addEventListener('unhandledrejection', event => {
-    lastClientError = { message: String(event.reason?.message || event.reason || 'promise_rejection').slice(0, 240), occurredAt: new Date().toISOString() };
-    trackEvent('client_error', { errorCode: 'unhandled_rejection' });
+    recordClientError('ASYNC_001', event.reason || new Error('promise_rejection'));
   });
 
   function activePanelName() {
@@ -6213,6 +6449,7 @@
         menuName: currentMenu?.name || '',
         recommendationConditions: sanitizeAnalyticsProperties(answers || {}),
         lastError: lastClientError,
+        requestedDeletion: feedback.type === 'privacy_deletion',
         userAgentFamily: /Android/i.test(navigator.userAgent) ? 'android' : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'web',
       } : null,
     };
@@ -6277,6 +6514,8 @@
       favorites,
       mealRecords: serializeDiaryRecords(diary),
       rejectionReasons: (() => { try { return JSON.parse(localStorage.getItem(STORAGE.rejectReasons) || '[]'); } catch (_) { return []; } })(),
+      recentSearches: readRecentStringList(STORAGE.recentSearches),
+      recentViewedMenus: readRecentStringList(STORAGE.recentViewed),
       analyticsConsent: getAnalyticsConsent() === true,
     };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -6294,10 +6533,12 @@
   window.addEventListener('online', () => {
     syncAnalyticsEvents();
     syncFeedbackQueue();
+    checkApiHealth().catch(() => {});
   });
 
   // ─── Init ───
   async function initApp() {
+    loadCachedApiHealth();
     await loadAppData();
     sanitizeMenuDatabase();
     normalizeCuisineCategories();
@@ -6327,6 +6568,7 @@
       syncAnalyticsEvents();
     }
     syncFeedbackQueue();
+    checkApiHealth().catch(() => {});
   }
 
   initApp().then(() => {

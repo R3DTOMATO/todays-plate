@@ -17,7 +17,7 @@ assert(app.includes("rejectTerms: ['브런치', '카페', '커피', '디저트'"
 assert(app.includes("if (!profile.allowCafe && (/카페|커피|디저트|베이커리|제과/.test(text) || place.category_group_code === 'CE7')) return true;"), '일반 식사 메뉴의 카페 제외 규칙 누락');
 assert(app.includes("return '메뉴 검색 후보';"), '미확인 장소 라벨 누락');
 assert(!app.slice(app.lastIndexOf('// ─── v4.6')).includes("return '추천도 높음'"), 'v4.6에서 추천도 높음 표현이 남아 있음');
-assert(/app\.js\?v=4\.(?:6|7|8)(?:\.\d+)?/.test(index), 'app.js 캐시 버전 누락');
+assert(/app\.js\?v=4\.(?:6|7|8|9)(?:\.\d+)?/.test(index), 'app.js 캐시 버전 누락');
 assert(JSON.stringify(firebase).includes('no-store'), 'Firebase HTML/JS 캐시 방지 설정 누락');
 
 if (failures.length) {

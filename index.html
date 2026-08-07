@@ -391,9 +391,10 @@
     </label>
 
     <label class="form-field photo-field">
-      <span>음식 사진 <small>선택 · 기기 안에 압축 저장</small></span>
+      <span>음식 사진 <small>선택 · 최대 15MB, 1280px 이하로 압축</small></span>
       <input id="recordPhoto" type="file" accept="image/*">
       <div id="recordPhotoPreview" class="photo-preview" hidden></div>
+      <button id="recordPhotoRemoveBtn" class="photo-remove-btn" type="button" onclick="removePendingMealPhoto()" hidden>사진 제거</button>
     </label>
 
     <p class="form-notice">사진과 메모는 현재 기기에만 저장됩니다. 분석 이벤트에는 사진·메모 원문을 전송하지 않습니다.</p>
@@ -447,6 +448,7 @@
         <option value="hours_incorrect">영업시간이 틀림</option>
         <option value="feature_broken">기능이 작동하지 않음</option>
         <option value="usage_unclear">사용 방법이 이해되지 않음</option>
+        <option value="privacy_deletion">개인정보 삭제 요청</option>
         <option value="other">기타 의견</option>
       </select>
     </label>
@@ -473,19 +475,24 @@
     <div class="modal-title" id="privacyModalTitle">개인정보 및 분석 설정</div>
     <div class="privacy-copy">
       <section>
-        <h3>비회원 데이터</h3>
-        <p>추천 기록, 찜, 식사 기록과 입맛 정보는 우선 현재 기기에 저장됩니다. 로그인 기능이 연결되기 전에는 다른 기기로 자동 동기화되지 않습니다.</p>
+        <h3>기기에만 저장되는 정보</h3>
+        <p>찜, 입맛 설정, 식사 기록, 음식 사진과 메모는 현재 브라우저에 저장됩니다. 사진은 최대 1280px로 압축되며 서버에 업로드하지 않습니다. 브라우저 데이터나 앱 저장 공간을 삭제하면 복구되지 않을 수 있으므로 필요한 경우 데이터 파일을 내려받아 보관하세요.</p>
       </section>
       <section>
         <h3>위치 정보</h3>
-        <p>주변 식당 찾기를 실행할 때만 현재 위치를 요청합니다. 식당 검색 요청 처리에 사용하며 지속적으로 추적하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
+        <p>주변 식당 찾기를 누른 시점에만 위치를 요청합니다. 좌표는 Railway 서버를 거쳐 Kakao 장소 검색에 일시적으로 사용되며 이벤트 파일에는 저장하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
       </section>
       <section>
-        <h3>베타 분석 데이터</h3>
-        <p>앱 실행, 추천 단계, 메뉴 선택·거절, 식당·레시피 이용, 식사 기록과 오류 여부를 익명 사용자 ID와 함께 기록할 수 있습니다. 이름, 연락처, 정밀 위치, 사진, 메모 원문은 분석 데이터에 넣지 않습니다.</p>
+        <h3>서버로 전송되는 정보</h3>
+        <p>분석에 동의한 경우 익명 사용자 ID, 세션 ID, 추천 단계, 선택·거절, 기능 이용과 오류 코드가 전송됩니다. 의견 보내기에서는 사용자가 입력한 내용과 선택적으로 입력한 연락처가 전송됩니다. 정밀 위치, 음식 사진, 식사 메모 원문은 분석 이벤트에 포함하지 않습니다.</p>
+      </section>
+      <section>
+        <h3>보관과 삭제</h3>
+        <p>베타 이벤트와 피드백은 운영 서버에서 원칙적으로 90일 동안 보관합니다. 분석 동의는 언제든 끌 수 있고, 기기 데이터는 ‘모든 앱 데이터 초기화’로 삭제할 수 있습니다. 서버 데이터 삭제 요청은 아래 버튼으로 접수하세요.</p>
       </section>
       <label class="consent-switch"><span><strong>선택 분석 데이터 수집</strong><small>추천 품질과 오류 개선에 사용</small></span><input id="analyticsConsentToggle" type="checkbox" onchange="setAnalyticsConsent(this.checked)"></label>
       <button class="profile-utility-btn full" type="button" onclick="downloadLocalData()">내 데이터 파일로 저장</button>
+      <button class="profile-utility-btn full" type="button" onclick="closePrivacyModal(); openFeedbackModal('privacy_deletion')">서버 데이터 삭제 요청</button>
     </div>
     <div class="modal-actions">
       <button class="btn-confirm" type="button" onclick="closePrivacyModal()">확인</button>
@@ -502,6 +509,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=4.8.4" defer></script>
+<script src="./js/app.js?v=4.9.0" defer></script>
 </body>
 </html>

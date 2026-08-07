@@ -1,0 +1,1552 @@
+--- a/.env.example
++++ b/.env.example
+@@ -4,3 +4,5 @@
+ ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
+ DATA_DIR=server/data
+ RATE_LIMIT_PER_MINUTE=120
++DATA_RETENTION_DAYS=90
++# BACKUP_DIR=/app/server/data/backups
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,16 @@
+-# 오늘의 식탁 · 한국 친구 베타 v4.8.4
++# 오늘의 식탁 · 한국 친구 베타 v4.9.0
++
++## v4.9.0 와디즈 전 안정화
++
++- 식사 기록 수정·삭제 및 사진 개별 제거
++- 1280px/약 400KB 목표의 반복 사진 압축과 저장 실패 보호
++- 음식 탐색 최근 검색·최근 본 음식
++- 추천 이유 최대 3개로 단순화
++- 앱 버전, 메뉴 데이터, 네트워크, API/Kakao 연결 상태와 오류 코드 표시
++- Firebase 공개 파일 범위 축소 및 CSP/HSTS/프레임 차단 헤더 추가
++- 서버 이벤트 중복 방지, 월별 JSONL 저장, 90일 보존, 백업 스크립트
++- 개인정보 안내를 실제 로컬/서버 저장 방식과 일치하도록 수정
++
+ 
+ 
+ ## v4.8.4 한글 검색 입력 및 주변 검색 카드 수정
+--- a/css/app.css
++++ b/css/app.css
+@@ -4132,3 +4132,32 @@
+ .nearby-search-card .manual-location-help {
+   color: var(--text-secondary);
+ }
++
++
++/* v4.9 — release hardening, record editing, explorer history and app status */
++.diary-record-actions { display:flex; flex-direction:column; gap:6px; align-self:center; }
++.diary-record-edit,
++.diary-record-delete { min-width:48px; min-height:34px; padding:6px 9px; border:1px solid var(--border-subtle); border-radius:10px; background:#fff; color:var(--text-secondary); font:700 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
++.diary-record-edit { color:#3f596f; background:#f7fafc; }
++.diary-record-delete { color:#a14538; background:#fff8f6; }
++.photo-remove-btn { margin-top:8px; min-height:36px; padding:7px 12px; border:1px solid #ffd2c7; border-radius:10px; background:#fff8f6; color:#a14538; font:700 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
++.explorer-search-row { display:grid; grid-template-columns:minmax(0,1fr) 60px; gap:8px; }
++.explorer-search-row > button { border:0; border-radius:12px; background:var(--text-primary); color:#fff; font:750 11px 'Noto Sans KR',sans-serif; cursor:pointer; }
++.explorer-history-section { margin-top:10px; }
++.explorer-history-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
++.explorer-history-head strong { font:750 10px 'Noto Sans KR',sans-serif; color:var(--text-secondary); }
++.explorer-history-head button,
++.explorer-recent-viewed .explorer-section-head button { border:0; background:transparent; color:var(--text-secondary); font:650 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
++.explorer-history-chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
++.explorer-history-chips button { flex:0 0 auto; min-height:32px; padding:6px 10px; border:1px solid var(--border-subtle); border-radius:999px; background:#fff; color:var(--text-secondary); font:650 10px 'Noto Sans KR',sans-serif; cursor:pointer; }
++.explorer-recent-viewed { margin-top:22px; padding-top:18px; border-top:1px solid var(--border-subtle); }
++.explorer-menu-list.compact .explorer-menu-card:nth-child(n+5) { display:none; }
++.app-status-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
++.app-status-grid > div { padding:10px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-soft); }
++.app-status-grid span { display:block; margin-bottom:4px; color:var(--text-secondary); font:650 9px 'Noto Sans KR',sans-serif; }
++.app-status-grid strong { font:750 11px/1.4 'Noto Sans KR',sans-serif; overflow-wrap:anywhere; }
++.status-ok { color:#1d7a50; } .status-error { color:#a14538; } .status-checking { color:#8f6420; }
++.last-error-box { display:grid; gap:3px; margin-top:10px; padding:10px; border:1px solid #ffd7cf; border-radius:12px; background:#fff8f6; }
++.last-error-box span { color:var(--text-secondary); font-size:9px; } .last-error-box strong { color:#a14538; font:800 11px 'JetBrains Mono',monospace; } .last-error-box small { color:var(--text-secondary); font:500 9px/1.4 'Noto Sans KR',sans-serif; }
++.app-health-refresh { margin-top:10px; }
++@media (max-width:520px) { .app-status-grid { grid-template-columns:1fr; } .diary-record-actions { flex-direction:row; grid-column:2 / -1; justify-self:end; } }
+--- a/docs/deployment-firebase-railway.md
++++ b/docs/deployment-firebase-railway.md
+@@ -62,3 +62,22 @@
+ 4. `/api/events` 수집
+ 5. 피드백 제출
+ 6. Railway 재배포 후 Volume 데이터 유지 여부
++
++## v4.9 데이터 운영
++
++Railway Variables에 다음 값을 추가한다.
++
++```env
++DATA_RETENTION_DAYS=90
++DATA_DIR=/app/server/data
++```
++
++이벤트와 피드백은 각각 `events-YYYY-MM.jsonl`, `feedback-YYYY-MM.jsonl`로 월별 저장된다. 동일한 이벤트 ID와 피드백 ID는 중복 저장하지 않는다. 서버 시작 시 보존 기간이 지난 월별 파일을 정리한다.
++
++수동 백업:
++
++```bash
++npm run backup
++```
++
++백업은 기본적으로 Railway Volume의 `server/data/backups/<timestamp>`에 생성된다. 백업 파일을 같은 Volume에만 보관하면 Volume 장애에는 대응하지 못하므로 정기적으로 외부 저장소로 복사해야 한다.
+--- /dev/null
++++ b/docs/wadiz-v4.9-release-checklist.md
+@@ -0,0 +1,53 @@
++# 오늘의 식탁 v4.9 와디즈 전 출시 체크리스트
++
++## 자동 검사
++
++```bash
++npm run check
++npm run validate:recommendation
++npm run validate:v4.5
++npm run validate:v4.6
++npm run validate:v4.7
++npm run validate:v4.8
++npm run validate:v4.8.1
++npm run validate:v4.8.2
++npm run validate:v4.8.4
++npm run validate:v4.9
++```
++
++## 실기기 P0
++
++Android Chrome, iPhone Safari, 카카오톡 인앱 브라우저에서 각각 아래 흐름을 확인한다.
++
++1. 추천 시작 → 음식 종류 → 욕구 → 예산 → 메뉴 결정
++2. 다른 메뉴 5회 요청 후 같은 음식 계열 반복 여부
++3. 집밥 기준 국가별 대표 음식 확인
++4. 음식 탐색에서 `가츠동`, `김치찌개`, `짜장면`, `샤브샤브` 한글 입력
++5. 메뉴 상세 → 찜 → 레시피 → 주변 식당 → 식사 기록
++6. 기록 사진 첨부 → 저장 → 수정 → 사진 제거 → 삭제
++7. 위치 허용, 위치 거부, 지역 직접 입력
++8. 오프라인 전환 후 기록과 피드백 보관
++9. 앱 종료 후 다시 열었을 때 기록·찜·최근 검색 복원
++10. 내 입맛에서 버전·API·Kakao 연결 상태 확인
++
++## 주변 식당 검증
++
++김치찌개, 라조기, 가츠동, 바베큐 립, 파스타, 쌀국수, 초밥, 샤브샤브를 서로 다른 3개 지역에서 확인한다.
++
++- 정확 메뉴 검색 결과와 전문점 후보가 구분되는가
++- 카페·커피 전문점 등 무관 업종이 제외되는가
++- 메뉴를 다른 음식으로 임의 치환하지 않는가
++- 3km, 7km, 12km, 20km 확장이 정상인가
++- 결과가 없을 때 판매 여부를 단정하지 않는가
++
++## 출시 중단 조건
++
++아래 중 하나라도 발생하면 와디즈 공개를 중단한다.
++
++- 빈 화면 또는 탭 무반응
++- 알레르기·제외 재료 위반
++- 선택한 음식 종류와 다른 종류 추천
++- 기록 저장·수정 후 데이터 유실
++- 사진 때문에 전체 기록 저장 실패
++- 주변 식당 검색에서 명백히 무관한 업종 반복 노출
++- API 키 또는 `.env`가 저장소에 노출
+--- a/firebase.json
++++ b/firebase.json
+@@ -12,7 +12,13 @@
+       "package-lock.json",
+       "railway.json",
+       "README.md",
+-      "*.zip"
++      "*.zip",
++      "scripts/**",
++      "tests/**",
++      "server/data/**",
++      "server/backups/**",
++      "*.patch",
++      "*.txt"
+     ],
+     "headers": [
+       {
+@@ -56,6 +62,18 @@
+           {
+             "key": "Permissions-Policy",
+             "value": "camera=(self), geolocation=(self), microphone=()"
++          },
++          {
++            "key": "Content-Security-Policy",
++            "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
++          },
++          {
++            "key": "Strict-Transport-Security",
++            "value": "max-age=31536000; includeSubDomains"
++          },
++          {
++            "key": "X-Frame-Options",
++            "value": "DENY"
+           }
+         ]
+       }
+--- a/index.html
++++ b/index.html
+@@ -391,9 +391,10 @@
+     </label>
+ 
+     <label class="form-field photo-field">
+-      <span>음식 사진 <small>선택 · 기기 안에 압축 저장</small></span>
++      <span>음식 사진 <small>선택 · 최대 15MB, 1280px 이하로 압축</small></span>
+       <input id="recordPhoto" type="file" accept="image/*">
+       <div id="recordPhotoPreview" class="photo-preview" hidden></div>
++      <button id="recordPhotoRemoveBtn" class="photo-remove-btn" type="button" onclick="removePendingMealPhoto()" hidden>사진 제거</button>
+     </label>
+ 
+     <p class="form-notice">사진과 메모는 현재 기기에만 저장됩니다. 분석 이벤트에는 사진·메모 원문을 전송하지 않습니다.</p>
+@@ -447,6 +448,7 @@
+         <option value="hours_incorrect">영업시간이 틀림</option>
+         <option value="feature_broken">기능이 작동하지 않음</option>
+         <option value="usage_unclear">사용 방법이 이해되지 않음</option>
++        <option value="privacy_deletion">개인정보 삭제 요청</option>
+         <option value="other">기타 의견</option>
+       </select>
+     </label>
+@@ -473,19 +475,24 @@
+     <div class="modal-title" id="privacyModalTitle">개인정보 및 분석 설정</div>
+     <div class="privacy-copy">
+       <section>
+-        <h3>비회원 데이터</h3>
+-        <p>추천 기록, 찜, 식사 기록과 입맛 정보는 우선 현재 기기에 저장됩니다. 로그인 기능이 연결되기 전에는 다른 기기로 자동 동기화되지 않습니다.</p>
++        <h3>기기에만 저장되는 정보</h3>
++        <p>찜, 입맛 설정, 식사 기록, 음식 사진과 메모는 현재 브라우저에 저장됩니다. 사진은 최대 1280px로 압축되며 서버에 업로드하지 않습니다. 브라우저 데이터나 앱 저장 공간을 삭제하면 복구되지 않을 수 있으므로 필요한 경우 데이터 파일을 내려받아 보관하세요.</p>
+       </section>
+       <section>
+         <h3>위치 정보</h3>
+-        <p>주변 식당 찾기를 실행할 때만 현재 위치를 요청합니다. 식당 검색 요청 처리에 사용하며 지속적으로 추적하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
++        <p>주변 식당 찾기를 누른 시점에만 위치를 요청합니다. 좌표는 Railway 서버를 거쳐 Kakao 장소 검색에 일시적으로 사용되며 이벤트 파일에는 저장하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
+       </section>
+       <section>
+-        <h3>베타 분석 데이터</h3>
+-        <p>앱 실행, 추천 단계, 메뉴 선택·거절, 식당·레시피 이용, 식사 기록과 오류 여부를 익명 사용자 ID와 함께 기록할 수 있습니다. 이름, 연락처, 정밀 위치, 사진, 메모 원문은 분석 데이터에 넣지 않습니다.</p>
++        <h3>서버로 전송되는 정보</h3>
++        <p>분석에 동의한 경우 익명 사용자 ID, 세션 ID, 추천 단계, 선택·거절, 기능 이용과 오류 코드가 전송됩니다. 의견 보내기에서는 사용자가 입력한 내용과 선택적으로 입력한 연락처가 전송됩니다. 정밀 위치, 음식 사진, 식사 메모 원문은 분석 이벤트에 포함하지 않습니다.</p>
++      </section>
++      <section>
++        <h3>보관과 삭제</h3>
++        <p>베타 이벤트와 피드백은 운영 서버에서 원칙적으로 90일 동안 보관합니다. 분석 동의는 언제든 끌 수 있고, 기기 데이터는 ‘모든 앱 데이터 초기화’로 삭제할 수 있습니다. 서버 데이터 삭제 요청은 아래 버튼으로 접수하세요.</p>
+       </section>
+       <label class="consent-switch"><span><strong>선택 분석 데이터 수집</strong><small>추천 품질과 오류 개선에 사용</small></span><input id="analyticsConsentToggle" type="checkbox" onchange="setAnalyticsConsent(this.checked)"></label>
+       <button class="profile-utility-btn full" type="button" onclick="downloadLocalData()">내 데이터 파일로 저장</button>
++      <button class="profile-utility-btn full" type="button" onclick="closePrivacyModal(); openFeedbackModal('privacy_deletion')">서버 데이터 삭제 요청</button>
+     </div>
+     <div class="modal-actions">
+       <button class="btn-confirm" type="button" onclick="closePrivacyModal()">확인</button>
+@@ -502,6 +509,6 @@
+ <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
+ 
+ <script src="./js/config.js"></script>
+-<script src="./js/app.js?v=4.8.4" defer></script>
++<script src="./js/app.js?v=4.9.0" defer></script>
+ </body>
+ </html>
+--- a/js/app.js
++++ b/js/app.js
+@@ -60,6 +60,7 @@
+   function setCoreDataError(error) {
+     APP_DATA_STATE.core = 'error';
+     APP_DATA_STATE.error = String(error?.message || error || '메뉴 데이터 로드 실패');
++    recordClientError('DATA_MENU_001', error, { area:'core_data' });
+   }
+ 
+   function renderCoreDataError() {
+@@ -851,6 +852,20 @@
+     const homeCuisine = getHomeCuisineType();
+     const useMarketBalance = !hasExplicitCuisinePreference(ans);
+     const topScore = Number(scored[0].score || 0);
++    const matchesNeed = menu => {
++      if (ans.need === 'light') return menu.weight === '가벼움';
++      if (ans.need === 'full') return menu.weight === '든든';
++      if (ans.need === 'hangover') return Boolean(menu.soup) && Number(menu.spicy || 0) <= 1;
++      if (ans.need === 'spicy') return Number(menu.spicy || 0) >= 1;
++      return true;
++    };
++
++    // 사용자가 현재 원하는 상태를 명시했다면 해당 조건을 만족하는 메뉴를 대표 결과로 우선합니다.
++    if (ans.need) {
++      const needMatchedLocal = scored.find(menu => matchesNeed(menu) && (!useMarketBalance || menu.type === homeCuisine));
++      const needMatchedAny = scored.find(matchesNeed);
++      addMenu(needMatchedLocal || needMatchedAny);
++    }
+ 
+     // 명시적 음식 종류가 없을 때는 현지 일상식 2개 + 익숙한 타 문화 메뉴 1개를 기본 구성으로 둡니다.
+     if (useMarketBalance) {
+@@ -1199,7 +1214,9 @@
+ 
+ 
+   // ─── State ───
+-  const APP_VERSION = 'korea-beta-v4.8.4';
++  const APP_VERSION = 'korea-beta-v4.9.0';
++  const APP_RELEASE_DATE = '2026-08-07';
++  const APP_DATA_VERSION = 'menus-197-v4.9';
+   let currentStep = 0;
+   let answers = {};
+   let history = [];
+@@ -1213,8 +1230,20 @@
+   let selectedSatisfaction = '';
+   let selectedEatAgain = '';
+   let recordSaving = false;
++  let editingRecordId = '';
+   let decidedMenuName = '';
++  let explorerSearchCommitTimer = null;
+   const RECENT_EXCLUDE_DAYS = 3;
++  const API_HEALTH_TTL_MS = 5 * 60 * 1000;
++  let apiHealthState = {
++    status: 'idle',
++    checkedAt: '',
++    kakaoConfigured: null,
++    eventCollection: null,
++    feedbackCollection: null,
++    retentionDays: null,
++    errorCode: ''
++  };
+ 
+   // ─── localStorage keys ───
+   const STORAGE = {
+@@ -1232,6 +1261,9 @@
+     recommendationDraft: 'todaysplate_recommendation_draft_v1',
+     rejectReasons: 'todaysplate_reject_reasons_v1',
+     feedbackQueue: 'todaysplate_feedback_queue_v1',
++    recentSearches: 'todaysplate_recent_searches_v1',
++    recentViewed: 'todaysplate_recent_viewed_v1',
++    apiHealth: 'todaysplate_api_health_v1',
+   };
+ 
+   const API_BASE_URL = (() => {
+@@ -1241,6 +1273,63 @@
+     try { return nearby ? new URL(nearby, window.location.href).origin : ''; }
+     catch (_) { return ''; }
+   })();
++
++  function loadCachedApiHealth() {
++    try {
++      const cached = JSON.parse(localStorage.getItem(STORAGE.apiHealth) || 'null');
++      if (cached && typeof cached === 'object') apiHealthState = { ...apiHealthState, ...cached };
++    } catch (_) {}
++  }
++
++  function apiHealthLabel() {
++    const labels = {
++      ok:'정상 연결', checking:'확인 중', error:'연결 실패', not_configured:'서버 주소 미설정', idle:'확인 전'
++    };
++    return labels[apiHealthState.status] || '상태 확인 필요';
++  }
++
++  async function checkApiHealth(force = false) {
++    if (!API_BASE_URL) {
++      apiHealthState = { ...apiHealthState, status:'not_configured', checkedAt:new Date().toISOString(), errorCode:'API_CONFIG_001' };
++      localStorage.setItem(STORAGE.apiHealth, JSON.stringify(apiHealthState));
++      if (document.body.dataset.panel === 'profile') renderProfile();
++      return apiHealthState;
++    }
++    const checkedAt = Date.parse(apiHealthState.checkedAt || 0);
++    if (!force && apiHealthState.status === 'ok' && Date.now() - checkedAt < API_HEALTH_TTL_MS) return apiHealthState;
++
++    apiHealthState = { ...apiHealthState, status:'checking', errorCode:'' };
++    if (document.body.dataset.panel === 'profile') renderProfile();
++    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
++    const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
++    try {
++      const response = await fetch(`${API_BASE_URL}/api/health`, { cache:'no-store', ...(controller ? { signal:controller.signal } : {}) });
++      if (!response.ok) throw new Error(`HTTP ${response.status}`);
++      const payload = await response.json();
++      apiHealthState = {
++        status:'ok',
++        checkedAt:new Date().toISOString(),
++        kakaoConfigured:Boolean(payload.kakaoConfigured),
++        eventCollection:Boolean(payload.eventCollection),
++        feedbackCollection:Boolean(payload.feedbackCollection),
++        retentionDays:Number(payload.retentionDays || 0) || null,
++        errorCode:''
++      };
++    } catch (error) {
++      apiHealthState = {
++        ...apiHealthState,
++        status:'error',
++        checkedAt:new Date().toISOString(),
++        errorCode:'API_HEALTH_001'
++      };
++      recordClientError('API_HEALTH_001', error, { area:'api_health' });
++    } finally {
++      if (timer) clearTimeout(timer);
++      try { localStorage.setItem(STORAGE.apiHealth, JSON.stringify(apiHealthState)); } catch (_) {}
++      if (document.body.dataset.panel === 'profile') renderProfile();
++    }
++    return apiHealthState;
++  }
+ 
+   function makeId(prefix = 'id') {
+     if (window.crypto?.randomUUID) return `${prefix}_${window.crypto.randomUUID()}`;
+@@ -1405,6 +1494,7 @@
+         desc: d.menu.desc || ''
+       } : null,
+       createdAt: d.createdAt || new Date().toISOString(),
++      updatedAt: d.updatedAt || '',
+     }));
+   }
+ 
+@@ -1425,6 +1515,7 @@
+         } catch (_) { /* 다음 오래된 사진 제거 */ }
+       }
+       console.warn('diary save failed', error);
++      recordClientError('STORAGE_DIARY_001', error, { area:'diary_save' });
+       return false;
+     }
+   }
+@@ -1476,6 +1567,7 @@
+           photoDataUrl: String(d.photoDataUrl || ''),
+           menu,
+           createdAt: d.createdAt || d.dateTime || new Date().toISOString(),
++          updatedAt: d.updatedAt || '',
+         };
+       }).filter(Boolean).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+       if (!localStorage.getItem(STORAGE.diary) && normalized.length) {
+@@ -1984,40 +2076,27 @@
+   }
+ 
+   function getRecommendationReasons(menu, ans = {}, candidateCount = null) {
+-    const profile = getMenuProfile(menu);
+-    const stats = personalProfile?.menuStats?.[menu.name] || {};
++    const reasons = [];
+     const mealTime = ans.time || ans.contextTime || getCurrentMealTime();
+-    const timeHit = personalProfile?.timePatterns?.[mealTime]?.[menu.name] || 0;
+-    const recentNames = getRecentMenuNames();
+-    const reasons = [];
+-
+-    if (ans.time && menu.time === ans.time) reasons.push(`${ans.time} 시간대 조건과 맞습니다.`);
+-    else if (!ans.time && menu.time === mealTime) reasons.push(`현재 시간 기준 ${mealTime} 메뉴로 자연스럽습니다.`);
+-    else reasons.push(`시간대는 강제로 제한하지 않고, 선택한 식사 방식과 예산을 우선 반영했습니다.`);
+-
+-    if (ans.type && menu.type === ans.type) reasons.push(`선택한 ${ans.type} 카테고리와 정확히 일치합니다.`);
+-    if (ans.weight && menu.weight === ans.weight) reasons.push(`원한 포만감인 '${ans.weight}' 범주에 맞습니다.`);
+-    if (ans.method && menu.method === ans.method) reasons.push(`오늘의 조리 방식 '${ans.method}'에 맞습니다.`);
+-    if (ans.mode) reasons.push(`${labelForOption(ans.mode)} 상황에서 실행하기 쉬운 메뉴입니다.`);
+-    if (ans.need) reasons.push(`현재 원하는 '${labelForOption(ans.need)}' 조건에 맞습니다.`);
+-    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`평균 가격이 ${budgetLabel(ans.budget)} 범위에 들어옵니다.`);
+-    if (ans.spicy) reasons.push(`맵기 선호를 반영해 ${spiceLabel(menu)} 메뉴를 골랐습니다.`);
+-    if (ans.situation && menuHasSituation(menu, ans.situation)) reasons.push(`오늘 상황 '${labelForOption(ans.situation)}'과 어울리는 메뉴로 판단했습니다.`);
+-    if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에서 선택한 ${menu.type} 범위 안에서 추천했습니다.`);
+-    if (!ans.weight && personalProfile?.defaultWeight && menu.weight === personalProfile.defaultWeight) reasons.push(`평소 선호 포만감 '${personalProfile.defaultWeight}'과 맞습니다.`);
+-    if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 조건을 통과했습니다.`);
+     const restrictions = restrictionSummary();
+-    if (restrictions.length) reasons.push(`제외 조건(${restrictions.slice(0,3).join(', ')}${restrictions.length > 3 ? ' 외' : ''})에 걸리는 메뉴는 후보에서 제외했습니다.`);
+-
+-    if ((stats.likes || 0) > 0) reasons.push(`이전에 긍정 반응을 ${stats.likes}회 남긴 메뉴라 가중치가 붙었습니다.`);
+-    if (timeHit > 0) reasons.push(`${mealTime} 시간대에 비슷한 선택이 ${timeHit}회 있어 패턴 점수를 반영했습니다.`);
+-    if (isFavorited(menu.name)) reasons.push('찜한 메뉴라 선호 점수를 추가했습니다.');
+-    if (recentNames.size > 0) reasons.push(`오늘/어제 먹은 메뉴 ${recentNames.size}개는 자동 제외했습니다.`);
+-    if (profile.situations.includes('시간없을때')) reasons.push('조리 부담이 낮아 빠르게 결정하기 좋습니다.');
+-    if (profile.moods.includes('회복형')) reasons.push('국물감이 있어 컨디션 회복형 식사로 적합합니다.');
+-    if (candidateCount !== null) reasons.push(`전체 ${menus.length}개 메뉴 중 조건을 정확히 만족한 ${candidateCount}개 후보만 비교했습니다.`);
+-
+-    return [...new Set(reasons)].slice(0, 6);
++
++    if (ans.type && menu.type === ans.type) reasons.push(`선택한 ${ans.type} 조건에 맞아요.`);
++    else if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에 저장한 ${menu.type} 범위에서 골랐어요.`);
++    else if (ans.mode === '집밥' && menu.type === getHomeCuisineType()) reasons.push(`${getHomeCountryInfo().label} 기준 집밥으로 익숙한 ${menu.type}이에요.`);
++
++    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`예상 가격이 ${budgetLabel(ans.budget)} 범위에 들어와요.`);
++    else if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 안에서 골랐어요.`);
++
++    if (ans.need) reasons.push(`지금 원하는 ‘${labelForOption(ans.need)}’ 느낌과 맞아요.`);
++    else if (ans.weight && menu.weight === ans.weight) reasons.push(`원한 포만감인 ‘${ans.weight}’에 맞아요.`);
++    else if (ans.time && menu.time === ans.time) reasons.push(`${ans.time}에 어울리는 메뉴예요.`);
++    else if (!ans.time && menu.time === mealTime) reasons.push(`현재 ${mealTime} 시간대에 자연스러운 메뉴예요.`);
++
++    if (restrictions.length && reasons.length < 3) reasons.push('알레르기·제외 재료 조건을 통과한 메뉴예요.');
++    if (getRecentMenuNames().size > 0 && reasons.length < 3) reasons.push('최근 먹은 메뉴와 같은 계열은 제외했어요.');
++    if (candidateCount !== null && reasons.length < 3) reasons.push(`${candidateCount}개 후보 중 조건이 가장 잘 맞았어요.`);
++
++    return [...new Set(reasons)].slice(0, 3);
+   }
+ 
+   function renderRecommendationReasonCard(menu, ans = {}, candidateCount = null) {
+@@ -2172,6 +2251,21 @@
+         `).join('')}</div>` : '<p class="empty-text" style="padding:8px 0; margin:0;">다른 추천을 누르면 거부 신호가 쌓입니다.</p>'}
+       </div>
+ 
++      <div class="profile-section app-status-section">
++        <div class="profile-label">앱 상태</div>
++        <div class="profile-title">버전과 연결 상태</div>
++        <div class="app-status-grid">
++          <div><span>앱 버전</span><strong>${escapeHtml(APP_VERSION.replace('korea-beta-',''))}</strong></div>
++          <div><span>메뉴 데이터</span><strong>${menus.length.toLocaleString()}개 · ${escapeHtml(APP_DATA_VERSION)}</strong></div>
++          <div><span>네트워크</span><strong>${navigator.onLine ? '온라인' : '오프라인'}</strong></div>
++          <div><span>API 서버</span><strong class="status-${escapeHtml(apiHealthState.status)}">${escapeHtml(apiHealthLabel())}</strong></div>
++          <div><span>Kakao 검색</span><strong>${apiHealthState.kakaoConfigured === true ? '설정됨' : apiHealthState.kakaoConfigured === false ? '키 확인 필요' : '확인 전'}</strong></div>
++          <div><span>보조 데이터</span><strong>${escapeHtml(APP_DATA_STATE.supplemental === 'ready' ? '정상' : APP_DATA_STATE.supplemental === 'partial' ? '일부 제한' : '확인 중')}</strong></div>
++        </div>
++        ${lastClientError ? `<div class="last-error-box"><span>최근 오류 코드</span><strong>${escapeHtml(lastClientError.code || 'CLIENT_UNKNOWN')}</strong><small>${escapeHtml(lastClientError.message || '')}</small></div>` : '<p class="form-notice">이 기기에서 기록된 최근 실행 오류가 없습니다.</p>'}
++        <button class="profile-action app-health-refresh" type="button" onclick="checkApiHealth(true)">연결 상태 다시 확인</button>
++      </div>
++
+       <button class="retry-btn danger-soft" onclick="resetPreferenceOnly()">개인화 취향만 초기화</button>
+     `;
+   }
+@@ -2195,6 +2289,7 @@
+   function showResultForMenu(menu) {
+     if (!menu) return;
+     currentMenu = menu;
++    rememberViewedMenu(menu.name);
+     const topEl = document.getElementById('topPick');
+     const score = scoreMenu(menu, answers || {});
+     document.querySelector('.action-grid').style.display = '';
+@@ -3584,7 +3679,10 @@
+           <small>${escapeHtml(satisfactionText)} · ${escapeHtml(againText)}</small>
+           ${record.memo ? `<p class="diary-record-note">${escapeHtml(record.memo)}</p>` : ''}
+         </div>
+-        <button class="diary-record-delete" type="button" onclick="deleteMealRecord('${escapeJsString(record.id)}')">삭제</button>
++        <div class="diary-record-actions">
++          <button class="diary-record-edit" type="button" onclick="editMealRecord('${escapeJsString(record.id)}')">수정</button>
++          <button class="diary-record-delete" type="button" onclick="deleteMealRecord('${escapeJsString(record.id)}')">삭제</button>
++        </div>
+       </article>`;
+   }
+ 
+@@ -3693,43 +3791,86 @@
+     document.querySelectorAll(`#${id} button`).forEach(button => button.classList.remove('selected'));
+   }
+ 
+-  function openRecordModal(menu = currentMenu, direct = false) {
+-    recordMenuSelection = menu || null;
+-    selectedMealTime = answers?.contextTime || answers?.time || getCurrentMealTime();
+-    selectedSatisfaction = '';
+-    selectedEatAgain = '';
++  function setSegmentedValue(id, value) {
++    document.querySelectorAll(`#${id} button`).forEach(button => button.classList.toggle('selected', button.dataset.value === value));
++  }
++
++  function renderPendingPhotoPreview() {
++    const preview = document.getElementById('recordPhotoPreview');
++    const removeButton = document.getElementById('recordPhotoRemoveBtn');
++    if (!preview || !removeButton) return;
++    if (pendingMealPhoto) {
++      preview.innerHTML = `<img src="${pendingMealPhoto}" alt="선택한 음식 사진 미리보기">`;
++      preview.hidden = false;
++      removeButton.hidden = false;
++    } else {
++      preview.hidden = true;
++      preview.innerHTML = '';
++      removeButton.hidden = true;
++    }
++  }
++
++  function removePendingMealPhoto() {
+     pendingMealPhoto = '';
++    const input = document.getElementById('recordPhoto');
++    if (input) input.value = '';
++    renderPendingPhotoPreview();
++    showToast('기록에서 사진을 제외했어요');
++  }
++
++  function openRecordModal(menu = currentMenu, direct = false, recordId = '') {
++    const existing = recordId ? diary.find(item => item.id === recordId) : null;
++    editingRecordId = existing?.id || '';
++    recordMenuSelection = existing?.menu || menu || null;
++    selectedMealTime = existing?.time || answers?.contextTime || answers?.time || getCurrentMealTime();
++    selectedSatisfaction = existing?.satisfaction || '';
++    selectedEatAgain = existing?.eatAgain || '';
++    pendingMealPhoto = existing?.photoDataUrl || '';
+     recordSaving = false;
+ 
+     const modal = document.getElementById('recordModal');
+     const menuInput = document.getElementById('recordMenuName');
++    document.getElementById('recordModalTitle').textContent = existing ? '식사 기록 수정' : '식사 기록';
+     menuInput.value = recordMenuSelection?.name || '';
+     document.getElementById('recordModalDish').innerHTML = recordMenuSelection
+-      ? `<strong>${escapeHtml(recordMenuSelection.name)}</strong>을(를) 실제로 먹은 기록을 남겨주세요.`
++      ? `<strong>${escapeHtml(recordMenuSelection.name)}</strong> 식사 경험을 ${existing ? '수정합니다.' : '기록합니다.'}`
+       : '먹은 음식을 검색하거나 이름을 직접 입력해 주세요.';
+-    document.getElementById('recordDateTime').value = toLocalDateTimeInputValue(new Date());
+-    document.getElementById('recordMethod').value = defaultRecordMethod(recordMenuSelection);
+-    document.getElementById('recordAmount').value = '';
+-    document.getElementById('recordMemo').value = '';
++    document.getElementById('recordDateTime').value = toLocalDateTimeInputValue(existing ? new Date(existing.dateTime) : new Date());
++    document.getElementById('recordMethod').value = existing?.method || defaultRecordMethod(recordMenuSelection);
++    document.getElementById('recordAmount').value = existing?.amount ?? '';
++    document.getElementById('recordMemo').value = existing?.memo || '';
+     document.getElementById('recordPhoto').value = '';
+-    document.getElementById('recordPhotoPreview').hidden = true;
+-    document.getElementById('recordPhotoPreview').innerHTML = '';
+     resetSegmentedInput('recordSatisfaction');
+     resetSegmentedInput('recordEatAgain');
++    setSegmentedValue('recordSatisfaction', selectedSatisfaction);
++    setSegmentedValue('recordEatAgain', selectedEatAgain);
+     document.querySelectorAll('.meal-time-btn').forEach(button => button.classList.toggle('selected', button.dataset.time === selectedMealTime));
++    renderPendingPhotoPreview();
+     const submitButton = document.getElementById('recordSubmitBtn');
+     submitButton.disabled = false;
+-    submitButton.textContent = '기록하기';
++    submitButton.textContent = existing ? '수정 저장' : '기록하기';
+     renderRecordMenuSuggestions(menuInput.value);
+     modal.classList.add('show');
+     modal.setAttribute('aria-hidden', 'false');
+     if (direct) setTimeout(() => menuInput.focus(), 80);
+   }
+ 
++  function editMealRecord(recordId) {
++    const record = diary.find(item => item.id === recordId);
++    if (!record) {
++      recordClientError('DIARY_EDIT_404', new Error('record_not_found'), { recordId });
++      showToast('수정할 기록을 찾지 못했어요');
++      return;
++    }
++    openRecordModal(record.menu, false, recordId);
++  }
++
+   function closeRecordModal() {
+     const modal = document.getElementById('recordModal');
+     modal.classList.remove('show');
+     modal.setAttribute('aria-hidden', 'true');
++    editingRecordId = '';
++    recordSaving = false;
+   }
+ 
+   document.querySelectorAll('.meal-time-btn').forEach(button => {
+@@ -3758,7 +3899,7 @@
+ 
+   async function compressMealPhoto(file) {
+     if (!file || !file.type.startsWith('image/')) return '';
+-    if (file.size > 12 * 1024 * 1024) throw new Error('사진은 12MB 이하만 선택할 수 있어요.');
++    if (file.size > 15 * 1024 * 1024) throw new Error('사진은 15MB 이하만 선택할 수 있어요.');
+     const dataUrl = await new Promise((resolve, reject) => {
+       const reader = new FileReader();
+       reader.onload = () => resolve(String(reader.result || ''));
+@@ -3771,37 +3912,46 @@
+       img.onerror = () => reject(new Error('사진 형식을 처리하지 못했습니다.'));
+       img.src = dataUrl;
+     });
+-    const maxSide = 960;
+-    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+-    const canvas = document.createElement('canvas');
+-    canvas.width = Math.max(1, Math.round(image.width * scale));
+-    canvas.height = Math.max(1, Math.round(image.height * scale));
+-    const context = canvas.getContext('2d');
+-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+-    let compressed = canvas.toDataURL('image/jpeg', 0.72);
+-    if (compressed.length > 480_000) compressed = canvas.toDataURL('image/jpeg', 0.55);
+-    if (compressed.length > 650_000) throw new Error('사진을 충분히 줄이지 못했습니다. 다른 사진을 선택해 주세요.');
++
++    const maxSide = 1280;
++    let scale = Math.min(1, maxSide / Math.max(image.width, image.height));
++    let quality = 0.82;
++    let compressed = '';
++    const targetLength = 520_000;
++    for (let attempt = 0; attempt < 9; attempt += 1) {
++      const canvas = document.createElement('canvas');
++      canvas.width = Math.max(1, Math.round(image.width * scale));
++      canvas.height = Math.max(1, Math.round(image.height * scale));
++      const context = canvas.getContext('2d', { alpha:false });
++      if (!context) throw new Error('사진 압축 기능을 사용할 수 없습니다.');
++      context.fillStyle = '#ffffff';
++      context.fillRect(0, 0, canvas.width, canvas.height);
++      context.drawImage(image, 0, 0, canvas.width, canvas.height);
++      const webp = canvas.toDataURL('image/webp', quality);
++      compressed = webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', quality);
++      if (compressed.length <= targetLength) break;
++      if (quality > 0.48) quality -= 0.1;
++      else scale *= 0.86;
++    }
++    if (compressed.length > 650_000) throw new Error('사진 용량을 충분히 줄이지 못했습니다. 다른 사진을 선택해 주세요.');
+     return compressed;
+   }
+ 
+   document.getElementById('recordPhoto').addEventListener('change', async event => {
+     const file = event.target.files?.[0];
+-    const preview = document.getElementById('recordPhotoPreview');
+     if (!file) {
+       pendingMealPhoto = '';
+-      preview.hidden = true;
+-      preview.innerHTML = '';
++      renderPendingPhotoPreview();
+       return;
+     }
+     try {
+       pendingMealPhoto = await compressMealPhoto(file);
+-      preview.innerHTML = `<img src="${pendingMealPhoto}" alt="선택한 음식 사진 미리보기">`;
+-      preview.hidden = false;
++      renderPendingPhotoPreview();
+     } catch (error) {
+       pendingMealPhoto = '';
+       event.target.value = '';
+-      preview.hidden = true;
+-      preview.innerHTML = '';
++      renderPendingPhotoPreview();
++      recordClientError('PHOTO_PROCESS_001', error, { fileType:file.type, fileSize:file.size });
+       showToast(error.message || '사진을 처리하지 못했습니다');
+     }
+   });
+@@ -3833,8 +3983,11 @@
+     submitButton.disabled = true;
+     submitButton.textContent = '저장 중…';
+ 
++    const existingIndex = editingRecordId ? diary.findIndex(item => item.id === editingRecordId) : -1;
++    const existing = existingIndex >= 0 ? diary[existingIndex] : null;
++    const previousDiary = diary.slice();
+     const record = {
+-      id: makeId('meal'),
++      id: existing?.id || makeId('meal'),
+       date: dateTime.toDateString(),
+       dateTime: dateTime.toISOString(),
+       time: selectedMealTime,
+@@ -3845,23 +3998,25 @@
+       memo: document.getElementById('recordMemo').value.trim().slice(0, 300),
+       photoDataUrl: pendingMealPhoto,
+       menu: selectedMenu,
+-      createdAt: new Date().toISOString(),
++      createdAt: existing?.createdAt || new Date().toISOString(),
++      updatedAt: existing ? new Date().toISOString() : ''
+     };
+ 
+-    diary.unshift(record);
++    if (existingIndex >= 0) diary.splice(existingIndex, 1, record);
++    else diary.unshift(record);
+     diary.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+     const saved = saveDiary();
+     if (!saved) {
+-      diary = diary.filter(item => item.id !== record.id);
++      diary = previousDiary;
+       recordSaving = false;
+       submitButton.disabled = false;
+-      submitButton.textContent = '다시 저장';
++      submitButton.textContent = existing ? '다시 수정 저장' : '다시 저장';
+       showToast('기록을 저장하지 못했습니다. 입력 내용은 화면에 남아 있어요.');
+       return;
+     }
+ 
+     const knownMenu = findMenuByName(selectedMenu.name);
+-    if (knownMenu && decidedMenuName !== knownMenu.name) {
++    if (!existing && knownMenu && decidedMenuName !== knownMenu.name) {
+       recordMenuFeedback(knownMenu, 'accept', selectedMealTime);
+       decidedMenuName = knownMenu.name;
+     }
+@@ -3870,7 +4025,7 @@
+     renderToday();
+     renderDiary();
+     renderProfile();
+-    trackEvent('meal_record_created', {
++    trackEvent(existing ? 'meal_record_updated' : 'meal_record_created', {
+       menuId: selectedMenu.id || selectedMenu.name,
+       customMenu: Boolean(selectedMenu.isCustomDiaryMenu),
+       mealTime: selectedMealTime,
+@@ -3881,10 +4036,10 @@
+       hasPhoto: Boolean(record.photoDataUrl),
+       hasMemo: Boolean(record.memo),
+     });
+-    showToast(`'${selectedMenu.name}' 식사 기록을 저장했어요`);
++    showToast(existing ? `'${selectedMenu.name}' 기록을 수정했어요` : `'${selectedMenu.name}' 식사 기록을 저장했어요`);
+     recordSaving = false;
+ 
+-    if (!personalProfile.onboardingDone && diary.length === 1) {
++    if (!existing && !personalProfile.onboardingDone && diary.length === 1) {
+       setTimeout(() => showToast('내 입맛에서 선호 음식과 제외 재료를 설정할 수 있어요'), 900);
+     }
+   }
+@@ -3962,6 +4117,59 @@
+     switchPanel('recipe');
+   }
+ 
++  function readRecentStringList(storageKey) {
++    try {
++      const rows = JSON.parse(localStorage.getItem(storageKey) || '[]');
++      return Array.isArray(rows) ? rows.filter(Boolean).map(String) : [];
++    } catch (_) { return []; }
++  }
++
++  function writeRecentStringList(storageKey, rows, limit = 10) {
++    try { localStorage.setItem(storageKey, JSON.stringify([...new Set(rows.filter(Boolean))].slice(0, limit))); }
++    catch (error) { recordClientError('STORAGE_RECENT_001', error, { storageKey }); }
++  }
++
++  function rememberExplorerSearch(value) {
++    const query = String(value || '').trim();
++    if (query.length < 2) return;
++    const rows = readRecentStringList(STORAGE.recentSearches).filter(item => item !== query);
++    writeRecentStringList(STORAGE.recentSearches, [query, ...rows], 8);
++    renderExplorerHistorySection();
++  }
++
++  function rememberViewedMenu(menuName) {
++    const name = String(menuName || '').trim();
++    if (!name) return;
++    const rows = readRecentStringList(STORAGE.recentViewed).filter(item => item !== name);
++    writeRecentStringList(STORAGE.recentViewed, [name, ...rows], 10);
++    if (document.body.dataset.panel === 'favorites') renderExplorerResults();
++  }
++
++  function clearExplorerHistory(kind = 'all') {
++    if (kind === 'search' || kind === 'all') localStorage.removeItem(STORAGE.recentSearches);
++    if (kind === 'viewed' || kind === 'all') localStorage.removeItem(STORAGE.recentViewed);
++    renderExplorerHistorySection();
++    renderExplorerResults();
++    showToast('탐색 기록을 삭제했어요');
++  }
++
++  function applyRecentExplorerSearch(value) {
++    explorerQuery = String(value || '');
++    const input = document.getElementById('menuExplorerSearch');
++    if (input) input.value = explorerQuery;
++    renderExplorerResults();
++    rememberExplorerSearch(explorerQuery);
++  }
++
++  function renderExplorerHistorySection() {
++    const box = document.getElementById('explorerHistorySection');
++    if (!box) return;
++    const recent = readRecentStringList(STORAGE.recentSearches);
++    box.innerHTML = recent.length ? `
++      <div class="explorer-history-head"><strong>최근 검색</strong><button type="button" onclick="clearExplorerHistory('search')">삭제</button></div>
++      <div class="explorer-history-chips">${recent.map(query => `<button type="button" onclick="applyRecentExplorerSearch('${escapeJsString(query)}')">${escapeHtml(query)}</button>`).join('')}</div>` : '';
++  }
++
+   let explorerQuery = '';
+   let explorerCuisine = '전체';
+   let explorerInputComposing = false;
+@@ -4011,6 +4219,14 @@
+         composing: event.isComposing === true
+       });
+     });
++
++    input.addEventListener('keydown', event => {
++      if (event.key !== 'Enter' || event.isComposing) return;
++      event.preventDefault();
++      rememberExplorerSearch(input.value);
++      input.blur();
++    });
++    input.addEventListener('blur', () => rememberExplorerSearch(input.value));
+   }
+ 
+   function toggleFavoriteByName(menuName, event) {
+@@ -4027,6 +4243,7 @@
+     if (!menu) return;
+     currentMenu = menu;
+     answers = {};
++    rememberViewedMenu(menu.name);
+     showResultForMenu(menu);
+     trackEvent('menu_explorer_opened', { menuId: menu.id || menu.name, menuType: menu.type });
+   }
+@@ -4091,11 +4308,16 @@
+     const favoriteMenus = normalizedFavoriteMenuNames()
+       .map(menuName => findMenuByName(menuName))
+       .filter(Boolean);
++    const recentViewedMenus = readRecentStringList(STORAGE.recentViewed)
++      .map(menuName => findMenuByName(menuName))
++      .filter(Boolean)
++      .slice(0, 8);
+ 
+     resultSection.innerHTML = `
+       <div class="explorer-section-head"><strong>검색 결과</strong><span>${filtered.length}개</span></div>
+       <div class="explorer-menu-list">${filtered.slice(0, 40).map(renderExplorerMenuCard).join('') || '<p class="empty-text">일치하는 메뉴가 없어요. 다른 검색어를 입력해 보세요.</p>'}</div>
+-      ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}`;
++      ${filtered.length > 40 ? `<p class="form-notice">검색 결과가 많아 상위 40개만 표시합니다. 음식 이름을 더 구체적으로 입력해 주세요.</p>` : ''}
++      ${recentViewedMenus.length ? `<div class="explorer-recent-viewed"><div class="explorer-section-head"><strong>최근 본 음식</strong><button type="button" onclick="clearExplorerHistory('viewed')">삭제</button></div><div class="explorer-menu-list compact">${recentViewedMenus.map(renderExplorerMenuCard).join('')}</div></div>` : ''}`;
+ 
+     favoriteSection.innerHTML = `
+       <div class="explorer-section-head"><strong>찜한 메뉴</strong><span>${favoriteMenus.length}개</span></div>
+@@ -4133,13 +4355,15 @@
+       c.innerHTML = `
+         <section class="menu-explorer-search">
+           <label for="menuExplorerSearch">음식 검색</label>
+-          <input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" autocomplete="off" enterkeyhint="search">
++          <div class="explorer-search-row"><input id="menuExplorerSearch" type="search" value="${escapeHtml(explorerQuery)}" placeholder="예: 라멘, 김치찌개, 샐러드" autocomplete="off" enterkeyhint="search"><button type="button" onclick="rememberExplorerSearch(document.getElementById('menuExplorerSearch').value)">검색</button></div>
+           <div class="explorer-cuisine-chips">${types.map(type => `<button type="button" data-explorer-cuisine="${type}" class="${explorerCuisine === type ? 'selected' : ''}" onclick="setExplorerCuisine('${type}')">${type}</button>`).join('')}</div>
++          <div id="explorerHistorySection" class="explorer-history-section"></div>
+         </section>
+         <section class="explorer-results-section" id="explorerResultsSection"></section>
+         <section class="explorer-favorites-section" id="explorerFavoritesSection"></section>`;
+ 
+       bindExplorerSearchInput();
++      renderExplorerHistorySection();
+       updateExplorerCuisineButtons();
+       renderExplorerResults();
+       return true;
+@@ -4271,7 +4495,10 @@
+     if (name === 'recipe') renderRecipe();
+     if (name === 'nearby') renderNearby();
+     if (name === 'favorites') renderFavorites();
+-    if (name === 'profile') renderProfile();
++    if (name === 'profile') {
++      renderProfile();
++      checkApiHealth().catch(() => {});
++    }
+     if (name === 'debug') renderRecommendationTest();
+     if (name === 'recipeqa') renderRecipeQA();
+     if (name === 'diary') {
+@@ -6116,18 +6343,27 @@
+ 
+   // ─── Beta feedback, privacy and consent ───
+   let lastClientError = null;
++
++  function recordClientError(code, error, context = {}) {
++    const normalizedCode = String(code || 'CLIENT_UNKNOWN').slice(0, 64);
++    lastClientError = {
++      code: normalizedCode,
++      message: String(error?.message || error || 'unknown_error').slice(0, 240),
++      context: sanitizeAnalyticsProperties(context),
++      occurredAt: new Date().toISOString()
++    };
++    trackEvent('client_error', { errorCode: normalizedCode, ...sanitizeAnalyticsProperties(context) });
++    return lastClientError;
++  }
++
+   window.addEventListener('error', event => {
+-    lastClientError = {
+-      message: String(event.message || 'client_error').slice(0, 240),
+-      source: String(event.filename || '').split('/').pop().slice(0, 100),
+-      line: Number(event.lineno || 0),
+-      occurredAt: new Date().toISOString(),
+-    };
+-    trackEvent('client_error', { errorCode: 'window_error', source: lastClientError.source, line: lastClientError.line });
++    recordClientError('UI_RUNTIME_001', event.error || new Error(event.message || 'client_error'), {
++      source:String(event.filename || '').split('/').pop().slice(0,100),
++      line:Number(event.lineno || 0)
++    });
+   });
+   window.addEventListener('unhandledrejection', event => {
+-    lastClientError = { message: String(event.reason?.message || event.reason || 'promise_rejection').slice(0, 240), occurredAt: new Date().toISOString() };
+-    trackEvent('client_error', { errorCode: 'unhandled_rejection' });
++    recordClientError('ASYNC_001', event.reason || new Error('promise_rejection'));
+   });
+ 
+   function activePanelName() {
+@@ -6213,6 +6449,7 @@
+         menuName: currentMenu?.name || '',
+         recommendationConditions: sanitizeAnalyticsProperties(answers || {}),
+         lastError: lastClientError,
++        requestedDeletion: feedback.type === 'privacy_deletion',
+         userAgentFamily: /Android/i.test(navigator.userAgent) ? 'android' : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'web',
+       } : null,
+     };
+@@ -6277,6 +6514,8 @@
+       favorites,
+       mealRecords: serializeDiaryRecords(diary),
+       rejectionReasons: (() => { try { return JSON.parse(localStorage.getItem(STORAGE.rejectReasons) || '[]'); } catch (_) { return []; } })(),
++      recentSearches: readRecentStringList(STORAGE.recentSearches),
++      recentViewedMenus: readRecentStringList(STORAGE.recentViewed),
+       analyticsConsent: getAnalyticsConsent() === true,
+     };
+     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+@@ -6294,10 +6533,12 @@
+   window.addEventListener('online', () => {
+     syncAnalyticsEvents();
+     syncFeedbackQueue();
++    checkApiHealth().catch(() => {});
+   });
+ 
+   // ─── Init ───
+   async function initApp() {
++    loadCachedApiHealth();
+     await loadAppData();
+     sanitizeMenuDatabase();
+     normalizeCuisineCategories();
+@@ -6327,6 +6568,7 @@
+       syncAnalyticsEvents();
+     }
+     syncFeedbackQueue();
++    checkApiHealth().catch(() => {});
+   }
+ 
+   initApp().then(() => {
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "todays-plate-beta-api",
+-  "version": "4.8.4",
++  "version": "4.9.0",
+   "private": true,
+   "type": "module",
+   "engines": {
+@@ -9,7 +9,7 @@
+   "scripts": {
+     "start": "node server/kakao-nearby-proxy.mjs",
+     "report": "node server/beta-report.mjs",
+-    "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\"",
++    "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node --check server/backup-data.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\"",
+     "validate:recommendation": "node scripts/validate-recommendation-v4.4.mjs",
+     "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs",
+     "validate:v4.6": "node scripts/validate-nearby-v4.6.mjs",
+@@ -17,6 +17,8 @@
+     "validate:v4.8": "node scripts/validate-product-v4.8.mjs",
+     "validate:v4.8.1": "node scripts/validate-explorer-v4.8.1.mjs",
+     "validate:v4.8.2": "node scripts/validate-explorer-v4.8.2.mjs",
+-    "validate:v4.8.4": "node scripts/validate-ui-input-v4.8.4.mjs"
++    "validate:v4.8.4": "node scripts/validate-ui-input-v4.8.4.mjs",
++    "backup": "node server/backup-data.mjs",
++    "validate:v4.9": "node scripts/validate-release-v4.9.mjs"
+   }
+ }
+--- a/scripts/validate-explorer-v4.8.1.mjs
++++ b/scripts/validate-explorer-v4.8.1.mjs
+@@ -6,7 +6,7 @@
+ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+ 
+ const checks = [
+-  ['version', /^4\.8\.[1-9][0-9]*$/.test(pkg.version) && app.includes(`korea-beta-v${pkg.version}`) && html.includes(`app.js?v=${pkg.version}`)],
++  ['version', /^4\.(?:8\.[1-9][0-9]*|9\.[0-9]+)$/.test(pkg.version) && app.includes(`korea-beta-v${pkg.version}`) && html.includes(`app.js?v=${pkg.version}`)],
+   ['static explorer shell', html.includes('explorer-loading-shell') && html.includes('favoritesContent')],
+   ['explorer guarded render', app.includes('function renderExplorerError') && app.includes('try {') && app.includes("area:'explorer_render'")],
+   ['favorites migration', app.includes('function normalizedFavoriteMenuNames') && app.includes("typeof item === 'string'")],
+--- a/scripts/validate-explorer-v4.8.2.mjs
++++ b/scripts/validate-explorer-v4.8.2.mjs
+@@ -12,9 +12,9 @@
+   if (!condition) process.exitCode = 1;
+ };
+ 
+-check('package version is 4.8.2', pkg.version === '4.8.2');
+-check('cache-busting script version is 4.8.2', html.includes('app.js?v=4.8.2'));
+-check('runtime app version is 4.8.2', app.includes("korea-beta-v4.8.2"));
++check('package version is 4.8.2 or newer', /^4\.(?:8\.(?:[2-9]|[1-9][0-9]+)|9\.[0-9]+)$/.test(pkg.version));
++check('cache-busting script version is current', html.includes(`app.js?v=${pkg.version}`));
++check('runtime app version is current', app.includes(`korea-beta-v${pkg.version}`));
+ check(
+   'explorer thumbnail participates in positioned shared photo wrapper',
+   /\.top-pick-photo,[\s\S]*?\.explorer-menu-photo\s*\{[\s\S]*?position:\s*relative/.test(css)
+--- a/scripts/validate-nearby-v4.6.mjs
++++ b/scripts/validate-nearby-v4.6.mjs
+@@ -17,7 +17,7 @@
+ assert(app.includes("if (!profile.allowCafe && (/카페|커피|디저트|베이커리|제과/.test(text) || place.category_group_code === 'CE7')) return true;"), '일반 식사 메뉴의 카페 제외 규칙 누락');
+ assert(app.includes("return '메뉴 검색 후보';"), '미확인 장소 라벨 누락');
+ assert(!app.slice(app.lastIndexOf('// ─── v4.6')).includes("return '추천도 높음'"), 'v4.6에서 추천도 높음 표현이 남아 있음');
+-assert(/app\.js\?v=4\.(?:6|7|8)(?:\.\d+)?/.test(index), 'app.js 캐시 버전 누락');
++assert(/app\.js\?v=4\.(?:6|7|8|9)(?:\.\d+)?/.test(index), 'app.js 캐시 버전 누락');
+ assert(JSON.stringify(firebase).includes('no-store'), 'Firebase HTML/JS 캐시 방지 설정 누락');
+ 
+ if (failures.length) {
+--- a/scripts/validate-product-v4.8.mjs
++++ b/scripts/validate-product-v4.8.mjs
+@@ -25,10 +25,10 @@
+ 
+ const failures = [];
+ 
+-if (!/const APP_VERSION = 'korea-beta-v4\.8(?:\.[0-9]+)?'/.test(app)) {
++if (!/const APP_VERSION = 'korea-beta-v4\.(?:8|9)(?:\.[0-9]+)?'/.test(app)) {
+   failures.push('app.js missing compatible v4.8 app version');
+ }
+-if (!/\.\/js\/app\.js\?v=4\.8(?:\.[0-9]+)?/.test(html)) {
++if (!/\.\/js\/app\.js\?v=4\.(?:8|9)(?:\.[0-9]+)?/.test(html)) {
+   failures.push('index.html missing compatible v4.8 app cache version');
+ }
+ for (const fragment of requiredAppFragments) {
+--- a/scripts/validate-recommendation-v4.4.mjs
++++ b/scripts/validate-recommendation-v4.4.mjs
+@@ -59,13 +59,22 @@
+   return true;
+ }
+ 
+-function diverseTop(scored, limit = 3) {
++function diverseTop(scored, limit = 3, answers = {}) {
+   if (!scored.length) return [];
+-  const selected = [scored[0]];
+-  const families = new Set([scored[0].menu.family]);
+-  const types = new Set([scored[0].menu.type]);
+-  const topScore = scored[0].score;
+-  const crossCuisine = scored.slice(1).find(item => !families.has(item.menu.family) && !types.has(item.menu.type) && topScore - item.score <= 8);
++  const matchesNeed = item => {
++    const menu = item.menu;
++    if (answers.need === 'light') return menu.weight === '가벼움';
++    if (answers.need === 'full') return menu.weight === '든든';
++    if (answers.need === 'hangover') return menu.soup && menu.spicy <= 1;
++    if (answers.need === 'spicy') return menu.spicy >= 1;
++    return true;
++  };
++  const first = scored.find(item => matchesNeed(item) && item.menu.type === '한식') || scored.find(matchesNeed) || scored[0];
++  const selected = [first];
++  const families = new Set([first.menu.family]);
++  const types = new Set([first.menu.type]);
++  const topScore = first.score;
++  const crossCuisine = scored.find(item => item !== first && !families.has(item.menu.family) && !types.has(item.menu.type) && topScore - item.score <= 8);
+   if (crossCuisine) {
+     selected.push(crossCuisine);
+     families.add(crossCuisine.menu.family);
+@@ -101,7 +110,7 @@
+       .filter(menu => eligible(menu, answers))
+       .map(menu => ({ menu, score: score(menu, answers) }))
+       .sort((a, b) => b.score - a.score || a.menu.name.localeCompare(b.menu.name, 'ko'));
+-    const top = diverseTop(scored);
++    const top = diverseTop(scored, 3, answers);
+     assert(top.length === 3, `${contextTime}/${need}: 추천 후보 3개 미만`);
+     assert(new Set(top.map(item => item.menu.family)).size === top.length, `${contextTime}/${need}: 같은 메뉴 계열 중복`);
+     if (contextTime !== '아침') {
+--- a/scripts/validate-recommendation-v4.5.mjs
++++ b/scripts/validate-recommendation-v4.5.mjs
+@@ -3,7 +3,7 @@
+ const keywords = JSON.parse(fs.readFileSync(new URL('../data/restaurant-keywords.json', import.meta.url), 'utf8'));
+ const checks = [];
+ const ok = (name, pass, detail='') => checks.push({name, pass:Boolean(pass), detail});
+-ok('앱 버전 v4.5 이상', /korea-beta-v4\.(5|6|7|8)/.test(app));
++ok('앱 버전 v4.5 이상', /korea-beta-v4\.(5|6|7|8|9)/.test(app));
+ ok('국가별 집밥 설정', app.includes('HOME_COUNTRY_CONFIG') && app.includes("JP: { label:'일본'") && app.includes("cuisine:'일식'"));
+ ok('집밥 대표 메뉴 국가 우선', (app.includes('prioritizeHomeCuisineForHomeMode') || app.includes('prioritizeMarketCuisine')) && app.includes('getHomeCuisineType'));
+ ok('라조기 정확 키워드', JSON.stringify(keywords['라조기']) === JSON.stringify(['라조기']), JSON.stringify(keywords['라조기']));
+--- a/scripts/validate-recommendation-v4.7.mjs
++++ b/scripts/validate-recommendation-v4.7.mjs
+@@ -9,9 +9,9 @@
+   if (!condition) throw new Error(message);
+ }
+ 
+-assert(/^4\.(?:7|8)(?:\.\d+)?$/.test(pkg.version), 'package version must be v4.7 or newer');
+-assert(/const APP_VERSION = 'korea-beta-v4\.(?:7|8)(?:\.\d+)?'/.test(app), 'APP_VERSION is not v4.7 or newer');
+-assert(/app\.js\?v=4\.(?:7|8)(?:\.\d+)?/.test(index), 'index cache version is not v4.7 or newer');
++assert(/^4\.(?:7|8|9)(?:\.\d+)?$/.test(pkg.version), 'package version must be v4.7 or newer');
++assert(/const APP_VERSION = 'korea-beta-v4\.(?:7|8|9)(?:\.\d+)?'/.test(app), 'APP_VERSION is not v4.7 or newer');
++assert(/app\.js\?v=4\.(?:7|8|9)(?:\.\d+)?/.test(index), 'index cache version is not v4.7 or newer');
+ 
+ assert(app.includes("10000: { label:'약 1만 원', ceiling:12000"), '1만원 flexible tier missing');
+ assert(app.includes("30000: { label:'약 3만 원', ceiling:33000"), '3만원 flexible tier missing');
+--- /dev/null
++++ b/scripts/validate-release-v4.9.mjs
+@@ -0,0 +1,75 @@
++import fs from 'node:fs';
++
++const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
++const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
++const css = fs.readFileSync(new URL('../css/app.css', import.meta.url), 'utf8');
++const server = fs.readFileSync(new URL('../server/kakao-nearby-proxy.mjs', import.meta.url), 'utf8');
++const report = fs.readFileSync(new URL('../server/beta-report.mjs', import.meta.url), 'utf8');
++const firebase = JSON.parse(fs.readFileSync(new URL('../firebase.json', import.meta.url), 'utf8'));
++const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
++const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
++
++const failures = [];
++const check = (condition, message) => { if (!condition) failures.push(message); };
++
++check(pkg.version === '4.9.0', 'package version must be 4.9.0');
++check(app.includes("korea-beta-v4.9.0"), 'runtime version missing');
++check(html.includes('app.js?v=4.9.0'), 'cache version missing');
++check(!app.includes("status: API_BASE_URL ? 'idle'"), 'API_BASE_URL is referenced before initialization');
++
++check(app.includes('function editMealRecord(recordId)'), 'meal record edit missing');
++check(app.includes("existing ? 'meal_record_updated' : 'meal_record_created'"), 'record update analytics missing');
++check(app.includes('function removePendingMealPhoto()'), 'photo remove missing');
++check(app.includes('const maxSide = 1280'), '1280px photo compression missing');
++check(app.includes('const targetLength = 520_000'), 'photo target size missing');
++check(html.includes('id="recordPhotoRemoveBtn"'), 'photo remove button missing');
++
++check(app.includes('function rememberExplorerSearch(value)'), 'recent search missing');
++check(app.includes('function rememberViewedMenu(menuName)'), 'recent viewed missing');
++check(app.includes('id="explorerHistorySection"'), 'recent search UI missing');
++check(app.includes('최근 본 음식'), 'recent viewed UI missing');
++
++check(app.includes('return [...new Set(reasons)].slice(0, 3)'), 'recommendation reasons are not limited to 3');
++check(app.includes('function checkApiHealth(force = false)'), 'API health check missing');
++check(app.includes('최근 오류 코드'), 'error code UI missing');
++check(app.includes("recordClientError('PHOTO_PROCESS_001'"), 'photo error code missing');
++check(app.includes("recordClientError('DATA_MENU_001'"), 'data error code missing');
++
++check(server.includes("monthlyFilename('events'"), 'monthly event files missing');
++check(server.includes('seenEventIds.has(eventId)'), 'event deduplication missing');
++check(server.includes('seenFeedbackIds.has(id)'), 'feedback deduplication missing');
++check(server.includes('DATA_RETENTION_DAYS'), 'retention setting missing');
++check(server.includes('cleanupExpiredData'), 'retention cleanup missing');
++check(report.includes("readAll('events')"), 'monthly report reader missing');
++check(pkg.scripts.backup === 'node server/backup-data.mjs', 'backup command missing');
++
++const ignore = firebase.hosting.ignore || [];
++for (const required of ['scripts/**','server/data/**','*.patch','*.txt']) {
++  check(ignore.includes(required), `firebase ignore missing: ${required}`);
++}
++const allHeaders = (firebase.hosting.headers || []).flatMap(rule => rule.headers || []);
++for (const required of ['Content-Security-Policy','Strict-Transport-Security','X-Frame-Options']) {
++  check(allHeaders.some(h => h.key === required), `security header missing: ${required}`);
++}
++
++check(html.includes('서버 데이터 삭제 요청'), 'server deletion request UI missing');
++check(html.includes('원칙적으로 90일'), 'retention disclosure missing');
++check(html.includes('사진은 최대 1280px로 압축'), 'photo storage disclosure missing');
++
++// Critical recommendation data coverage.
++const byName = new Map(menus.map(menu => [menu.name, menu]));
++for (const name of ['김치찌개','초밥','라조기','부리또','아침 부리또','볼로네제']) {
++  check(byName.has(name), `critical menu missing: ${name}`);
++}
++check(menus.filter(menu => menu.type === '한식').length >= 50, 'Korean menu coverage below 50');
++check(app.includes('if (excluded.some(tag => tags.includes(tag))) return true;'), 'hard exclusion filter missing');
++check(app.includes("if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;"), 'strict taste type filter missing');
++
++if (failures.length) {
++  console.error('v4.9 release validation failed');
++  failures.forEach(failure => console.error(`- ${failure}`));
++  process.exit(1);
++}
++
++console.log('v4.9 release validation passed');
++console.log(JSON.stringify({ menuCount: menus.length, koreanMenus: menus.filter(menu => menu.type === '한식').length }, null, 2));
+--- a/scripts/validate-ui-input-v4.8.4.mjs
++++ b/scripts/validate-ui-input-v4.8.4.mjs
+@@ -6,9 +6,9 @@
+ const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+ 
+ const checks = [
+-  ['package version', pkg.version === '4.8.4'],
+-  ['runtime version', app.includes("korea-beta-v4.8.4")],
+-  ['cache version', html.includes('app.js?v=4.8.4')],
++  ['package version', /^4\.(?:8\.(?:[4-9]|[1-9][0-9]+)|9\.[0-9]+)$/.test(pkg.version)],
++  ['runtime version', app.includes(`korea-beta-v${pkg.version}`)],
++  ['cache version', html.includes(`app.js?v=${pkg.version}`)],
+   ['composition start handler', app.includes("addEventListener('compositionstart'")],
+   ['composition end handler', app.includes("addEventListener('compositionend'")],
+   ['input composing guard', app.includes('event.isComposing === true')],
+--- a/server/README.md
++++ b/server/README.md
+@@ -75,3 +75,14 @@
+ ```
+ 
+ 리포트는 이벤트 수, 추천 퍼널, 메뉴 선택률, 기록률, 거절 이유, 주변 식당·레시피 이용량, 오류 및 피드백 유형을 출력합니다.
++
++## v4.9 운영
++
++- 이벤트: `events-YYYY-MM.jsonl`
++- 피드백: `feedback-YYYY-MM.jsonl`
++- 기본 보존 기간: 90일 (`DATA_RETENTION_DAYS`)
++- 동일 ID 중복 수집 방지
++- `npm run backup`: Volume 내부 백업 생성
++- `npm run report`: 전체 월별 파일을 합쳐 베타 리포트 생성
++
++Railway Volume 자체의 장애에 대비하려면 생성된 백업을 별도 저장소로 복사해야 한다.
+--- /dev/null
++++ b/server/backup-data.mjs
+@@ -0,0 +1,23 @@
++import { copyFile, mkdir, readdir, stat, writeFile } from 'node:fs/promises';
++import { dirname, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
++const BACKUP_ROOT = resolve(process.env.BACKUP_DIR || resolve(DATA_DIR, 'backups'));
++const stamp = new Date().toISOString().replace(/[:.]/g, '-');
++const destination = resolve(BACKUP_ROOT, stamp);
++
++await mkdir(destination, { recursive: true });
++const names = (await readdir(DATA_DIR)).filter((name) => /^(events|feedback)(?:-\d{4}-\d{2})?\.jsonl$/.test(name));
++const files = [];
++for (const name of names) {
++  const source = resolve(DATA_DIR, name);
++  const target = resolve(destination, name);
++  await copyFile(source, target);
++  const info = await stat(target);
++  files.push({ name, bytes: info.size });
++}
++const manifest = { createdAt: new Date().toISOString(), source: DATA_DIR, files };
++await writeFile(resolve(destination, 'manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
++console.log(JSON.stringify({ ok: true, destination, files }, null, 2));
+--- a/server/beta-report.mjs
++++ b/server/beta-report.mjs
+@@ -1,9 +1,9 @@
+-import { readFile } from 'node:fs/promises';
++import { readFile, readdir } from 'node:fs/promises';
+ import { resolve, dirname } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ 
+ const HERE = dirname(fileURLToPath(import.meta.url));
+-const DATA_DIR = resolve(process.env.DATA_DIR || resolve(HERE, 'data'));
++const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
+ 
+ async function readJsonLines(filename) {
+   try {
+@@ -15,6 +15,23 @@
+     if (error?.code === 'ENOENT') return [];
+     throw error;
+   }
++}
++
++async function readAll(kind) {
++  let names = [];
++  try { names = await readdir(DATA_DIR); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
++  const pattern = new RegExp(`^${kind}(?:-\\d{4}-\\d{2})?\\.jsonl$`);
++  const files = names.filter((name) => pattern.test(name)).sort();
++  const rows = (await Promise.all(files.map(readJsonLines))).flat();
++  const key = kind === 'events' ? 'eventId' : 'id';
++  const seen = new Set();
++  return rows.filter((row) => {
++    const id = row?.[key];
++    if (!id) return true;
++    if (seen.has(id)) return false;
++    seen.add(id);
++    return true;
++  });
+ }
+ 
+ function countBy(items, getKey) {
+@@ -30,8 +47,8 @@
+   return denominator ? Number(((numerator / denominator) * 100).toFixed(1)) : 0;
+ }
+ 
+-const events = await readJsonLines('events.jsonl');
+-const feedback = await readJsonLines('feedback.jsonl');
++const events = await readAll('events');
++const feedback = await readAll('feedback');
+ const byName = countBy(events, (event) => event.name);
+ const uniqueUsers = new Set(events.map((event) => event.anonymousUserId).filter(Boolean));
+ const uniqueSessions = new Set(events.map((event) => event.sessionId).filter(Boolean));
+@@ -73,11 +90,12 @@
+     recipeViews: byName.recipe_viewed || 0,
+     favorites: byName.menu_favorited || 0,
+     alternativeSelections: byName.alternative_menu_selected || 0,
++    mealRecordUpdates: byName.meal_record_updated || 0,
+   },
+   rejectionReasons: countBy(rejectionEvents, (event) => event.properties?.reason),
+   eventsByName: byName,
+   feedbackByType: countBy(feedback, (item) => item.type),
+-  errorsByName: countBy(errors, (event) => event.name),
++  errorsByCode: countBy(errors, (event) => event.properties?.errorCode),
+ };
+ 
+ console.log(JSON.stringify(report, null, 2));
+--- a/server/kakao-nearby-proxy.mjs
++++ b/server/kakao-nearby-proxy.mjs
+@@ -1,5 +1,5 @@
+ import { createServer } from 'node:http';
+-import { appendFile, mkdir } from 'node:fs/promises';
++import { appendFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
+ import { dirname, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ 
+@@ -7,6 +7,7 @@
+ const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || '';
+ const HERE = dirname(fileURLToPath(import.meta.url));
+ const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
++const RETENTION_DAYS = Math.max(30, Number(process.env.DATA_RETENTION_DAYS || 90));
+ const ALLOWED_ORIGINS = new Set(
+   (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500')
+     .split(',')
+@@ -18,6 +19,9 @@
+ const WINDOW_MS = 60_000;
+ const MAX_REQUESTS_PER_WINDOW = Number(process.env.RATE_LIMIT_PER_MINUTE || 120);
+ const MAX_BODY_BYTES = 256 * 1024;
++const MAX_DEDUPE_IDS = 50_000;
++const seenEventIds = new Set();
++const seenFeedbackIds = new Set();
+ 
+ function isOriginAllowed(origin) {
+   return !origin || ALLOWED_ORIGINS.has(origin);
+@@ -104,9 +108,78 @@
+   }
+ }
+ 
++function monthKey(value = new Date()) {
++  const date = value instanceof Date ? value : new Date(value);
++  const safe = Number.isNaN(date.getTime()) ? new Date() : date;
++  return `${safe.getUTCFullYear()}-${String(safe.getUTCMonth() + 1).padStart(2, '0')}`;
++}
++
++function monthlyFilename(kind, value = new Date()) {
++  return `${kind}-${monthKey(value)}.jsonl`;
++}
++
++function keepBounded(set, value) {
++  if (!value || set.has(value)) return;
++  set.add(value);
++  if (set.size <= MAX_DEDUPE_IDS) return;
++  const removeCount = Math.max(1, Math.floor(MAX_DEDUPE_IDS * 0.1));
++  const iterator = set.values();
++  for (let i = 0; i < removeCount; i += 1) {
++    const next = iterator.next();
++    if (next.done) break;
++    set.delete(next.value);
++  }
++}
++
+ async function appendJsonLine(filename, payload) {
+   await mkdir(DATA_DIR, { recursive: true });
+   await appendFile(resolve(DATA_DIR, filename), `${JSON.stringify(payload)}\n`, { encoding: 'utf8', mode: 0o600 });
++}
++
++async function readJsonLinesIfExists(filename) {
++  try {
++    const text = await readFile(resolve(DATA_DIR, filename), 'utf8');
++    return text.split(/\r?\n/).filter(Boolean).flatMap((line) => {
++      try { return [JSON.parse(line)]; } catch { return []; }
++    });
++  } catch (error) {
++    if (error?.code === 'ENOENT') return [];
++    throw error;
++  }
++}
++
++async function warmDedupeSets() {
++  const now = new Date();
++  const previous = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
++  const files = [
++    'events.jsonl', 'feedback.jsonl',
++    monthlyFilename('events', now), monthlyFilename('events', previous),
++    monthlyFilename('feedback', now), monthlyFilename('feedback', previous),
++  ];
++  for (const filename of [...new Set(files)]) {
++    const rows = await readJsonLinesIfExists(filename);
++    for (const row of rows) {
++      if (row.eventId) keepBounded(seenEventIds, cleanString(row.eventId, 100));
++      if (row.id) keepBounded(seenFeedbackIds, cleanString(row.id, 100));
++    }
++  }
++}
++
++async function cleanupExpiredData() {
++  await mkdir(DATA_DIR, { recursive: true });
++  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
++  const names = await readdir(DATA_DIR);
++  const removed = [];
++  for (const name of names) {
++    const match = /^(events|feedback)-(\d{4})-(\d{2})\.jsonl$/.exec(name);
++    if (!match) continue;
++    const [, , year, month] = match;
++    const nextMonth = Date.UTC(Number(year), Number(month), 1);
++    if (nextMonth >= cutoff) continue;
++    await rm(resolve(DATA_DIR, name), { force: true });
++    removed.push(name);
++  }
++  return removed;
+ }
+ 
+ async function kakaoRequest(path, params) {
+@@ -139,7 +212,7 @@
+   const sort = requestUrl.searchParams.get('sort') === 'distance' ? 'distance' : 'accuracy';
+ 
+   if (query.length < 2 || !Number.isFinite(x) || !Number.isFinite(y)) {
+-    return sendJson(res, 400, { error: 'invalid_parameters' }, origin);
++    return sendJson(res, 400, { error: 'invalid_parameters', errorCode: 'NEARBY_PARAM_001' }, origin);
+   }
+ 
+   const params = new URLSearchParams({ query, x: String(x), y: String(y), radius: String(radius), size: String(size), page: String(page), sort });
+@@ -152,7 +225,7 @@
+ 
+ async function handleResolveLocation(requestUrl, res, origin) {
+   const query = cleanString(requestUrl.searchParams.get('query'), 120);
+-  if (query.length < 2) return sendJson(res, 400, { error: 'invalid_query' }, origin);
++  if (query.length < 2) return sendJson(res, 400, { error: 'invalid_query', errorCode: 'LOCATION_QUERY_001' }, origin);
+ 
+   let payload = await kakaoRequest('/v2/local/search/address.json', new URLSearchParams({ query, size: '1' }));
+   let doc = Array.isArray(payload.documents) ? payload.documents[0] : null;
+@@ -167,7 +240,7 @@
+   const lat = Number(doc?.y);
+   const lng = Number(doc?.x);
+   if (!doc || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+-    return sendJson(res, 404, { error: 'location_not_found' }, origin);
++    return sendJson(res, 404, { error: 'location_not_found', errorCode: 'LOCATION_NOT_FOUND_001' }, origin);
+   }
+   return sendJson(res, 200, { lat, lng, label: cleanString(label || query, 160) }, origin, 'private, max-age=300');
+ }
+@@ -178,16 +251,20 @@
+   if (!events.length) return sendJson(res, 400, { error: 'events_required' }, origin);
+ 
+   let accepted = 0;
++  let duplicates = 0;
++  let invalid = 0;
+   for (const raw of events) {
+-    if (!raw || typeof raw !== 'object') continue;
++    if (!raw || typeof raw !== 'object') { invalid += 1; continue; }
+     const name = cleanString(raw.name || raw.eventName, 80);
+     const eventId = cleanString(raw.eventId, 100);
+     const anonymousUserId = cleanString(raw.anonymousUserId, 100);
+     const sessionId = cleanString(raw.sessionId, 100);
+-    if (!name || !eventId || !anonymousUserId || !sessionId) continue;
++    if (!name || !eventId || !anonymousUserId || !sessionId) { invalid += 1; continue; }
++    if (seenEventIds.has(eventId)) { duplicates += 1; continue; }
++
+     const rawTimestamp = raw.occurredAt || raw.timestamp;
+     const timestamp = Number.isFinite(Date.parse(rawTimestamp)) ? new Date(rawTimestamp).toISOString() : new Date().toISOString();
+-    await appendJsonLine('events.jsonl', {
++    const record = {
+       eventId,
+       name,
+       anonymousUserId,
+@@ -198,11 +275,13 @@
+       firstVisit: Boolean(raw.firstVisit),
+       previousUseCount: parseNumber(raw.previousUseCount, { min: 0, max: 1_000_000, fallback: 0 }),
+       properties: sanitizeProperties(raw.properties || {}),
+-    });
++    };
++    await appendJsonLine(monthlyFilename('events', timestamp), record);
++    keepBounded(seenEventIds, eventId);
+     accepted += 1;
+   }
+-  if (!accepted) return sendJson(res, 400, { error: 'no_valid_events' }, origin);
+-  return sendJson(res, 202, { accepted }, origin);
++  if (!accepted && !duplicates) return sendJson(res, 400, { error: 'no_valid_events', invalid }, origin);
++  return sendJson(res, 202, { accepted, duplicates, invalid, received: events.length }, origin);
+ }
+ 
+ async function handleFeedback(req, res, origin) {
+@@ -211,8 +290,9 @@
+   const type = cleanString(body.type, 80);
+   const message = cleanString(body.message, 4000);
+   if (!type || !message) return sendJson(res, 400, { error: 'type_and_message_required' }, origin);
+-
+-  await appendJsonLine('feedback.jsonl', {
++  if (seenFeedbackIds.has(id)) return sendJson(res, 202, { accepted: true, duplicate: true, feedbackId: id }, origin);
++
++  const record = {
+     id,
+     type,
+     message,
+@@ -224,14 +304,16 @@
+     appVersion: cleanString(body.appVersion, 60),
+     context: sanitizeProperties(body.context || {}),
+     status: 'received',
+-  });
+-  return sendJson(res, 202, { accepted: true, feedbackId: id }, origin);
++  };
++  await appendJsonLine(monthlyFilename('feedback', record.receivedAt), record);
++  keepBounded(seenFeedbackIds, id);
++  return sendJson(res, 202, { accepted: true, duplicate: false, feedbackId: id }, origin);
+ }
+ 
+ const server = createServer(async (req, res) => {
+   const origin = String(req.headers.origin || '');
+ 
+-  if (!isOriginAllowed(origin)) return sendJson(res, 403, { error: 'origin_not_allowed' });
++  if (!isOriginAllowed(origin)) return sendJson(res, 403, { error: 'origin_not_allowed', errorCode: 'CORS_001' });
+ 
+   if (req.method === 'OPTIONS') {
+     if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
+@@ -243,7 +325,7 @@
+   }
+ 
+   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+-  if (rateLimit(ip)) return sendJson(res, 429, { error: 'rate_limit_exceeded' }, origin);
++  if (rateLimit(ip)) return sendJson(res, 429, { error: 'rate_limit_exceeded', errorCode: 'RATE_LIMIT_001' }, origin);
+ 
+   const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+ 
+@@ -251,25 +333,40 @@
+     if (req.method === 'GET' && requestUrl.pathname === '/api/health') {
+       return sendJson(res, 200, {
+         ok: true,
++        version: '4.9.0',
+         kakaoConfigured: Boolean(KAKAO_REST_API_KEY),
+         eventCollection: true,
+         feedbackCollection: true,
++        storageMode: 'monthly-jsonl',
++        retentionDays: RETENTION_DAYS,
+       }, origin, 'no-store');
+     }
+     if (req.method === 'GET' && requestUrl.pathname === '/api/nearby') return await handleNearby(requestUrl, res, origin);
+     if (req.method === 'GET' && requestUrl.pathname === '/api/resolve-location') return await handleResolveLocation(requestUrl, res, origin);
+     if (req.method === 'POST' && requestUrl.pathname === '/api/events') return await handleEvents(req, res, origin);
+     if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
+-    return sendJson(res, 404, { error: 'not_found' }, origin);
++    return sendJson(res, 404, { error: 'not_found', errorCode: 'ROUTE_404' }, origin);
+   } catch (error) {
+     const status = Number(error?.statusCode) || 500;
+-    const payload = { error: cleanString(error?.message || 'internal_error', 100) };
++    const payload = { error: cleanString(error?.message || 'internal_error', 100), errorCode: status >= 500 ? 'SERVER_001' : 'REQUEST_001' };
+     if (error?.detail) payload.detail = cleanString(error.detail, 240);
+     return sendJson(res, status, payload, origin);
+   }
+ });
+ 
++await mkdir(DATA_DIR, { recursive: true });
++await cleanupExpiredData();
++await warmDedupeSets();
++
++setInterval(() => {
++  const cutoff = Date.now() - WINDOW_MS * 2;
++  for (const [ip, bucket] of requestBuckets) {
++    if (bucket.startedAt < cutoff) requestBuckets.delete(ip);
++  }
++}, 5 * 60_000).unref();
++
+ server.listen(PORT, () => {
+-  console.log(`Today's Plate beta API listening on http://localhost:${PORT}`);
++  console.log(`Today's Plate beta API v4.9.0 listening on http://localhost:${PORT}`);
+   console.log(`Data directory: ${DATA_DIR}`);
++  console.log(`Retention: ${RETENTION_DAYS} days`);
+ });

@@ -62,3 +62,22 @@ https://FIREBASE_PROJECT_ID.firebaseapp.com
 4. `/api/events` 수집
 5. 피드백 제출
 6. Railway 재배포 후 Volume 데이터 유지 여부
+
+## v4.9 데이터 운영
+
+Railway Variables에 다음 값을 추가한다.
+
+```env
+DATA_RETENTION_DAYS=90
+DATA_DIR=/app/server/data
+```
+
+이벤트와 피드백은 각각 `events-YYYY-MM.jsonl`, `feedback-YYYY-MM.jsonl`로 월별 저장된다. 동일한 이벤트 ID와 피드백 ID는 중복 저장하지 않는다. 서버 시작 시 보존 기간이 지난 월별 파일을 정리한다.
+
+수동 백업:
+
+```bash
+npm run backup
+```
+
+백업은 기본적으로 Railway Volume의 `server/data/backups/<timestamp>`에 생성된다. 백업 파일을 같은 Volume에만 보관하면 Volume 장애에는 대응하지 못하므로 정기적으로 외부 저장소로 복사해야 한다.

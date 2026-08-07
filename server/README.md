@@ -75,3 +75,14 @@ node server/beta-report.mjs > beta-report.json
 ```
 
 리포트는 이벤트 수, 추천 퍼널, 메뉴 선택률, 기록률, 거절 이유, 주변 식당·레시피 이용량, 오류 및 피드백 유형을 출력합니다.
+
+## v4.9 운영
+
+- 이벤트: `events-YYYY-MM.jsonl`
+- 피드백: `feedback-YYYY-MM.jsonl`
+- 기본 보존 기간: 90일 (`DATA_RETENTION_DAYS`)
+- 동일 ID 중복 수집 방지
+- `npm run backup`: Volume 내부 백업 생성
+- `npm run report`: 전체 월별 파일을 합쳐 베타 리포트 생성
+
+Railway Volume 자체의 장애에 대비하려면 생성된 백업을 별도 저장소로 복사해야 한다.
