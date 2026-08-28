@@ -960,37 +960,31 @@
     });
   }
   const questions = [
-    { step: 1, total: 4, title: '오늘은 어떻게 먹을까요?', sub: '식사 방식에 맞는 메뉴부터 좁혀드릴게요', key: 'mode', grid: 2,
+    { step:1, total:3, title:'누구와 먹나요?', sub:'상황에 맞는 메뉴 분위기를 먼저 맞출게요.', key:'situation', grid:2,
       options: [
-        { emoji:'🍽️', text:'외식', hint:'가까운 식당에서', value:'외식' },
-        { emoji:'🛵', text:'배달', hint:'주문하기 좋은 메뉴', value:'배달' },
-        { emoji:'🏠', text:'집밥', hint:'직접 간단히 만들기', value:'집밥' },
-        { emoji:'🏪', text:'편의점', hint:'빠르고 부담 없이', value:'편의점' }
+        { emoji:'🙂', text:'혼자', hint:'빠르고 편안하게', value:'혼밥' },
+        { emoji:'👥', text:'친구', hint:'함께 나눠 먹기', value:'친구와' },
+        { emoji:'♥', text:'데이트', hint:'분위기도 중요하게', value:'데이트' },
+        { emoji:'🏠', text:'가족', hint:'모두가 편한 메뉴', value:'가족' },
+        { emoji:'🥂', text:'회식', hint:'여럿이 즐기기', value:'회식' },
+        { emoji:'💻', text:'팀프로젝트', hint:'간편하게 집중하기', value:'팀프로젝트' }
       ] },
-    { step: 2, total: 4, title: '어떤 종류의 음식이 좋아요?', sub: '원하는 음식 종류가 있으면 정확히 맞춰드릴게요', key: 'type', grid: 2,
+    { step:2, total:3, title:'어떤 한 끼가 당기나요?', sub:'두 개까지 골라도 괜찮아요.', key:'preferenceBundle', bundle:true, grid:3,
       options: [
-        { emoji:'🇰🇷', text:'한식', hint:'밥·국·찌개·구이', value:'한식' },
-        { emoji:'🇨🇳', text:'중식', hint:'면·볶음·중화요리', value:'중식' },
-        { emoji:'🇯🇵', text:'일식', hint:'초밥·덮밥·면요리', value:'일식' },
-        { emoji:'🍝', text:'양식', hint:'파스타·피자·샐러드', value:'양식' },
-        { emoji:'🌏', text:'세계음식', hint:'동남아·멕시칸·인도 등', value:'세계음식' }
-      ] },
-    { step: 3, total: 4, title: '지금 어떤 메뉴가 당겨요?', sub: '오늘의 배고픔과 컨디션을 알려주세요', key: 'need', grid: 2,
-      options: [
-        { emoji:'🥗', text:'가볍게', hint:'부담 적은 한 끼', value:'light' },
-        { emoji:'🍚', text:'든든하게', hint:'배부르게 먹기', value:'full' },
-        { emoji:'🍲', text:'해장·국물', hint:'따뜻하고 편안하게', value:'hangover' },
-        { emoji:'🌶️', text:'매콤하게', hint:'기분 좋은 자극', value:'spicy' }
-      ] },
-    { step: 4, total: 4, title: '한 끼 예산은 어느 정도예요?', sub: '가격 차이를 고려해 선택 금액보다 조금 넓게 추천합니다', key: 'budget', grid: 2,
-      options: [
-        { emoji:'₩', text:'약 1만 원', hint:'최대 1만 2천 원 정도', value:10000 },
-        { emoji:'₩₩', text:'약 3만 원', hint:'최대 3만 3천 원 정도', value:30000 },
-        { emoji:'₩₩₩', text:'약 5만 원', hint:'최대 5만 5천 원 정도', value:50000 },
-        { emoji:'∞', text:'가격 상관없음', hint:'가격보다 메뉴 우선', value:null }
+        { text:'한식', value:'type:한식' },
+        { text:'매콤한', value:'need:spicy' },
+        { text:'국물', value:'need:hangover' },
+        { text:'든든한', value:'need:full' },
+        { text:'가벼운', value:'need:light' },
+        { text:'상관없음', value:'any' }
+      ],
+      budgets: [
+        { text:'1만원대', value:'10000' },
+        { text:'3만원대', value:'30000' },
+        { text:'5만원대', value:'50000' },
+        { text:'가격 상관없음', value:'any' }
       ] },
   ];
-  questions.forEach((q, idx) => { q.step = idx + 1; q.total = questions.length; });
 
   // ─── 카카오 로컬 API ───
   //
@@ -1214,7 +1208,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v4.9.0';
+  const APP_VERSION = 'korea-beta-v5.0.0';
   const APP_RELEASE_DATE = '2026-08-07';
   const APP_DATA_VERSION = 'menus-197-v4.9';
   let currentStep = 0;
@@ -1657,6 +1651,7 @@
     if (value === null || value === undefined) return '상관없음';
     const labels = {
       외식:'외식', 배달:'배달', 집밥:'집밥', 편의점:'편의점',
+      혼밥:'혼자', 친구와:'친구', 데이트:'데이트', 가족:'가족', 회식:'회식', 팀프로젝트:'팀프로젝트',
       light:'가볍게', full:'든든하게', hangover:'해장·국물', spicy:'매콤하게',
       10000:'약 1만 원', 30000:'약 3만 원', 50000:'약 5만 원'
     };
@@ -2183,8 +2178,39 @@
     const topType = sortedEntries(typeCounts)[0];
     const topWeight = sortedEntries(weightCounts)[0];
     const topTime = sortedEntries(Object.fromEntries(Object.entries(personalProfile.timePatterns || {}).map(([t, obj]) => [t, Object.values(obj || {}).reduce((a,b)=>a+b,0)])))[0];
+    const totalChosen = selectedMenus.reduce((sum, item) => sum + Number(item.stats.chosen || 0), 0);
+    const percentOf = value => totalChosen ? Math.round(Number(value || 0) / totalChosen * 100) : 0;
+    const topTypePercent = percentOf(topType?.[1]);
+    const spicyPercent = percentOf(selectedMenus.filter(item => Number(item.menu.spicy || 0) >= 1).reduce((sum, item) => sum + Number(item.stats.chosen || 0), 0));
+    const fullPercent = percentOf(weightCounts['든든']);
+    const soupPercent = percentOf(selectedMenus.filter(item => item.menu.soup).reduce((sum, item) => sum + Number(item.stats.chosen || 0), 0));
+    const explorePercent = percentOf(selectedMenus.filter(item => getMenuFamiliarity(item.menu) === 'explore').reduce((sum, item) => sum + Number(item.stats.chosen || 0), 0));
+    const archetype = topType
+      ? `${spicyPercent >= 50 ? '매콤한 ' : ''}${topType[0]} 탐험가`
+      : '입맛을 알아가는 탐험가';
 
     c.innerHTML = `
+      <section class="taste-archetype-card">
+        <img src="./assets/figma/taste-badge.svg" alt="" width="56" height="56">
+        <div><strong>${escapeHtml(archetype)}</strong><p>${totalChosen ? `최근 ${totalChosen}번의 선택으로 계산했어요.` : '식사를 기록하면 나만의 입맛 유형이 만들어져요.'}</p></div>
+        <div class="taste-archetype-tags">
+          <span>${topType ? `${escapeHtml(topType[0])} ${topTypePercent}%` : '음식 취향 학습 전'}</span>
+          <span>${spicyPercent ? `매콤 ${spicyPercent}%` : '맵기 학습 전'}</span>
+          <span>${personalProfile.budgetMax ? budgetLabel(personalProfile.budgetMax) : '예산 미설정'}</span>
+        </div>
+      </section>
+
+      <section class="taste-fingerprint">
+        <div class="taste-fingerprint-head"><strong>입맛 지문</strong><span>실제 선택 데이터 기준</span></div>
+        ${[
+          [topType?.[0] || '선호 음식', topTypePercent],
+          ['매콤한 맛', spicyPercent],
+          ['든든함', fullPercent],
+          ['국물', soupPercent],
+          ['새로운 메뉴', explorePercent],
+        ].map(([label, value]) => `<div class="taste-fingerprint-row"><span>${escapeHtml(label)}</span><i><b style="width:${Math.max(3, Number(value || 0))}%"></b></i><small>${Number(value || 0)}%</small></div>`).join('')}
+      </section>
+
       <div class="mini-stat-grid">
         <div class="mini-stat"><strong>${personalProfile.acceptedCount || 0}</strong><span>선호</span></div>
         <div class="mini-stat"><strong>${personalProfile.rejectedCount || 0}</strong><span>비선호</span></div>
@@ -2341,15 +2367,8 @@
     const greeting = document.getElementById('mealGreeting');
     const quickTitle = document.getElementById('quickRecommendTitle');
     const dateLine = document.getElementById('dateLine');
-    if (dateLine) dateLine.textContent = `${months[today.getMonth()]} ${today.getDate()}일 · ${days[today.getDay()]}`;
-    if (greeting) {
-      const copy = {
-        아침: '가볍고 기분 좋은 아침 메뉴를 찾아드려요',
-        점심: '지금 먹기 좋은 점심 메뉴를 찾아드려요',
-        저녁: '오늘 하루를 마무리할 저녁 메뉴를 찾아드려요'
-      };
-      greeting.textContent = copy[mealTime] || '지금 먹기 좋은 메뉴를 찾아드려요';
-    }
+    if (dateLine) dateLine.textContent = userLocationLabel ? `${userLocationLabel}⌄` : '내 주변⌄';
+    if (greeting) greeting.textContent = '고민은 짧게, 만족은 오래.';
     if (quickTitle) quickTitle.textContent = `${mealTime} 바로 추천`;
     renderResumeRecommendation();
   }
@@ -2681,11 +2700,13 @@
   // ─── Render question ───
   function renderQuestion() {
     const q = questions[currentStep];
-    document.getElementById('stepNum').textContent = `질문 ${q.step}`;
+    document.getElementById('stepNum').textContent = `빠른 결정 · ${q.step}/3`;
     document.getElementById('questionText').textContent = q.title;
     document.getElementById('questionSub').textContent = q.sub;
     document.getElementById('stepCurrent').textContent = q.step;
     document.getElementById('stepTotal').textContent = q.total;
+    const flowLabel = document.getElementById('quizFlowLabel');
+    if (flowLabel) flowLabel.textContent = `빠른 결정 · ${q.step}/3`;
 
     const stepsEl = document.getElementById('progressSteps');
     stepsEl.innerHTML = '';
@@ -2703,6 +2724,25 @@
     const opts = document.getElementById('optionsContainer');
     opts.className = 'options' + (q.grid === 2 ? ' grid-2' : '');
     opts.innerHTML = '';
+    const skipRow = document.getElementById('skipBtn')?.closest('.skip-row');
+    if (skipRow) skipRow.hidden = Boolean(q.bundle);
+    if (q.bundle) {
+      const chosen = Array.isArray(answers._cravings) ? answers._cravings : [];
+      opts.className = 'options preference-bundle';
+      opts.innerHTML = `
+        <div class="craving-options">
+          ${q.options.map(opt => `<button type="button" class="preference-chip ${chosen.includes(opt.value) ? 'selected' : ''}" data-value="${escapeHtml(opt.value)}" onclick="togglePreferenceBundle('${opt.value}', this)">${opt.text}</button>`).join('')}
+        </div>
+        <div class="budget-heading"><strong>1인 예산</strong><span>딱 맞는 가격보다 만족스러운 범위로 찾아요.</span></div>
+        <div class="budget-options">
+          ${q.budgets.map(opt => `<button type="button" class="preference-chip ${answers._budgetSelected && (opt.value === 'any' ? answers.budget === null : Number(opt.value) === Number(answers.budget)) ? 'selected' : ''}" onclick="selectPreferenceBudget('${opt.value}', this)">${opt.text}</button>`).join('')}
+        </div>
+        <div class="preference-summary" id="preferenceSummary">${buildPreferenceSummary()}</div>
+        <button class="preference-submit" type="button" onclick="completePreferenceBundle()">이 조건으로 추천받기 <span aria-hidden="true">→</span></button>`;
+      document.getElementById('backBtn').disabled = false;
+      renderFilterSummary();
+      return;
+    }
     q.options.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'option';
@@ -2721,6 +2761,68 @@
     renderFilterSummary();
   }
 
+  function buildPreferenceSummary() {
+    const situation = labelForOption(answers.situation || '혼밥');
+    const cravings = (answers._cravings || [])
+      .filter(value => value !== 'any')
+      .map(value => labelForOption(value.split(':')[1]));
+    const budget = answers._budgetSelected ? budgetLabel(answers.budget) : '예산 선택 전';
+    return `✓ ${escapeHtml(situation)} · ${escapeHtml(cravings.join(' · ') || '메뉴 상관없음')} · ${escapeHtml(budget)}`;
+  }
+
+  function syncPreferenceAnswers() {
+    delete answers.type;
+    delete answers.need;
+    (answers._cravings || []).forEach(value => {
+      const [kind, choice] = String(value).split(':');
+      if (kind === 'type') answers.type = choice;
+      if (kind === 'need') answers.need = choice;
+    });
+  }
+
+  function togglePreferenceBundle(value) {
+    let selected = Array.isArray(answers._cravings) ? [...answers._cravings] : [];
+    if (value === 'any') {
+      selected = selected.includes('any') ? [] : ['any'];
+    } else {
+      const alreadySelected = selected.includes(value);
+      const [kind] = value.split(':');
+      selected = selected.filter(item => item !== 'any' && !item.startsWith(`${kind}:`));
+      if (!alreadySelected) selected.push(value);
+      selected = selected.slice(-2);
+    }
+    answers._cravings = selected;
+    syncPreferenceAnswers();
+    document.querySelectorAll('.craving-options .preference-chip').forEach(chip => {
+      chip.classList.toggle('selected', selected.includes(chip.dataset.value));
+    });
+    const summary = document.getElementById('preferenceSummary');
+    if (summary) summary.textContent = buildPreferenceSummary();
+    saveRecommendationDraft('quiz');
+  }
+
+  function selectPreferenceBudget(value, button) {
+    answers._budgetSelected = true;
+    answers.budget = value === 'any' ? null : Number(value);
+    document.querySelectorAll('.budget-options .preference-chip').forEach(chip => chip.classList.remove('selected'));
+    button.classList.add('selected');
+    const summary = document.getElementById('preferenceSummary');
+    if (summary) summary.textContent = buildPreferenceSummary();
+    saveRecommendationDraft('quiz');
+  }
+
+  function completePreferenceBundle() {
+    if (!answers._budgetSelected) {
+      showToast('1인 예산을 선택해 주세요.');
+      return;
+    }
+    history.push({ key:'preferenceBundle', value:[...(answers._cravings || []), answers.budget] });
+    trackEvent('recommendation_step_completed', { step:2, key:'preferenceBundle', value:buildPreferenceSummary(), conditions:{ ...answers } });
+    currentStep++;
+    saveRecommendationDraft('quiz');
+    showResult();
+  }
+
   function renderFilterSummary() {
     const sum = document.getElementById('filterSummary');
     sum.innerHTML = '';
@@ -2731,12 +2833,13 @@
       soup: { true:'국물 있음', false:'국물 없음' },
       spicy: { mild:'순한맛', mid:'약간매콤', hot:'매운맛' },
       method: { 간단:'간편요리', 요리:'정성요리', 외식:'외식/배달' },
-      situation: { 혼밥:'혼밥', 친구와:'친구와', 배달:'배달', 집밥:'집밥', 비오는날:'비 오는 날', 운동후:'운동 후', 속편한식사:'속 편한 식사', 시간없을때:'시간 없음' },
+      situation: { 혼밥:'혼자', 친구와:'친구', 데이트:'데이트', 가족:'가족', 회식:'회식', 팀프로젝트:'팀프로젝트', 배달:'배달', 집밥:'집밥', 비오는날:'비 오는 날', 운동후:'운동 후', 속편한식사:'속 편한 식사', 시간없을때:'시간 없음' },
       mode: { 외식:'외식', 배달:'배달', 집밥:'집밥', 편의점:'편의점' },
       need: { light:'가볍게', full:'든든하게', hangover:'해장·국물', spicy:'매콤하게' },
       budget: { 10000:'약 1만 원', 30000:'약 3만 원', 50000:'약 5만 원' },
     };
     Object.keys(answers).forEach(key => {
+      if (key.startsWith('_')) return;
       const val = answers[key];
       if (val === null || val === undefined) return;
       const label = labels[key]?.[val];
@@ -2965,7 +3068,7 @@
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     saveRecommendationDraft('quiz');
-    trackEvent('recommendation_started', { flow: 'four_step', mealTime: answers.contextTime });
+    trackEvent('recommendation_started', { flow: 'figma_three_step', mealTime: answers.contextTime });
     switchPanel('quiz', false);
     renderQuestion();
   }
@@ -3420,6 +3523,10 @@
     const orderTip = menu.soup ? '국물 메뉴는 전문점·회전율·육수 베이스 확인' : menu.spicy >= 2 ? '맵기 조절 가능 여부와 사이드 구성 확인' : '대표 메뉴명과 세부 카테고리 일치 여부 확인';
     const deliveryFit = menu.method === '외식' || answers.situation === '배달' ? '높음' : menu.soup ? '보통' : '높음';
     return `
+      <div class="nearby-map-art" aria-label="${escapeHtml(menu.name)} 주변 지도">
+        <img src="./assets/figma/map-art.svg" alt="" width="393" height="210">
+        <span>${escapeHtml(menu.name)} · 가까운 곳부터</span>
+      </div>
       <div class="nearby-guide">
         <div class="nearby-label">Restaurant Strategy</div>
         <div class="nearby-title">근처에서 먹는다면 이렇게 고르세요</div>
@@ -3576,6 +3683,37 @@
   function goNearby() {
     if (currentMenu) trackEvent('restaurant_search_started', { menuId: currentMenu.id || currentMenu.name });
     switchPanel('nearby');
+  }
+
+  let selectedGroupVote = '';
+
+  function openGroupVote() {
+    selectedGroupVote = '';
+    switchPanel('group');
+    trackEvent('group_vote_opened', { source:'home' });
+  }
+
+  function selectGroupVote(button, menuName) {
+    selectedGroupVote = menuName;
+    document.querySelectorAll('#groupVoteOptions button').forEach(option => option.classList.remove('selected'));
+    button.classList.add('selected');
+    const lead = document.getElementById('groupLead');
+    if (lead) lead.innerHTML = `<strong>${escapeHtml(menuName)}에 투표할까요?</strong><span>투표 후에도 마감 전까지 다시 고를 수 있어요.</span>`;
+  }
+
+  function submitGroupVote() {
+    if (!selectedGroupVote) {
+      showToast('투표할 메뉴를 먼저 골라 주세요.');
+      return;
+    }
+    try {
+      localStorage.setItem('todaysPlateGroupVoteDraft', JSON.stringify({
+        menuName:selectedGroupVote,
+        votedAt:new Date().toISOString()
+      }));
+    } catch (_) {}
+    trackEvent('group_vote_submitted', { menuName:selectedGroupVote, localOnly:true });
+    showToast(`${selectedGroupVote} 투표를 이 기기에 저장했어요.`);
   }
 
   // ─── Diary ───
@@ -4100,11 +4238,11 @@
     if (isFavorited(currentMenu.name)) {
       btn.classList.add('faved');
       icon.textContent = '♥';
-      text.textContent = '찜 해제';
+      text.textContent = '저장됨';
     } else {
       btn.classList.remove('faved');
       icon.textContent = '♡';
-      text.textContent = '찜하기';
+      text.textContent = '저장하기';
     }
   }
 
@@ -4442,6 +4580,17 @@
     `;
   }
 
+  function selectRunner(menuName) {
+    const menu = findMenuByName(menuName);
+    if (!menu) {
+      showToast('선택한 메뉴를 찾지 못했어요.');
+      return;
+    }
+    answers = readRecommendationTestAnswers();
+    showResultForMenu(menu);
+    trackEvent('recommendation_test_menu_selected', { menuId:menu.id || menu.name, conditions:{ ...answers } });
+  }
+
   // ─── Panel switching ───
   function resetPanelScroll(nextPanel) {
     const scrollTargets = [
@@ -4485,7 +4634,7 @@
     setTimeout(() => resetPanelScroll(nextPanel), 60);
 
     if (updateNav) {
-      const navMap = { home:'home', quiz:'home', result:'home', recipe:'home', nearby:'nearby', favorites:'favorites', profile:'profile', debug:'home', recipeqa:'home', diary:'diary' };
+      const navMap = { home:'home', quiz:'home', result:'home', group:'home', recipe:'home', nearby:'nearby', favorites:'favorites', profile:'profile', debug:'home', recipeqa:'home', diary:'diary' };
       const target = navMap[name];
       document.querySelectorAll('.nav-item').forEach(n => {
         n.classList.toggle('active', n.dataset.panel === target);

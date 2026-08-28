@@ -9,16 +9,16 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-assert(/^4\.(?:7|8|9)(?:\.\d+)?$/.test(pkg.version), 'package version must be v4.7 or newer');
-assert(/const APP_VERSION = 'korea-beta-v4\.(?:7|8|9)(?:\.\d+)?'/.test(app), 'APP_VERSION is not v4.7 or newer');
-assert(/app\.js\?v=4\.(?:7|8|9)(?:\.\d+)?/.test(index), 'index cache version is not v4.7 or newer');
+assert(/^(?:4\.(?:7|8|9)(?:\.\d+)?|[5-9]\.\d+\.\d+)$/.test(pkg.version), 'package version must be v4.7 or newer');
+assert(/const APP_VERSION = 'korea-beta-(?:v4\.(?:7|8|9)(?:\.\d+)?|v[5-9]\.\d+\.\d+)'/.test(app), 'APP_VERSION is not v4.7 or newer');
+assert(/app\.js\?v=(?:4\.(?:7|8|9)(?:\.\d+)?|[5-9]\.\d+\.\d+)/.test(index), 'index cache version is not v4.7 or newer');
 
 assert(app.includes("10000: { label:'약 1만 원', ceiling:12000"), '1만원 flexible tier missing');
 assert(app.includes("30000: { label:'약 3만 원', ceiling:33000"), '3만원 flexible tier missing');
 assert(app.includes("50000: { label:'약 5만 원', ceiling:55000"), '5만원 flexible tier missing');
-assert(app.includes("text:'약 1만 원'"), 'quiz 1만원 option missing');
-assert(app.includes("text:'약 3만 원'"), 'quiz 3만원 option missing');
-assert(app.includes("text:'약 5만 원'"), 'quiz 5만원 option missing');
+assert(/text:'(?:약 )?1만(?: 원|원대)'/.test(app), 'quiz 1만원 option missing');
+assert(/text:'(?:약 )?3만(?: 원|원대)'/.test(app), 'quiz 3만원 option missing');
+assert(/text:'(?:약 )?5만(?: 원|원대)'/.test(app), 'quiz 5만원 option missing');
 assert(!app.includes("text:'7천 원 이하'"), 'old 7천원 quiz option remains');
 assert(!app.includes("text:'1만 5천 원 이하'"), 'old 1만5천원 quiz option remains');
 

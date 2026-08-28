@@ -6,7 +6,7 @@ const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const checks = [
-  ['package version', /^4\.(?:8\.(?:[4-9]|[1-9][0-9]+)|9\.[0-9]+)$/.test(pkg.version)],
+  ['package version', /^(?:4\.(?:8\.(?:[4-9]|[1-9][0-9]+)|9\.[0-9]+)|[5-9]\.\d+\.\d+)$/.test(pkg.version)],
   ['runtime version', app.includes(`korea-beta-v${pkg.version}`)],
   ['cache version', html.includes(`app.js?v=${pkg.version}`)],
   ['composition start handler', app.includes("addEventListener('compositionstart'")],

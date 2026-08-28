@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>오늘의 식탁 · 오늘 뭐 먹지?</title>
 <meta name="description" content="상황과 예산에 맞는 메뉴를 30초 안에 추천하고, 레시피와 주변 식당까지 연결하는 식사 결정 앱">
-<meta name="theme-color" content="#FF684E">
+<meta name="theme-color" content="#C93F31">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="오늘의 식탁">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/app.css">
+<link rel="stylesheet" href="./css/app.css?v=5.0.0">
 </head>
 <body>
 <div class="container">
@@ -26,9 +26,9 @@
   <header class="topbar">
     <button class="brand" type="button" onclick="switchPanel('home')" aria-label="오늘의 식탁 홈으로 이동">
       <img class="brand-logo" src="./assets/brand/logo-symbol.svg" alt="" width="42" height="42">
-      <span class="brand-copy"><strong>오늘의 식탁</strong><small>오늘 뭐 먹지? 30초 안에 결정</small></span>
+      <span class="brand-copy"><strong>오늘의 식탁</strong><small>고민은 짧게, 만족은 오래.</small></span>
     </button>
-    <div class="date-pill" id="dateLine">7월 23일 · 목요일</div>
+    <button class="date-pill" id="dateLine" type="button" onclick="switchPanel('nearby')" aria-label="주변 식당 화면 열기">내 주변⌄</button>
   </header>
 
 
@@ -57,35 +57,29 @@
     <main class="home">
       <section class="home-hero">
         <div class="hero-copy">
-          <div class="home-eyebrow"><span class="status-dot"></span><span id="mealGreeting">지금 먹기 좋은 메뉴를 찾아드려요</span></div>
-          <h1 class="home-title">오늘 뭐 먹지?<br><span>30초면 결정돼요.</span></h1>
-          <p class="home-sub">시간대와 입맛, 예산을 반영해<br>지금 가장 잘 맞는 한 끼를 추천합니다.</p>
+          <h1 class="home-title">오늘 뭐 먹지?</h1>
+          <p class="home-sub" id="mealGreeting">고민은 짧게, 만족은 오래.</p>
         </div>
-        <figure class="hero-visual">
-          <span class="hero-fallback" aria-hidden="true">🍲</span>
-          <img src="https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=900&q=84" alt="정갈하게 차려진 한식 한 끼" width="900" height="1100" loading="eager" decoding="async" onerror="this.style.display='none'">
-          <figcaption class="photo-caption">오늘의 한 끼</figcaption>
-          <div class="plate-orbit orbit-one">지금 시간에 맞춰</div>
-          <div class="plate-orbit orbit-two">내 예산 안에서</div>
-        </figure>
+        <button class="quick-decision" type="button" onclick="startQuiz()">
+          <span class="quick-decision-badge">30초 빠른 결정</span>
+          <span class="quick-decision-title">3가지만 알려주세요</span>
+          <span class="quick-decision-copy">누구와 · 무엇을 · 얼마에</span>
+          <img class="quick-decision-art" src="./assets/figma/hero-meal.svg" alt="한식 한 상 일러스트" width="150" height="118">
+          <span class="quick-decision-cta">오늘 메뉴 결정하기 <span aria-hidden="true">→</span></span>
+        </button>
       </section>
 
-      <button class="start-card primary" type="button" onclick="startQuiz()">
-        <span class="start-icon">✦</span>
-        <span class="start-card-copy">
-          <span class="start-title">30초 메뉴 추천 시작</span>
-          <span class="start-desc">식사 방식·오늘 상태·예산 3가지만 선택</span>
-        </span>
-        <span class="start-arrow" aria-hidden="true">→</span>
+      <div class="quick-chips" aria-label="빠른 추천 조건 예시">
+        <span>친구와</span><span>30분 이내</span><span>1만원대</span>
+      </div>
+
+      <button class="group-vote-entry" type="button" onclick="openGroupVote()">
+        <span><strong>친구들과 함께 고르기</strong><small>링크 하나로 투표하고 빠르게 합의해요</small></span>
+        <span aria-hidden="true">→</span>
       </button>
       <div id="resumeRecommendation" class="resume-slot" aria-live="polite"></div>
 
-      <div class="beta-trust-note" aria-label="사용 안내">
-        <span>로그인 없이 바로 사용</span>
-        <span>위치는 주변 검색할 때만 요청</span>
-      </div>
-
-      <section class="home-section">
+      <section class="home-section home-secondary">
         <div class="section-heading">
           <div><span class="section-kicker">맞춤 선택</span><h2>내 상황에 맞게 고르기</h2></div>
         </div>
@@ -126,6 +120,10 @@
   <!-- QUIZ PANEL                       -->
   <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-quiz">
+    <div class="quiz-flow-header">
+      <button class="quiz-back" id="backBtn" type="button" aria-label="이전 질문">‹</button>
+      <strong id="quizFlowLabel">빠른 결정 · 1/3</strong>
+    </div>
     <div class="progress-area">
       <div class="progress-top">
         <div class="progress-label"><span id="stepCurrent">1</span> / <span id="stepTotal">3</span></div>
@@ -147,7 +145,6 @@
     </div>
 
     <div class="quiz-nav">
-      <button class="nav-text-btn" id="backBtn" disabled>← 이전</button>
       <button class="nav-text-btn" onclick="switchPanel('home')">처음으로</button>
     </div>
   </div>
@@ -157,32 +154,33 @@
   <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-result">
     <div class="result-screen">
-      <div class="result-label">오늘의 추천</div>
-      <h2 class="result-title">오늘은 이 메뉴 어때요?</h2>
+      <div class="result-header-row">
+        <h2 class="result-title">추천 완료</h2>
+        <span class="result-time">✓ 18초 만에</span>
+      </div>
       <p class="result-sub" id="resultSub">베스트 매치</p>
 
       <div class="top-pick" id="topPick" aria-live="polite"></div>
 
       <div class="action-grid">
         <button class="action-btn primary-action" onclick="acceptCurrentMenu()">
-          <span class="action-btn-icon">✓</span>
-          <div class="action-btn-text">이 메뉴로 결정</div>
+          <span class="action-btn-icon">✓</span><div class="action-btn-text">이걸로 먹을래요</div>
           <div class="action-btn-sub">선택하고 식사 기록하기</div>
-        </button>
-        <button class="action-btn" onclick="goRecipe()">
-          <span class="action-btn-icon">▤</span>
-          <div class="action-btn-text">집에서 만들어 먹기</div>
-          <div class="action-btn-sub">초보자용 레시피 보기</div>
-        </button>
-        <button class="action-btn" onclick="goNearby()">
-          <span class="action-btn-icon">⌖</span>
-          <div class="action-btn-text">주변 식당 찾기</div>
-          <div class="action-btn-sub">위치를 확인한 뒤 검색</div>
         </button>
         <button class="action-btn" id="favActionBtn" onclick="toggleFavorite()">
           <span class="action-btn-icon" id="favActionIcon">♡</span>
-          <div class="action-btn-text" id="favActionText">찜하기</div>
+          <div class="action-btn-text" id="favActionText">저장하기</div>
           <div class="action-btn-sub">나중에 다시 보기</div>
+        </button>
+        <button class="action-btn" onclick="goNearby()">
+          <span class="action-btn-icon">⌖</span>
+          <div class="action-btn-text">식당 찾기</div>
+          <div class="action-btn-sub">가까운 곳부터 보기</div>
+        </button>
+        <button class="action-btn" onclick="goRecipe()">
+          <span class="action-btn-icon">▤</span>
+          <div class="action-btn-text">집에서 요리</div>
+          <div class="action-btn-sub">레시피 보기</div>
         </button>
         <button class="action-btn" onclick="rejectCurrentMenu()">
           <span class="action-btn-icon">↻</span>
@@ -197,6 +195,26 @@
       <div id="runnerList"></div>
 
       <button class="retry-btn" onclick="startQuiz()">↻ 다시 찾아보기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- GROUP VOTE PANEL                 -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-group">
+    <div class="sub-panel group-vote-panel">
+      <button class="panel-back" type="button" onclick="switchPanel('home')" aria-label="홈으로 돌아가기">‹</button>
+      <div class="group-kicker">GROUP TABLE</div>
+      <h2 class="sub-title">오늘 저녁, 뭐 먹지?</h2>
+      <p class="sub-subtitle">7명 중 5명 참여 · 오늘 6:30 마감</p>
+      <div class="group-avatars" aria-label="참여자 7명"><span>재</span><span>민</span><span>수</span><span>하</span><span>윤</span><small>+2</small></div>
+      <div class="group-vote-options" id="groupVoteOptions">
+        <button type="button" onclick="selectGroupVote(this, '제육볶음 정식')"><span>🥘</span><strong>제육볶음 정식</strong><small>3표 · 합정동</small></button>
+        <button type="button" onclick="selectGroupVote(this, '마라탕')"><span>🍲</span><strong>마라탕</strong><small>2표 · 홍대입구</small></button>
+        <button type="button" onclick="selectGroupVote(this, '냉모밀')"><span>🍜</span><strong>냉모밀</strong><small>0표 · 망원동</small></button>
+      </div>
+      <div class="group-lead" id="groupLead"><strong>제육볶음이 1표 앞서고 있어요</strong><span>마감 후 1위 메뉴와 가까운 식당을 바로 추천해요.</span></div>
+      <button class="group-vote-submit" type="button" onclick="submitGroupVote()">이 메뉴에 투표하기</button>
     </div>
   </div>
 
@@ -239,8 +257,8 @@
   <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-diary">
     <div class="sub-panel">
-      <h2 class="sub-title">식단 기록</h2>
-      <p class="sub-subtitle">최근 식사 기록과 실제 지출</p>
+      <h2 class="sub-title">나의 식사 기록</h2>
+      <p class="sub-subtitle">결정한 식사가 쌓여 나만의 리포트가 돼요.</p>
       <div id="diaryContent"></div>
     </div>
   </div>
@@ -509,6 +527,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=4.9.0" defer></script>
+<script src="./js/app.js?v=5.0.0" defer></script>
 </body>
 </html>

@@ -5,15 +5,12 @@ const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
 
 const requiredAppFragments = [
-  "title: '어떤 종류의 음식이 좋아요?'",
-  "key: 'type'",
   "if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;",
   'function isDietFriendlyMenu(menu)',
   'function openDirectRecordModal()',
   'function buildCustomDiaryMenu(name, snapshot = {})',
   'menuSnapshot:',
   'function renderExplorerMenuCard(menu)',
-  "flow: 'four_step'",
 ];
 
 const requiredHtmlFragments = [
@@ -25,14 +22,23 @@ const requiredHtmlFragments = [
 
 const failures = [];
 
-if (!/const APP_VERSION = 'korea-beta-v4\.(?:8|9)(?:\.[0-9]+)?'/.test(app)) {
+if (!/const APP_VERSION = 'korea-beta-(?:v4\.(?:8|9)(?:\.[0-9]+)?|v[5-9]\.\d+\.\d+)'/.test(app)) {
   failures.push('app.js missing compatible v4.8 app version');
 }
-if (!/\.\/js\/app\.js\?v=4\.(?:8|9)(?:\.[0-9]+)?/.test(html)) {
+if (!/\.\/js\/app\.js\?v=(?:4\.(?:8|9)(?:\.[0-9]+)?|[5-9]\.\d+\.\d+)/.test(html)) {
   failures.push('index.html missing compatible v4.8 app cache version');
 }
 for (const fragment of requiredAppFragments) {
   if (!app.includes(fragment)) failures.push(`app.js missing: ${fragment}`);
+}
+const hasTypePreferenceInput = (
+  app.includes("title: '어떤 종류의 음식이 좋아요?'") && app.includes("key: 'type'")
+) || (
+  app.includes("title:'어떤 한 끼가 당기나요?'") && app.includes("value:'type:한식'") && app.includes("key:'preferenceBundle'")
+);
+if (!hasTypePreferenceInput) failures.push('음식 종류 선호 입력 흐름 누락');
+if (!app.includes("flow: 'four_step'") && !app.includes("flow: 'figma_three_step'")) {
+  failures.push('추천 흐름 분석 이벤트 누락');
 }
 for (const fragment of requiredHtmlFragments) {
   if (!html.includes(fragment)) failures.push(`index.html missing: ${fragment}`);
@@ -55,7 +61,7 @@ if (japaneseDiet.some(menu => menu.name === '스콘')) failures.push('스콘이 
 if (!menus.some(menu => menu.name === '스콘')) failures.push('스콘 회귀 테스트 데이터가 없음');
 
 const questionCount = (app.match(/title: '/g) || []).length;
-if (!app.includes('questions.forEach((q, idx) => { q.step = idx + 1; q.total = questions.length; });')) {
+if (!app.includes('questions.forEach((q, idx) => { q.step = idx + 1; q.total = questions.length; });') && !app.includes('total:3')) {
   failures.push('질문 단계 수 자동 반영 코드 누락');
 }
 

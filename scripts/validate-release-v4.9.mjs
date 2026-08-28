@@ -12,9 +12,9 @@ const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.me
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
 
-check(pkg.version === '4.9.0', 'package version must be 4.9.0');
-check(app.includes("korea-beta-v4.9.0"), 'runtime version missing');
-check(html.includes('app.js?v=4.9.0'), 'cache version missing');
+check(/^(?:4\.9\.0|[5-9]\.\d+\.\d+)$/.test(pkg.version), 'package version must be v4.9.0 or newer');
+check(/korea-beta-(?:v4\.9\.0|v[5-9]\.\d+\.\d+)/.test(app), 'runtime version v4.9+ missing');
+check(html.includes(`app.js?v=${pkg.version}`), 'cache version missing');
 check(!app.includes("status: API_BASE_URL ? 'idle'"), 'API_BASE_URL is referenced before initialization');
 
 check(app.includes('function editMealRecord(recordId)'), 'meal record edit missing');

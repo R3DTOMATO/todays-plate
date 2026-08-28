@@ -12,7 +12,7 @@ const check = (name, condition) => {
   if (!condition) process.exitCode = 1;
 };
 
-check('package version is 4.8.2 or newer', /^4\.(?:8\.(?:[2-9]|[1-9][0-9]+)|9\.[0-9]+)$/.test(pkg.version));
+check('package version is 4.8.2 or newer', /^(?:4\.(?:8\.(?:[2-9]|[1-9][0-9]+)|9\.[0-9]+)|[5-9]\.\d+\.\d+)$/.test(pkg.version));
 check('cache-busting script version is current', html.includes(`app.js?v=${pkg.version}`));
 check('runtime app version is current', app.includes(`korea-beta-v${pkg.version}`));
 check(
