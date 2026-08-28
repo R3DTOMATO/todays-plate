@@ -4764,3 +4764,229 @@ body[data-panel="quiz"] .bottom-nav { display: flex !important; }
 @media (prefers-reduced-motion: reduce) {
   .quick-decision, .panel.active { transition: none; animation: none; }
 }
+
+/* Flow 01 fidelity pass: preserve the Figma 393px proportions responsively
+   and remove inherited editorial-grid rules that compressed the card. */
+html, body { background: var(--tt-bg-subtle); }
+body::before { display: none; }
+.container {
+  max-width: 430px;
+  min-height: 100dvh;
+  background: var(--tt-bg-canvas);
+  box-shadow: none;
+}
+.topbar {
+  position: relative;
+  min-height: 104px;
+  padding: max(51px, env(safe-area-inset-top)) 20px 17px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.brand { padding: 0; border: 0; background: transparent; }
+.brand, .home-title, .question-text, .result-title, .sub-title, .pick-name { font-family: inherit; }
+.date-pill { flex: 0 0 auto; font-family: inherit; letter-spacing: 0; text-transform: none; }
+
+.home {
+  width: 100%;
+  padding: 0 20px 124px;
+}
+.home-intro { display: block; }
+.home-title {
+  max-width: none;
+  margin: 6px 0 5px;
+  font-size: 31px;
+  line-height: 1.2;
+}
+.home-sub { margin: 0 0 20px; }
+
+.quick-decision {
+  display: block;
+  width: 100%;
+  height: 292px;
+  margin: 0;
+  padding: 20px;
+  border-radius: 24px;
+  box-shadow: none;
+}
+.quick-decision-title {
+  margin: 14px 0 0;
+  font: inherit;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.28;
+}
+.quick-decision-copy { margin: 5px 0 0; line-height: 1.45; }
+.quick-decision-cta {
+  border: 1px solid var(--tt-bg-brand);
+  cursor: pointer;
+  font-family: inherit;
+}
+.quick-decision-cta:focus-visible { outline-color: rgba(255,255,255,.8); }
+
+.quick-chips {
+  grid-template-columns: 1fr 1.124fr 1fr;
+  gap: 8px;
+  margin: 20px 0;
+}
+.group-vote-entry { margin: 0; }
+
+.bottom-nav {
+  width: 361px;
+  max-width: calc(100% - 32px);
+  height: 76px;
+  min-height: 76px;
+  padding: 4px;
+  justify-content: center;
+  border-radius: 24px;
+  box-shadow: none;
+}
+.nav-item {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 58px;
+  min-height: 58px;
+  padding: 4px 0;
+  border-radius: 16px;
+}
+.nav-icon { width: 22px; height: 22px; }
+.nav-label { font-size: 11px; font-weight: 400; }
+.nav-item.active .nav-label { font-weight: 800; }
+
+@media (max-width: 392px) {
+  .nav-item { flex: 1 1 0; width: auto; }
+}
+
+/* Flow 01 / Result: one decisive card and two secondary actions only. */
+.result-screen { padding: 54px 20px 118px; }
+.result-sub { margin: 14px 0 18px; }
+.top-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--tt-border-default);
+  border-radius: 24px;
+  background: var(--tt-bg-surface);
+  box-shadow: var(--tt-shadow-card);
+}
+.top-pick .pick-overline {
+  width: fit-content;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--tt-bg-brand-soft);
+  color: var(--tt-text-brand);
+  font-size: 11px;
+  font-weight: 800;
+}
+.figma-pick-visual {
+  display: grid;
+  width: 100%;
+  height: 150px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--tt-bg-brand-soft);
+}
+.figma-pick-visual img { width: 100%; height: 100%; object-fit: contain; }
+.top-pick .pick-name {
+  margin: 0;
+  color: var(--tt-text-primary);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.05em;
+}
+.top-pick .pick-desc {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--tt-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.figma-pick-meta {
+  margin: 0;
+  color: var(--tt-text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.figma-pick-cta {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tt-bg-brand);
+  color: var(--tt-text-inverse);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+}
+.result-secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.result-secondary-btn {
+  min-height: 56px;
+  border: 1px solid var(--tt-bg-brand);
+  border-radius: 999px;
+  background: var(--tt-bg-surface);
+  color: var(--tt-text-brand);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+}
+.result-secondary-btn.faved { background: var(--tt-bg-brand-soft); }
+.result-note {
+  margin: 16px 0 0;
+  color: var(--tt-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Flow 01 / Occasion: keep the Figma selection state on screen until Next. */
+.occasion-note {
+  display: flex;
+  min-height: 112px;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--tt-bg-brand-soft);
+  color: var(--tt-text-brand);
+}
+.occasion-note strong { font-size: 14px; font-weight: 800; }
+.occasion-note span { max-width: 290px; color: var(--tt-text-secondary); font-size: 12px; line-height: 1.45; }
+.occasion-next {
+  display: flex;
+  min-height: 56px;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 64px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tt-bg-brand);
+  color: var(--tt-text-inverse);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+}
+.occasion-next:disabled { opacity: .42; cursor: not-allowed; }

@@ -315,22 +315,16 @@
   }
 
   function renderTopPickCard(menu, score) {
+    const safeScore = Number.isFinite(Number(score)) ? Number(score) : scoreMenu(menu, answers || {});
+    const price = Number(menu?.price || 0).toLocaleString();
+    const reason = menu?.desc || '선택한 조건에 잘 맞는 오늘의 한 끼예요.';
     return `
-      <div class="top-pick-photo-wrap">
-        ${renderMenuPhoto(menu, 'top-pick-photo')}
-        <div class="match-score">추천 적합도 ${toMatchPercent(score)}%</div>
-      </div>
-      <div class="top-pick-content">
-        <div class="pick-overline">${escapeHtml(menu.type || '오늘의 메뉴')}</div>
-        <div class="pick-name">${escapeHtml(menu.name)}</div>
-        <div class="pick-en">${escapeHtml(menu.en || '')}</div>
-        <div class="pick-meta">
-          <span><strong>${menu.cook === 0 ? '외식' : menu.cook + '분'}</strong><small>준비 시간</small></span>
-          <span><strong>${Number(menu.kcal || 0).toLocaleString()}kcal</strong><small>예상 열량</small></span>
-          <span><strong>약 ${Number(menu.price || 0).toLocaleString()}원</strong><small>한 끼 예산</small></span>
-        </div>
-        <p class="pick-desc">${escapeHtml(menu.desc || '')}</p>
-      </div>
+      <span class="pick-overline">오늘의 1순위</span>
+      <div class="figma-pick-visual"><img src="./assets/figma/hero-meal.svg" alt="${escapeHtml(menu?.name || '오늘의 추천')} 일러스트"></div>
+      <h3 class="pick-name">${escapeHtml(menu.name)}</h3>
+      <p class="pick-desc">${escapeHtml(reason)}</p>
+      <p class="figma-pick-meta">₩${price} · 추천 적합도 ${toMatchPercent(safeScore)}%</p>
+      <button class="figma-pick-cta" type="button" onclick="acceptCurrentMenu()">이 메뉴로 결정 <span aria-hidden="true">→</span></button>
     `;
   }
 
@@ -1208,7 +1202,7 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v5.0.0';
+  const APP_VERSION = 'korea-beta-v5.1.0';
   const APP_RELEASE_DATE = '2026-08-07';
   const APP_DATA_VERSION = 'menus-197-v4.9';
   let currentStep = 0;
@@ -2318,18 +2312,8 @@
     rememberViewedMenu(menu.name);
     const topEl = document.getElementById('topPick');
     const score = scoreMenu(menu, answers || {});
-    document.querySelector('.action-grid').style.display = '';
-    document.querySelector('.runner-title').style.display = '';
     document.getElementById('resultSub').textContent = '선택한 메뉴 상세 보기';
     topEl.innerHTML = renderTopPickCard(menu, score);
-    document.getElementById('resultDetails').innerHTML = `
-      ${renderRecommendationReasonCard(menu, answers || {}, null)}
-      ${renderMenuDecisionFacts(menu)}
-      ${renderMenuPremiumDetails(menu)}
-      ${renderPersonalNote(menu, answers || {})}
-      ${renderFeedbackCard(menu)}
-    `;
-    document.getElementById('runnerList').innerHTML = '';
     updateFavButton();
     saveRecommendationDraft('result', { menuName: menu.name });
     switchPanel('result', false);
@@ -2725,7 +2709,7 @@
     opts.className = 'options' + (q.grid === 2 ? ' grid-2' : '');
     opts.innerHTML = '';
     const skipRow = document.getElementById('skipBtn')?.closest('.skip-row');
-    if (skipRow) skipRow.hidden = Boolean(q.bundle);
+    if (skipRow) skipRow.hidden = true;
     if (q.bundle) {
       const chosen = Array.isArray(answers._cravings) ? answers._cravings : [];
       opts.className = 'options preference-bundle';
@@ -2738,7 +2722,7 @@
           ${q.budgets.map(opt => `<button type="button" class="preference-chip ${answers._budgetSelected && (opt.value === 'any' ? answers.budget === null : Number(opt.value) === Number(answers.budget)) ? 'selected' : ''}" onclick="selectPreferenceBudget('${opt.value}', this)">${opt.text}</button>`).join('')}
         </div>
         <div class="preference-summary" id="preferenceSummary">${buildPreferenceSummary()}</div>
-        <button class="preference-submit" type="button" onclick="completePreferenceBundle()">이 조건으로 추천받기 <span aria-hidden="true">→</span></button>`;
+        <button class="preference-submit" type="button" onclick="completePreferenceBundle()">내 메뉴 추천받기 <span aria-hidden="true">→</span></button>`;
       document.getElementById('backBtn').disabled = false;
       renderFilterSummary();
       return;
@@ -2746,6 +2730,7 @@
     q.options.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'option';
+      if (answers[q.key] === opt.value) btn.classList.add('selected');
       btn.innerHTML = `
         <span class="opt-emoji">${opt.emoji}</span>
         <div style="flex:1;">
@@ -2756,6 +2741,24 @@
       btn.addEventListener('click', () => selectOption(q.key, opt.value, btn));
       opts.appendChild(btn);
     });
+
+    if (q.key === 'situation') {
+      const note = document.createElement('aside');
+      note.className = 'occasion-note';
+      note.id = 'occasionNote';
+      note.innerHTML = '<strong>식사 상황을 골라 주세요</strong><span>상황에 맞는 메뉴 분위기를 먼저 맞출게요.</span>';
+      opts.appendChild(note);
+
+      const next = document.createElement('button');
+      next.className = 'occasion-next';
+      next.id = 'occasionNext';
+      next.type = 'button';
+      next.disabled = !answers.situation;
+      next.innerHTML = '다음 · 먹고 싶은 것 <span aria-hidden="true">→</span>';
+      next.addEventListener('click', continueOccasion);
+      opts.appendChild(next);
+      updateOccasionFlowState();
+    }
 
     document.getElementById('backBtn').disabled = currentStep === 0;
     renderFilterSummary();
@@ -2853,6 +2856,14 @@
   }
 
   function selectOption(key, value, btnEl) {
+    if (key === 'situation') {
+      answers[key] = value;
+      document.querySelectorAll('#optionsContainer .option').forEach(btn => btn.classList.remove('selected'));
+      btnEl.classList.add('selected');
+      updateOccasionFlowState();
+      saveRecommendationDraft('quiz');
+      return;
+    }
     btnEl.classList.add('selected');
     setTimeout(() => {
       answers[key] = value;
@@ -2863,6 +2874,40 @@
       if (currentStep >= questions.length) showResult();
       else renderQuestion();
     }, 280);
+  }
+
+  function occasionDesignNote(situation) {
+    const notes = {
+      혼밥: ['혼밥 모드', '빠르고 편하게 먹기 좋은 메뉴를 우선 추천해요.'],
+      친구와: ['친구 식사 모드', '호불호가 갈리지 않고 나눠 먹기 좋은 메뉴를 우선 추천해요.'],
+      데이트: ['데이트 모드', '분위기와 대화에 어울리는 메뉴를 우선 추천해요.'],
+      가족: ['가족 식사 모드', '함께 먹기 편하고 든든한 메뉴를 우선 추천해요.'],
+      회식: ['회식 모드', '여럿이 나눠 먹기 좋은 메뉴를 우선 추천해요.'],
+      팀프로젝트: ['팀프로젝트 모드', '빠르게 먹고 대화를 이어가기 좋은 메뉴를 우선 추천해요.']
+    };
+    return notes[situation] || ['식사 상황을 골라 주세요', '상황에 맞는 메뉴 분위기를 먼저 맞출게요.'];
+  }
+
+  function updateOccasionFlowState() {
+    const [title, copy] = occasionDesignNote(answers.situation);
+    const note = document.getElementById('occasionNote');
+    const next = document.getElementById('occasionNext');
+    if (note) note.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(copy)}</span>`;
+    if (next) next.disabled = !answers.situation;
+  }
+
+  function continueOccasion() {
+    if (!answers.situation) {
+      showToast('누구와 먹는지 선택해 주세요.');
+      return;
+    }
+    if (!history.some(item => item.key === 'situation')) {
+      history.push({ key:'situation', value:answers.situation });
+      trackEvent('recommendation_step_completed', { step:1, key:'situation', value:labelForOption(answers.situation), conditions:{ ...answers } });
+    }
+    currentStep = 1;
+    saveRecommendationDraft('quiz');
+    renderQuestion();
   }
 
   document.getElementById('skipBtn').addEventListener('click', () => {
@@ -2899,29 +2944,15 @@
       const kept = getStrictMissMessages(answers);
       document.getElementById('resultSub').textContent = '선택한 조건을 모두 만족하는 메뉴가 없어요.';
       document.getElementById('topPick').innerHTML = `
-        <span class="pick-emoji">🧭</span>
+        <span class="pick-overline">다시 선택하기</span>
+        <div class="figma-pick-visual"><img src="./assets/figma/hero-meal.svg" alt="메뉴 추천 일러스트"></div>
         <div class="pick-name">조건을 조금만 넓혀볼까요?</div>
         <p class="pick-desc">선택한 조건을 임의로 바꾸지 않고 정확히 맞는 메뉴만 찾고 있어요. 한두 가지 질문을 ‘아무거나 괜찮아요’로 선택하면 더 다양한 메뉴를 추천받을 수 있습니다.</p>
-        <div class="reason-card">
-          <div class="reason-label">선택한 조건</div>
-          <div class="reason-title">이 조건을 그대로 유지했어요</div>
-          <ul class="reason-list">
-            ${kept.length ? kept.map(x => `<li>${escapeHtml(x)}</li>`).join('') : '<li>선택된 조건이 거의 없습니다.</li>'}
-            <li>최근 먹은 메뉴와 제외한 메뉴, 피하고 싶은 재료, 예산 조건도 함께 반영했습니다.</li>
-            <li>다시 찾기에서 조건 하나를 ‘아무거나’로 바꿔보세요.</li>
-          </ul>
-        </div>
+        <p class="figma-pick-meta">${kept.length ? escapeHtml(kept.join(' · ')) : '조건을 다시 골라 주세요.'}</p>
       `;
-      document.querySelector('.action-grid').style.display = 'none';
-      document.querySelector('.runner-title').style.display = 'none';
-      document.getElementById('runnerList').innerHTML = '';
-      document.getElementById('resultDetails').innerHTML = '';
       switchPanel('result', false);
       return;
     }
-
-    document.querySelector('.action-grid').style.display = '';
-    document.querySelector('.runner-title').style.display = '';
 
     const recommendationSet = selectDiverseRecommendationSet(prioritizeMarketCuisine(scored, answers), 3, answers);
     const top = recommendationSet[0];
@@ -2931,34 +2962,10 @@
     trackEvent('recommendation_result_viewed', { menuId: top.id || top.name, recommendationRank: 1, candidateCount: candidates.length, conditions: { ...answers } });
     [top, ...runners].forEach(m => recordMenuFeedback(m, 'shown'));
 
-    document.getElementById('resultSub').textContent = `선택한 조건에 맞는 ${candidates.length}개 메뉴 중 가장 잘 맞는 한 끼예요.`;
+    document.getElementById('resultSub').textContent = '오늘은 이 메뉴가 가장 잘 맞아요.';
 
     const topEl = document.getElementById('topPick');
-    const matchPct = toMatchPercent(top.score);
     topEl.innerHTML = renderTopPickCard(top, top.score);
-    document.getElementById('resultDetails').innerHTML = `
-      ${renderRecommendationReasonCard(top, answers, candidates.length)}
-      ${renderMenuDecisionFacts(top)}
-      ${renderMenuPremiumDetails(top)}
-      ${renderPersonalNote(top, answers)}
-      ${renderFeedbackCard(top)}
-    `;
-
-    const runEl = document.getElementById('runnerList');
-    if (runners.length === 0) {
-      runEl.innerHTML = '<div style="text-align:center; color:var(--ink-soft); font-size:13px; padding:20px;">엄격 조건에 맞는 다른 후보가 없어요</div>';
-    } else {
-      runEl.innerHTML = runners.map((r, idx) => `
-        <div class="runner-item" onclick="pickRunner(${idx})">
-          ${renderMenuPhoto(r, 'runner-photo')}
-          <div class="runner-info">
-            <div class="runner-name">${r.name}</div>
-            <div class="runner-meta">${r.type} · ${r.weight} · ${spiceLabel(r)} · ${r.kcal}kcal</div>
-          </div>
-          <span class="runner-score">${toMatchPercent(r.score)}%</span>
-        </div>
-      `).join('');
-    }
     window._runners = runners;
     switchPanel('result', false);
     updateFavButton();
@@ -2971,16 +2978,7 @@
     saveRecommendationDraft('result', { menuName: r.name });
     trackEvent('alternative_menu_selected', { menuId: r.id || r.name, recommendationRank: idx + 2, conditions: { ...answers } });
     // 대안 상세 확인은 최종 결정이 아니므로 선호 선택으로 누적하지 않습니다.
-    // Re-render as top pick
-    const topEl = document.getElementById('topPick');
-    topEl.innerHTML = renderTopPickCard(r, r.score);
-    document.getElementById('resultDetails').innerHTML = `
-      ${renderRecommendationReasonCard(r, answers, null)}
-      ${renderMenuDecisionFacts(r)}
-      ${renderMenuPremiumDetails(r)}
-      ${renderPersonalNote(r, answers)}
-      ${renderFeedbackCard(r)}
-    `;
+    document.getElementById('topPick').innerHTML = renderTopPickCard(r, r.score);
     showToast(`${r.name}(으)로 선택했어요`);
     updateFavButton();
   }
@@ -4237,12 +4235,12 @@
     if (!btn) return;
     if (isFavorited(currentMenu.name)) {
       btn.classList.add('faved');
-      icon.textContent = '♥';
-      text.textContent = '저장됨';
+      if (icon) icon.textContent = '♥';
+      if (text) text.textContent = '저장됨';
     } else {
       btn.classList.remove('faved');
-      icon.textContent = '♡';
-      text.textContent = '저장하기';
+      if (icon) icon.textContent = '♡';
+      if (text) text.textContent = '저장하기';
     }
   }
 

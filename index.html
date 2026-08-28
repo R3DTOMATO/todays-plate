@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/app.css?v=5.0.0">
+<link rel="stylesheet" href="./css/app.css?v=5.1.0">
 </head>
 <body>
 <div class="container">
@@ -55,18 +55,17 @@
   <!-- ═══════════════════════════════ -->
   <div class="panel active" id="panel-home">
     <main class="home">
-      <section class="home-hero">
-        <div class="hero-copy">
-          <h1 class="home-title">오늘 뭐 먹지?</h1>
-          <p class="home-sub" id="mealGreeting">고민은 짧게, 만족은 오래.</p>
-        </div>
-        <button class="quick-decision" type="button" onclick="startQuiz()">
-          <span class="quick-decision-badge">30초 빠른 결정</span>
-          <span class="quick-decision-title">3가지만 알려주세요</span>
-          <span class="quick-decision-copy">누구와 · 무엇을 · 얼마에</span>
-          <img class="quick-decision-art" src="./assets/figma/hero-meal.svg" alt="한식 한 상 일러스트" width="150" height="118">
-          <span class="quick-decision-cta">오늘 메뉴 결정하기 <span aria-hidden="true">→</span></span>
-        </button>
+      <header class="home-intro">
+        <h1 class="home-title">오늘 뭐 먹지?</h1>
+        <p class="home-sub" id="mealGreeting">고민은 짧게, 만족은 오래.</p>
+      </header>
+
+      <section class="quick-decision" aria-labelledby="quickDecisionTitle">
+        <span class="quick-decision-badge">30초 빠른 결정</span>
+        <h2 class="quick-decision-title" id="quickDecisionTitle">3가지만 알려주세요</h2>
+        <p class="quick-decision-copy">누구와 · 무엇을 · 얼마에</p>
+        <img class="quick-decision-art" src="./assets/figma/hero-meal.svg" alt="한식 한 상 일러스트" width="150" height="118">
+        <button class="quick-decision-cta" type="button" onclick="startQuiz()">오늘 메뉴 결정하기 <span aria-hidden="true">→</span></button>
       </section>
 
       <div class="quick-chips" aria-label="빠른 추천 조건 예시">
@@ -75,41 +74,6 @@
 
       <button class="group-vote-entry" type="button" onclick="openGroupVote()">
         <span><strong>친구들과 함께 고르기</strong><small>링크 하나로 투표하고 빠르게 합의해요</small></span>
-        <span aria-hidden="true">→</span>
-      </button>
-      <div id="resumeRecommendation" class="resume-slot" aria-live="polite"></div>
-
-      <section class="home-section home-secondary">
-        <div class="section-heading">
-          <div><span class="section-kicker">맞춤 선택</span><h2>내 상황에 맞게 고르기</h2></div>
-        </div>
-        <div class="home-action-grid">
-          <button class="start-card compact" type="button" onclick="quickRecommend()">
-            <span class="start-icon soft">↗</span>
-            <span class="start-title" id="quickRecommendTitle">바로 추천</span>
-            <span class="start-desc">현재 시간과 이전 선택으로 즉시 추천</span>
-            <span class="start-arrow">→</span>
-          </button>
-          <button class="start-card compact" type="button" onclick="openOnboarding(true)">
-            <span class="start-icon soft">♡</span>
-            <span class="start-title">내 입맛 설정</span>
-            <span class="start-desc">불호 재료와 선호 메뉴를 반영</span>
-            <span class="start-arrow">→</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="today-strip">
-        <div class="today-strip-head">
-          <div><span class="section-kicker">오늘</span><h2>오늘의 식사 기록</h2></div>
-          <button type="button" onclick="switchPanel('diary')">전체보기</button>
-        </div>
-        <div class="today-meals" id="todayMeals"></div>
-      </section>
-
-      <button class="record-link-card" type="button" onclick="switchPanel('favorites')">
-        <span class="record-link-icon">♥</span>
-        <span><strong>찜한 메뉴 다시 보기</strong><small>고민될 때 저장해둔 메뉴에서 빠르게 골라보세요.</small></span>
         <span aria-hidden="true">→</span>
       </button>
 
@@ -162,39 +126,11 @@
 
       <div class="top-pick" id="topPick" aria-live="polite"></div>
 
-      <div class="action-grid">
-        <button class="action-btn primary-action" onclick="acceptCurrentMenu()">
-          <span class="action-btn-icon">✓</span><div class="action-btn-text">이걸로 먹을래요</div>
-          <div class="action-btn-sub">선택하고 식사 기록하기</div>
-        </button>
-        <button class="action-btn" id="favActionBtn" onclick="toggleFavorite()">
-          <span class="action-btn-icon" id="favActionIcon">♡</span>
-          <div class="action-btn-text" id="favActionText">저장하기</div>
-          <div class="action-btn-sub">나중에 다시 보기</div>
-        </button>
-        <button class="action-btn" onclick="goNearby()">
-          <span class="action-btn-icon">⌖</span>
-          <div class="action-btn-text">식당 찾기</div>
-          <div class="action-btn-sub">가까운 곳부터 보기</div>
-        </button>
-        <button class="action-btn" onclick="goRecipe()">
-          <span class="action-btn-icon">▤</span>
-          <div class="action-btn-text">집에서 요리</div>
-          <div class="action-btn-sub">레시피 보기</div>
-        </button>
-        <button class="action-btn" onclick="rejectCurrentMenu()">
-          <span class="action-btn-icon">↻</span>
-          <div class="action-btn-text">다른 메뉴</div>
-          <div class="action-btn-sub">새 추천 받기</div>
-        </button>
+      <div class="result-secondary-actions">
+        <button class="result-secondary-btn" type="button" onclick="startQuiz()">↻&nbsp; 다시 추천</button>
+        <button class="result-secondary-btn" id="favActionBtn" type="button" onclick="toggleFavorite()"><span id="favActionIcon">♡</span>&nbsp; <span id="favActionText">저장하기</span></button>
       </div>
-
-      <div id="resultDetails" class="result-details"></div>
-
-      <div class="runner-title">다른 후보들</div>
-      <div id="runnerList"></div>
-
-      <button class="retry-btn" onclick="startQuiz()">↻ 다시 찾아보기</button>
+      <p class="result-note">다른 후보 2개는 ‘다시 추천’에서 바로 볼 수 있어요.</p>
     </div>
   </div>
 
@@ -527,6 +463,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=5.0.0" defer></script>
+<script src="./js/app.js?v=5.1.0" defer></script>
 </body>
 </html>
