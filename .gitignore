@@ -7,3 +7,9 @@ server/data/*.json
 beta-report.json
 .DS_Store
 .firebase/
+
+# Firebase 서비스 계정 키 — 절대 커밋하지 않는다.
+# Firestore 보안 규칙을 전부 우회하는 자격증명이다.
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+firebase-service-account.json

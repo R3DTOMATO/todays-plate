@@ -444,7 +444,7 @@ function commentsHtml(postId) {
             ? `<button type="button" class="feed-comment-del"
                  data-del-comment="${escapeHtml(postId)}|${escapeHtml(c.id)}">삭제</button>`
             : `<button type="button" class="feed-comment-del"
-                 data-report-comment="${escapeHtml(c.id)}">신고</button>`}
+                 data-report-comment="${escapeHtml(postId)}|${escapeHtml(c.id)}">신고</button>`}
         </div>`).join('');
 
   return `
@@ -495,8 +495,9 @@ function openMoreSheet(postId) {
   showSheet(post.authorName || '이 사용자');
 }
 
-function openCommentReport(commentId) {
-  reportTarget = { type: 'comment', id: commentId, authorUid: null, authorName: null };
+function openCommentReport(postId, commentId) {
+  // 상위 게시물 ID를 함께 남겨야 관리자 도구가 원문을 바로 찾을 수 있다
+  reportTarget = { type: 'comment', id: commentId, parentId: postId, authorUid: null, authorName: null };
   showSheet(null, { blockable: false });
 }
 
@@ -536,7 +537,7 @@ async function doReport(reason) {
   const target = reportTarget;
   closeSheet();
 
-  const result = await submitReport(target.type, target.id, reason);
+  const result = await submitReport(target.type, target.id, reason, '', target.parentId || '');
   if (result.ok) {
     toast('신고를 접수했어요. 검토 후 조치할게요.');
   } else if (result.error) {
@@ -586,7 +587,10 @@ function bindEvents(container) {
     b.addEventListener('click', () => openMoreSheet(b.dataset.more)));
 
   container.querySelectorAll('[data-report-comment]').forEach(b =>
-    b.addEventListener('click', () => openCommentReport(b.dataset.reportComment)));
+    b.addEventListener('click', () => {
+      const [postId, commentId] = b.dataset.reportComment.split('|');
+      openCommentReport(postId, commentId);
+    }));
 
   container.querySelectorAll('[data-del-comment]').forEach(b =>
     b.addEventListener('click', () => {

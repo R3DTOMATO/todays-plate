@@ -2,6 +2,11 @@ import { createServer } from 'node:http';
 import { appendFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  adminConfigured, verifyIdToken, isAdmin,
+  listReports, fetchTarget, hidePost, restorePost, hideComment,
+  resolveReport, countReportsForTarget,
+} from './admin-reports.mjs';
 
 const PORT = Number(process.env.PORT || 8787);
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || '';
@@ -310,6 +315,101 @@ async function handleFeedback(req, res, origin) {
   return sendJson(res, 202, { accepted: true, duplicate: false, feedbackId: id }, origin);
 }
 
+
+// ─── 신고 검토 관리자 API ───
+// Firestore 규칙상 reports는 클라이언트가 읽을 수 없으므로 서버에서만 처리한다.
+
+async function requireAdmin(req) {
+  if (!adminConfigured) {
+    const error = new Error('admin_not_configured');
+    error.statusCode = 503;
+    throw error;
+  }
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) {
+    const error = new Error('missing_token');
+    error.statusCode = 401;
+    throw error;
+  }
+  let uid;
+  try {
+    uid = await verifyIdToken(token);
+  } catch (cause) {
+    const error = new Error('invalid_token');
+    error.statusCode = 401;
+    throw error;
+  }
+  if (!isAdmin(uid)) {
+    const error = new Error('not_admin');
+    error.statusCode = 403;
+    throw error;
+  }
+  return uid;
+}
+
+async function handleAdminReports(req, requestUrl, res, origin) {
+  await requireAdmin(req);
+  const status = cleanString(requestUrl.searchParams.get('status') || 'pending', 20);
+  const reports = await listReports(status, 50);
+
+  // 신고 대상 원문과 누적 신고 수를 함께 붙여야 판단할 수 있다
+  const detailed = await Promise.all(reports.map(async (report) => {
+    const [target, count] = await Promise.all([
+      fetchTarget(report.targetType, report.targetId, report.parentId || ''),
+      countReportsForTarget(report.targetType, report.targetId),
+    ]);
+    return { ...report, target, reportCount: count };
+  }));
+
+  return sendJson(res, 200, { reports: detailed }, origin);
+}
+
+async function handleAdminAction(req, res, origin) {
+  const adminUid = await requireAdmin(req);
+  const body = await readJsonBody(req);
+
+  const action = cleanString(body.action || '', 20);
+  const reportId = cleanString(body.reportId || '', 200);
+  const note = cleanString(body.note || '', 300);
+
+  if (!reportId) {
+    const error = new Error('missing_report_id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (action === 'dismiss') {
+    await resolveReport(reportId, 'reviewed', note || '문제 없음', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  if (action === 'hide') {
+    const targetType = cleanString(body.targetType || '', 20);
+    const targetId = cleanString(body.targetId || '', 400);
+    if (targetType === 'post') {
+      await hidePost(targetId);
+    } else if (targetType === 'comment') {
+      const parentId = cleanString(body.parentId || '', 400);
+      const target = await fetchTarget('comment', targetId, parentId);
+      if (target?._path) await hideComment(target._path);
+    }
+    await resolveReport(reportId, 'actioned', note || '숨김 처리', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  if (action === 'restore') {
+    const targetId = cleanString(body.targetId || '', 400);
+    await restorePost(targetId);
+    await resolveReport(reportId, 'reviewed', note || '복원', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  const error = new Error('unknown_action');
+  error.statusCode = 400;
+  throw error;
+}
+
 const server = createServer(async (req, res) => {
   const origin = String(req.headers.origin || '');
 
@@ -318,7 +418,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
     res.writeHead(204);
     return res.end();
@@ -339,12 +439,15 @@ const server = createServer(async (req, res) => {
         feedbackCollection: true,
         storageMode: 'monthly-jsonl',
         retentionDays: RETENTION_DAYS,
+        adminConfigured,
       }, origin, 'no-store');
     }
     if (req.method === 'GET' && requestUrl.pathname === '/api/nearby') return await handleNearby(requestUrl, res, origin);
     if (req.method === 'GET' && requestUrl.pathname === '/api/resolve-location') return await handleResolveLocation(requestUrl, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/events') return await handleEvents(req, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
+    if (req.method === 'GET' && requestUrl.pathname === '/api/admin/reports') return await handleAdminReports(req, requestUrl, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/admin/action') return await handleAdminAction(req, res, origin);
     return sendJson(res, 404, { error: 'not_found', errorCode: 'ROUTE_404' }, origin);
   } catch (error) {
     const status = Number(error?.statusCode) || 500;

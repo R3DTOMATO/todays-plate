@@ -39,8 +39,10 @@ export const REPORT_REASONS = [
  * @param {string} targetId
  * @param {string} reason  REPORT_REASONS의 id
  * @param {string} detail  선택 설명
+ * @param {string} parentId 댓글 신고 시 상위 게시물 ID.
+ *                          없으면 관리자 도구가 원문을 찾으려고 전체를 훑어야 한다.
  */
-export async function submitReport(targetType, targetId, reason, detail = '') {
+export async function submitReport(targetType, targetId, reason, detail = '', parentId = '') {
   if (!FIREBASE_READY || !db) {
     return { ok: false, error: '신고 기능이 아직 설정되지 않았어요.' };
   }
@@ -66,6 +68,7 @@ export async function submitReport(targetType, targetId, reason, detail = '') {
       reporterUid: user.uid,
       reason,
       detail: String(detail || '').slice(0, 300),
+      parentId: String(parentId || ''),
       status: 'pending',
       createdAt: serverTimestamp()
     });

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>신고 검토 · 오늘의 식탁</title>
+<style>
+  :root {
+    --brand: #c93f31;
+    --brand-soft: #fff1ed;
+    --canvas: #fffaf7;
+    --surface: #fff;
+    --border: #f2e7e1;
+    --text: #201a17;
+    --muted: #7d6f68;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: var(--canvas);
+    color: var(--text);
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.02em; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 22px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    padding: 9px 15px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--brand-soft); }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.primary:hover { opacity: .92; }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .tabs { display: flex; gap: 7px; margin-bottom: 16px; }
+  .tabs button.active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+
+  .report {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .report.multi { border-color: var(--brand); }
+
+  .report-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .badge.gray { background: #f4f0ee; color: var(--muted); }
+  .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  .target {
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 13.5px;
+  }
+  .target img { max-width: 100%; max-height: 260px; border-radius: 8px; display: block; margin-top: 8px; }
+  .target .label { color: var(--muted); font-size: 11.5px; font-weight: 700; }
+  .target .missing { color: var(--muted); font-style: italic; }
+
+  .actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .error { color: var(--brand); font-weight: 600; }
+  #signinBox { text-align: center; padding: 30px 20px; }
+  code { background: var(--brand-soft); padding: 2px 6px; border-radius: 5px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>신고 검토</h1>
+  <p class="sub">오늘의 식탁 운영 도구 · 관리자 전용</p>
+
+  <div class="panel" id="signinBox">
+    <p>관리자 계정으로 로그인해 주세요.</p>
+    <button class="primary" id="signinBtn">Google로 로그인</button>
+    <p class="error" id="signinError" style="display:none"></p>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="panel" style="display:flex;justify-content:space-between;align-items:center">
+      <span id="whoami"></span>
+      <button id="signoutBtn">로그아웃</button>
+    </div>
+
+    <div class="tabs">
+      <button class="active" data-status="pending">대기 중</button>
+      <button data-status="actioned">조치함</button>
+      <button data-status="reviewed">검토함</button>
+      <button id="refreshBtn" style="margin-left:auto">새로고침</button>
+    </div>
+
+    <div id="list"><div class="empty">불러오는 중…</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+// 앱과 같은 Firebase 프로젝트를 쓴다. 여기에 관리자 전용 비밀값은 없다.
+// 실제 권한 확인은 서버가 ADMIN_UIDS로 한다.
+const FIREBASE_CONFIG = {
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: ''
+};
+
+// Railway 서버 주소
+const API_BASE = 'https://todays-plate.up.railway.app';
+
+const auth = getAuth(initializeApp(FIREBASE_CONFIG));
+let currentStatus = 'pending';
+
+const $ = id => document.getElementById(id);
+
+const REASON_LABELS = {
+  spam: '스팸/광고', inappropriate: '부적절한 내용', notFood: '음식 무관',
+  harassment: '욕설·괴롭힘', falseInfo: '허위 정보', other: '기타'
+};
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function when(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('ko-KR');
+}
+
+async function api(path, options = {}) {
+  const token = await getIdToken(auth.currentUser, true);
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    throw new Error(detail.error || `요청 실패 (${response.status})`);
+  }
+  return response.json();
+}
+
+// ─── 목록 ───
+
+async function load() {
+  $('list').innerHTML = '<div class="empty">불러오는 중…</div>';
+  try {
+    const { reports } = await api(`/api/admin/reports?status=${currentStatus}`);
+    render(reports);
+  } catch (error) {
+    $('list').innerHTML = `<div class="empty error">${esc(error.message)}</div>`;
+  }
+}
+
+function render(reports) {
+  if (!reports.length) {
+    $('list').innerHTML = '<div class="empty">해당하는 신고가 없어요.</div>';
+    return;
+  }
+  $('list').innerHTML = reports.map(cardHtml).join('');
+
+  document.querySelectorAll('[data-act]').forEach(button => {
+    button.addEventListener('click', () => act(button));
+  });
+}
+
+function cardHtml(report) {
+  const typeLabel = { post: '게시물', comment: '댓글', user: '사용자' }[report.targetType] || report.targetType;
+  const multi = report.reportCount > 1;
+
+  return `
+    <div class="report${multi ? ' multi' : ''}">
+      <div class="report-head">
+        <div>
+          <span class="badge">${esc(REASON_LABELS[report.reason] || report.reason)}</span>
+          <span class="badge gray">${esc(typeLabel)}</span>
+          ${multi ? `<span class="badge">신고 ${report.reportCount}건</span>` : ''}
+        </div>
+        <span class="when">${when(report.createdAt)}</span>
+      </div>
+
+      ${report.detail ? `<p>${esc(report.detail)}</p>` : ''}
+      ${targetHtml(report)}
+
+      <div class="actions">
+        ${report.status === 'pending' ? `
+          <button class="primary" data-act="hide" data-id="${esc(report.id)}"
+                  data-type="${esc(report.targetType)}" data-target="${esc(report.targetId)}" data-parent="${esc(report.parentId||'')}">숨기기</button>
+          <button data-act="dismiss" data-id="${esc(report.id)}">문제 없음</button>
+        ` : `
+          <button data-act="restore" data-id="${esc(report.id)}"
+                  data-target="${esc(report.targetId)}">복원</button>
+          <span class="when">${esc(report.reviewNote || '')} · ${when(report.reviewedAt)}</span>
+        `}
+      </div>
+    </div>`;
+}
+
+function targetHtml(report) {
+  const t = report.target;
+  if (!t) return '<div class="target"><span class="missing">원문을 찾을 수 없어요 (이미 삭제됨).</span></div>';
+
+  if (report.targetType === 'comment') {
+    return `<div class="target">
+      <div class="label">댓글 · ${esc(t.authorName || '')}</div>
+      <div>${esc(t.text || '')}</div>
+      ${t.status !== 'visible' ? '<div class="label">현재 상태: 숨김</div>' : ''}
+    </div>`;
+  }
+
+  return `<div class="target">
+    <div class="label">${esc(t.menuName || '')} · ${esc(t.authorName || '')}</div>
+    <div>${esc(t.memo || '(메모 없음)')}</div>
+    ${t.photoUrl ? `<img src="${esc(t.photoUrl)}" alt="신고된 사진">` : ''}
+    ${t.status !== 'visible' ? '<div class="label">현재 상태: 숨김</div>' : ''}
+  </div>`;
+}
+
+// ─── 조치 ───
+
+async function act(button) {
+  const action = button.dataset.act;
+  if (action === 'hide' && !confirm('이 게시물을 숨길까요? 나중에 복원할 수 있어요.')) return;
+
+  button.disabled = true;
+  try {
+    await api('/api/admin/action', {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        reportId: button.dataset.id,
+        targetType: button.dataset.type || '',
+        targetId: button.dataset.target || '',
+        parentId: button.dataset.parent || ''
+      })
+    });
+    await load();
+  } catch (error) {
+    alert(error.message);
+    button.disabled = false;
+  }
+}
+
+// ─── 인증 ───
+
+$('signinBtn').addEventListener('click', async () => {
+  $('signinError').style.display = 'none';
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch (error) {
+    $('signinError').textContent = error.message;
+    $('signinError').style.display = 'block';
+  }
+});
+
+$('signoutBtn').addEventListener('click', () => signOut(auth));
+$('refreshBtn').addEventListener('click', load);
+
+document.querySelectorAll('[data-status]').forEach(button => {
+  button.addEventListener('click', () => {
+    currentStatus = button.dataset.status;
+    document.querySelectorAll('[data-status]').forEach(b =>
+      b.classList.toggle('active', b === button));
+    load();
+  });
+});
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    $('signinBox').style.display = 'none';
+    $('app').style.display = 'block';
+    $('whoami').textContent = `${user.displayName || user.email} 로 로그인됨`;
+    load();
+  } else {
+    $('signinBox').style.display = 'block';
+    $('app').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
