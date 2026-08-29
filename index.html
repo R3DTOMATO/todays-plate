@@ -224,6 +224,7 @@
       <h2 class="sub-title">내 입맛</h2>
       <p class="sub-subtitle">개인화 추천에 반영되는 취향 데이터</p>
       <div id="profileContent"></div>
+      <div class="auth-status-box" id="authStatusBox" hidden></div>
       <div class="data-actions profile-data-actions">
         <button class="profile-utility-btn" type="button" onclick="openFeedbackModal()">의견·오류 보내기</button>
         <button class="profile-utility-btn" type="button" onclick="openPrivacyModal()">개인정보 및 분석 설정</button>
@@ -362,6 +363,60 @@
 
 
 <!-- Recommendation rejection reason modal -->
+<!-- Auth modal (login / signup / password reset) -->
+<div class="modal-overlay" id="authModal" aria-hidden="true">
+  <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="modal-title" id="authModalTitle">로그인</div>
+    <p class="modal-sub" id="authReason" hidden></p>
+
+    <div class="auth-social-group" id="authSocialGroup">
+      <button type="button" class="auth-social-btn google" id="authGoogleBtn">
+        <span aria-hidden="true">G</span> Google로 계속하기
+      </button>
+      <button type="button" class="auth-social-btn apple" id="authAppleBtn">
+        <span aria-hidden="true"></span> Apple로 계속하기
+      </button>
+      <div class="auth-divider"><span>또는 이메일로</span></div>
+    </div>
+
+    <div class="auth-field" id="authNicknameRow" hidden>
+      <label for="authNickname">닉네임</label>
+      <input type="text" id="authNickname" maxlength="12" autocomplete="nickname"
+             placeholder="피드에 표시될 이름">
+    </div>
+
+    <div class="auth-field">
+      <label for="authEmail">이메일</label>
+      <input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com">
+    </div>
+
+    <div class="auth-field" id="authPasswordRow">
+      <label for="authPassword">비밀번호</label>
+      <input type="password" id="authPassword" autocomplete="current-password"
+             placeholder="8자 이상">
+    </div>
+
+    <p class="auth-error" id="authError" role="alert" hidden></p>
+
+    <button type="button" class="btn-confirm auth-submit" id="authSubmitBtn">로그인</button>
+
+    <div class="auth-links">
+      <button type="button" class="auth-link" id="authToSignup">계정이 없어요 · 회원가입</button>
+      <button type="button" class="auth-link" id="authToReset">비밀번호를 잊었어요</button>
+      <button type="button" class="auth-link" id="authToSignin" hidden>이미 계정이 있어요 · 로그인</button>
+    </div>
+
+    <p class="auth-consent">
+      계속하면 이용약관과 개인정보처리방침에 동의하는 것으로 봅니다.
+    </p>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" id="authCloseBtn">닫기</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="rejectReasonModal" aria-hidden="true">
   <div class="modal reject-modal" role="dialog" aria-modal="true" aria-labelledby="rejectReasonTitle">
     <div class="modal-title" id="rejectReasonTitle">왜 다른 메뉴가 필요하신가요?</div>
@@ -465,6 +520,8 @@
 <script src="./js/config.js"></script>
 <script src="./js/app.js?v=5.1.0" defer></script>
 <!-- 그룹 투표 (GROUP TABLE). FIREBASE_CONFIG가 비어 있으면 자동으로 비활성화됩니다. -->
+<script type="module" src="./js/auth.js?v=6.0.0"></script>
+<script type="module" src="./js/auth-ui.js?v=6.0.0"></script>
 <script type="module" src="./js/group-vote.js?v=6.0.0"></script>
 </body>
 </html>
