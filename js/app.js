@@ -4157,6 +4157,13 @@
       decidedMenuName = knownMenu.name;
     }
     clearRecommendationDraft();
+
+    // 피드 공개 모듈(js/feed-share-ui.js)에 저장 완료를 알린다.
+    // 모듈이 없으면 아무 일도 일어나지 않으므로 기존 동작에 영향이 없다.
+    document.dispatchEvent(new CustomEvent('mealRecordSaved', {
+      detail: { record, isNew: !existing }
+    }));
+
     closeRecordModal();
     renderToday();
     renderDiary();
@@ -6992,3 +6999,50 @@
         ${rows}
       </details>`;
   }
+
+  // ─── 피드 공개 모듈 연동 ───
+  // js/feed-share-ui.js가 "지금 수정 중인 기록"을 알아야 토글 초기 상태를
+  // 정할 수 있다. app.js 내부 상태를 직접 읽게 하는 대신 접근자만 노출한다.
+  window.getEditingDiaryRecord = function () {
+    if (!editingRecordId) return null;
+    return diary.find(item => item.id === editingRecordId) || null;
+  };
+
+  // 피드 개인화(js/feed-ui.js)가 취향 벡터를 만들 때 쓰는 식사 이력.
+  // 사진·메모 같은 민감한 내용은 제외하고 취향 판단에 필요한 필드만 넘긴다.
+  window.getDiaryForTaste = function () {
+    return diary
+      .filter(item => item && item.menu && item.menu.type)
+      .slice(0, 60)
+      .map(item => ({
+        menu: {
+          type: item.menu.type,
+          spicy: item.menu.spicy,
+          soup: item.menu.soup,
+          weight: item.menu.weight
+        },
+        satisfaction: item.satisfaction
+      }));
+  };
+
+  // 피드 검색이 "메뉴 먼저, 그다음 사람들의 피드"로 결과를 보여주기 위해
+  // 메뉴 데이터에 접근할 수 있게 노출한다.
+  window.searchMenusByName = function (term, max) {
+    const keyword = String(term || '').trim().toLowerCase();
+    if (!keyword) return [];
+    const limit = max || 5;
+    const scored = [];
+    for (const menu of menus) {
+      const name = String(menu.name || '').toLowerCase();
+      const en = String(menu.en || '').toLowerCase();
+      let score = -1;
+      if (name === keyword) score = 100;
+      else if (name.startsWith(keyword)) score = 80;
+      else if (name.includes(keyword)) score = 60;
+      else if (en.startsWith(keyword)) score = 40;
+      else if (en.includes(keyword)) score = 20;
+      if (score >= 0) scored.push({ menu, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map(item => item.menu);
+  };

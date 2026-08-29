@@ -5155,3 +5155,518 @@ body::before { display: none; }
   line-height: 1.5;
   color: var(--tt-text-secondary, #7d6f68);
 }
+
+/* ═══════════════════════════════════════════════
+   FEED SHARE — 식사 기록의 피드 공개 토글
+   ═══════════════════════════════════════════════ */
+
+.feed-share-field {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+}
+
+.feed-share-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  cursor: pointer;
+}
+
+.feed-share-toggle input[type="checkbox"] {
+  flex: none;
+  width: 21px;
+  height: 21px;
+  margin: 1px 0 0;
+  accent-color: var(--tt-bg-brand, #c93f31);
+  cursor: pointer;
+}
+
+.feed-share-text { display: block; }
+
+.feed-share-text strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+}
+
+.feed-share-text small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* 공개 상태일 때 안내 문구를 강조한다 —
+   "기기에만 저장" 문구와 정반대 의미이므로 시각적으로 구분되어야 한다 */
+.form-notice.is-public {
+  color: var(--tt-text-brand, #c93f31);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════
+   FEED — 소셜 피드 화면
+   ═══════════════════════════════════════════════ */
+
+.feed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed-refresh-btn {
+  flex: none;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-secondary, #7d6f68);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.feed-refresh-btn:active { transform: scale(.97); }
+
+.feed-hint {
+  margin: 14px 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+.feed-list { display: flex; flex-direction: column; gap: 14px; }
+
+/* 게시물 카드 */
+.feed-card {
+  border-radius: 18px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  overflow: hidden;
+}
+
+.feed-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px 11px;
+}
+.feed-card-avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+  font-size: 14px;
+  font-weight: 800;
+}
+.feed-card-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.feed-card-who strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-card-who small { font-size: 11.5px; color: var(--tt-text-secondary, #7d6f68); }
+
+.feed-card-photo { width: 100%; background: var(--tt-bg-subtle, #fff6f1); }
+.feed-card-photo img {
+  display: block;
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+}
+
+.feed-card-body { padding: 12px 14px 4px; }
+
+.feed-card-menu {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.feed-card-menu strong {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+}
+.feed-card-tag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.feed-card-place {
+  font-size: 12px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+.feed-card-stars {
+  margin-top: 6px;
+  color: var(--tt-bg-brand, #c93f31);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.feed-card-memo {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--tt-text-primary, #201a17);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.feed-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 12px;
+}
+.feed-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease, transform .1s ease;
+}
+.feed-like-btn span:first-child { font-size: 15px; line-height: 1; }
+.feed-like-btn:active { transform: scale(.96); }
+.feed-like-btn.liked {
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  border-color: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-brand, #c93f31);
+}
+
+/* 빈 상태 */
+.feed-empty {
+  margin-top: 18px;
+  padding: 34px 20px;
+  border-radius: 18px;
+  border: 1px dashed var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+  text-align: center;
+}
+.feed-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+}
+.feed-empty-body {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* ── 피드 검색 ── */
+.feed-search {
+  position: relative;
+  margin: 14px 0 4px;
+}
+.feed-search input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 40px 0 15px;
+  border-radius: 14px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14.5px;
+  box-sizing: border-box;
+}
+.feed-search input:focus {
+  outline: none;
+  border-color: var(--tt-bg-brand, #c93f31);
+  background: var(--tt-bg-surface, #fff);
+}
+.feed-search input::-webkit-search-cancel-button { display: none; }
+#feedSearchClear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tt-border-default, #f2e7e1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ── 검색 결과 섹션 ── */
+.feed-section { margin-top: 18px; }
+.feed-section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--tt-text-secondary, #7d6f68);
+  letter-spacing: -.01em;
+}
+
+.feed-menu-results { display: flex; flex-direction: column; gap: 8px; }
+.feed-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  text-align: left;
+  cursor: pointer;
+}
+.feed-menu-row:active { transform: scale(.99); }
+.feed-menu-emoji { font-size: 24px; flex: none; }
+.feed-menu-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.feed-menu-info strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+}
+.feed-menu-info small { font-size: 12px; color: var(--tt-text-secondary, #7d6f68); }
+
+/* ── 카드 상단: 카테고리 / 식당 ── */
+.feed-card-topic { min-width: 0; flex: 1; }
+.feed-card-topic > strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.feed-card-author {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  max-width: 40%;
+}
+.feed-card-author span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--tt-text-secondary, #7d6f68);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.feed-card-author small { font-size: 11px; color: var(--tt-text-secondary, #7d6f68); opacity: .8; }
+
+.feed-card-memo.muted { color: var(--tt-text-secondary, #7d6f68); font-style: italic; }
+
+/* ── 액션 버튼 ── */
+.feed-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease, transform .1s ease;
+}
+.feed-act span:first-child { font-size: 14px; line-height: 1; }
+.feed-act:active { transform: scale(.96); }
+.feed-act.on {
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  border-color: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-brand, #c93f31);
+}
+
+/* ── 댓글 ── */
+.feed-comments {
+  border-top: 1px solid var(--tt-border-default, #f2e7e1);
+  padding: 12px 14px 14px;
+  background: var(--tt-bg-subtle, #fff6f1);
+}
+.feed-comment {
+  position: relative;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(242, 231, 225, .7);
+}
+.feed-comment:last-of-type { border-bottom: 0; }
+.feed-comment strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+}
+.feed-comment p {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--tt-text-primary, #201a17);
+  word-break: break-word;
+  padding-right: 40px;
+}
+.feed-comment-del {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  border: 0;
+  background: none;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 11.5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.feed-comment-empty {
+  margin: 4px 0 10px;
+  font-size: 12.5px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.feed-comment-form { display: flex; gap: 7px; margin-top: 10px; }
+.feed-comment-form input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 13px;
+  border-radius: 12px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13.5px;
+}
+.feed-comment-form input:focus {
+  outline: none;
+  border-color: var(--tt-bg-brand, #c93f31);
+}
+.feed-comment-form button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tt-bg-brand, #c93f31);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── 신고 · 차단 ── */
+.feed-more-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.feed-more-btn:hover { background: var(--tt-bg-subtle, #fff6f1); }
+
+.feed-sheet {
+  width: 100%;
+  max-width: 460px;
+  margin-top: auto;
+  padding: 22px 20px 20px;
+  border-radius: 22px 22px 0 0;
+  background: var(--tt-bg-surface, #fff);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.feed-sheet-overlay { align-items: flex-end; }
+
+.feed-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 14px;
+}
+.feed-reason-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 15px;
+  border-radius: 14px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.feed-reason-btn:active { transform: scale(.99); }
+.feed-reason-btn:hover { background: var(--tt-bg-subtle, #fff6f1); }
+
+.feed-block-row { margin-top: 16px; }
+.feed-block-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 15px;
+  border-radius: 14px;
+  border: 1px solid var(--tt-bg-brand, #c93f31);
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  text-align: left;
+  cursor: pointer;
+}
+.feed-block-btn span {
+  display: block;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--tt-text-brand, #c93f31);
+  letter-spacing: -.02em;
+}
+.feed-block-btn small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tt-text-secondary, #7d6f68);
+}

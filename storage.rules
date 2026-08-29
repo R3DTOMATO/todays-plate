@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+// 오늘의 식탁 — Firebase Storage 보안 규칙
+//
+// 원칙
+//  1. 기본 거부. feedPhotos/ 외의 경로는 전면 차단한다.
+//  2. 자기 폴더에만 올릴 수 있다. 경로에 uid가 들어가는 이유다.
+//  3. 용량과 MIME 타입을 서버에서 검증한다.
+//     클라이언트 압축은 우회 가능하므로 규칙에서 다시 막는다.
+//
+// 적용: Firebase 콘솔 → Storage → Rules 탭에 붙여넣고 "게시"
+//       또는 firebase deploy --only storage
+// ─────────────────────────────────────────────────────────────
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 피드 사진
+    // 경로: feedPhotos/{uid}/{파일명}
+    match /feedPhotos/{userId}/{fileName} {
+
+      // 피드는 로그인 사용자에게 공개된다
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId
+                    // 클라이언트에서 1280px·WebP로 압축하지만 우회할 수 있으므로 다시 막는다
+                    && request.resource.size <= 800 * 1024
+                    && request.resource.contentType.matches('image/.*');
+
+      // 사진은 덮어쓰지 않는다. 새로 올리고 이전 것을 지운다.
+      // (덮어쓰기를 허용하면 CDN 캐시와 실제 파일이 어긋난다)
+      allow update: if false;
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 그 외 모든 경로 차단
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
