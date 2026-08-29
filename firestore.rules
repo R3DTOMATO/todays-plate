@@ -1,0 +1,105 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+// 오늘의 식탁 — Firestore 보안 규칙
+//
+// 원칙
+//  1. 기본은 차단. 명시적으로 허용한 경로만 열린다.
+//  2. 자기 문서만 쓸 수 있다. 남의 이름으로 투표하거나 프로필을 바꿀 수 없다.
+//  3. 삭제는 클라이언트에서 금지한다. 필요한 삭제는 관리자/서버가 처리한다.
+//
+// 적용: Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣고 "게시"
+// ─────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── 공통 함수 ───
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // 문자열 필드가 존재하고 길이 제한을 지키는지 확인
+    function validName(value) {
+      return value is string && value.size() > 0 && value.size() <= 12;
+    }
+
+    // ─── 사용자 프로필 ───
+    // 피드·투표에서 표시 이름이 보여야 하므로 로그인 사용자에게 읽기를 허용한다.
+    // 이메일은 애초에 저장하지 않으므로 노출 위험이 없다.
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSelf(userId)
+                    && validName(request.resource.data.displayName);
+
+      allow update: if isSelf(userId)
+                    && validName(request.resource.data.displayName)
+                    // uid를 바꿔치기할 수 없게 고정
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly(['displayName', 'photoUrl', 'feedPublicDefault']);
+
+      // 탈퇴 시 문서 삭제는 서버(Cloud Functions)에서 처리한다
+      allow delete: if false;
+    }
+
+    // ─── 그룹 투표 ───
+
+    match /voteSessions/{sessionId} {
+
+      function session() {
+        return get(/databases/$(database)/documents/voteSessions/$(sessionId)).data;
+      }
+
+      // 세션 ID는 12자 랜덤이므로 링크를 아는 사람만 사실상 접근 가능하다.
+      // 규칙만으로 "링크를 아는 사람"을 표현할 수 없어 로그인 여부로 제한한다.
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+                    && request.resource.data.hostUid == request.auth.uid
+                    && request.resource.data.status == 'open'
+                    && request.resource.data.candidates.size() >= 2
+                    && request.resource.data.candidates.size() <= 5
+                    && request.resource.data.closesAt > request.time;
+
+      // 마감 처리는 주최자만 할 수 있다
+      allow update: if isSignedIn()
+                    && resource.data.hostUid == request.auth.uid
+                    && request.resource.data.hostUid == resource.data.hostUid;
+
+      allow delete: if false;
+
+      match /participants/{participantUid} {
+        allow read: if isSignedIn();
+
+        // 문서 ID가 곧 uid이므로, 자기 문서만 만들 수 있다 → 1인 1표가 구조적으로 보장된다
+        allow create: if isSelf(participantUid)
+                      && session().status == 'open'
+                      && session().closesAt > request.time
+                      && validName(request.resource.data.name);
+
+        // 마감 시각이 지나면 투표를 바꿀 수 없다.
+        // 주최자가 status를 못 바꾼 경우에도 시각으로 막힌다.
+        allow update: if isSelf(participantUid)
+                      && session().status == 'open'
+                      && session().closesAt > request.time
+                      && validName(request.resource.data.name);
+
+        allow delete: if false;
+      }
+    }
+
+    // ─── 명시하지 않은 모든 경로는 차단 ───
+    // 위에서 허용한 경로 외에는 읽기·쓰기가 모두 막힌다.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
