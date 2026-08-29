@@ -6,3 +6,16 @@ window.APP_CONFIG = {
   NEARBY_PROXY_URL: 'https://todays-plate.up.railway.app/api/nearby',
   NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000]
 };
+
+// Firebase 설정 — 그룹 투표(js/group-vote.js)와 소셜 피드에서 사용합니다.
+// 아래 값은 Firebase 콘솔 > 프로젝트 설정 > 웹 앱에서 발급받아 채웁니다.
+// 이 값들은 비밀값이 아니며 브라우저에 노출되어도 됩니다.
+// 실제 접근 제어는 Firestore 보안 규칙(docs/firebase-rules.example)이 담당합니다.
+window.FIREBASE_CONFIG = {
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: ''
+};
