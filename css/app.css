@@ -5711,3 +5711,20 @@ body::before { display: none; }
   border-color: var(--tt-bg-brand, #c93f31);
 }
 .btn-confirm.danger:disabled { opacity: .45; cursor: default; }
+
+/* ── 약관 링크 ── */
+.legal-links {
+  margin: 18px 0 8px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.legal-links a {
+  color: var(--tt-text-secondary, #7d6f68);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal-links a:hover { color: var(--tt-text-brand, #c93f31); }
+.legal-links span { margin: 0 7px; opacity: .6; }
+.auth-consent a { color: var(--tt-text-brand, #c93f31); font-weight: 600; }
