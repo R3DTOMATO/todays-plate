@@ -14,7 +14,7 @@ import {
   getAuth, onAuthStateChanged, signOut,
   GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  sendPasswordResetEmail, updateProfile, deleteUser
+  sendPasswordResetEmail, updateProfile
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp
@@ -193,19 +193,40 @@ export async function signOutUser() {
 
 /**
  * 계정 삭제. 개인정보보호법·App Store 심사 모두 요구하는 기능이다.
- * 최근 로그인 이력이 없으면 Firebase가 재인증을 요구한다.
+ *
+ * 클라이언트에서 Auth 계정만 지우면 Firestore 문서와 Storage 사진이 남는다.
+ * 남의 게시물에 단 좋아요·댓글은 보안 규칙상 클라이언트가 정리할 수도 없다.
+ * 그래서 서버가 데이터를 모두 정리한 뒤 마지막에 계정을 지운다.
  */
 export async function deleteAccount() {
   requireReady();
   if (!currentUser) throw new Error('로그인 상태가 아니에요.');
-  try {
-    await deleteUser(currentUser);
-  } catch (error) {
-    if (error?.code === 'auth/requires-recent-login') {
+
+  const base = window.APP_CONFIG?.API_BASE_URL;
+  if (!base) throw new Error('서버 주소가 설정되지 않았어요.');
+
+  // 발급한 지 오래된 토큰은 서버가 거부하므로 새로 받는다
+  const token = await currentUser.getIdToken(true);
+
+  const response = await fetch(`${base}/api/account/delete`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    if (response.status === 401) {
       throw new Error('보안을 위해 다시 로그인한 뒤 탈퇴를 진행해 주세요.');
     }
-    throw toFriendlyError(error);
+    throw new Error(detail.error === 'service_unavailable'
+      ? '탈퇴 기능이 아직 준비되지 않았어요. 문의해 주세요.'
+      : '탈퇴 처리에 실패했어요. 잠시 후 다시 시도해 주세요.');
   }
+
+  const result = await response.json();
+  // 서버가 계정을 지웠으므로 로컬 세션도 정리한다
+  await signOut(auth).catch(() => {});
+  return result.deleted;
 }
 
 // ─── 게이트 ───

@@ -161,7 +161,9 @@ service cloud.firestore {
       // 좋아요 — 문서 ID가 uid이므로 한 사람이 한 번만 누를 수 있다
       match /likes/{likeUid} {
         allow read: if isSignedIn();
-        allow create, delete: if isSelf(likeUid);
+        allow create: if isSelf(likeUid)
+                      && request.resource.data.uid == request.auth.uid;
+        allow delete: if isSelf(likeUid);
         allow update: if false;
       }
 

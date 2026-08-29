@@ -194,7 +194,9 @@ async function toggleLike(postId) {
         tx.delete(likeRef);
         tx.update(postRef, { likeCount: increment(-1) });
       } else {
-        tx.set(likeRef, { createdAt: new Date() });
+        // uid를 필드로도 남긴다. 문서 ID만으로는 컬렉션 그룹 쿼리로
+        // "이 사용자의 좋아요 전부"를 찾을 수 없어 탈퇴 처리가 불가능해진다.
+        tx.set(likeRef, { uid: user.uid, createdAt: new Date() });
         tx.update(postRef, { likeCount: increment(1) });
       }
     });

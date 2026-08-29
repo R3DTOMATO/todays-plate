@@ -102,14 +102,18 @@ export function isAdmin(uid) {
 let accessToken = null;
 let accessTokenExpireAt = 0;
 
-async function getAccessToken() {
+export async function getAccessToken() {
   if (accessToken && Date.now() < accessTokenExpireAt - 60_000) return accessToken;
 
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const claim = {
     iss: CLIENT_EMAIL,
-    scope: 'https://www.googleapis.com/auth/datastore',
+    scope: [
+      'https://www.googleapis.com/auth/datastore',
+      'https://www.googleapis.com/auth/identitytoolkit',
+      'https://www.googleapis.com/auth/devstorage.full_control',
+    ].join(' '),
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
@@ -145,10 +149,12 @@ async function getAccessToken() {
 
 // ─── Firestore REST 헬퍼 ───
 
+export const PROJECT = () => PROJECT_ID;
+
 const FS_BASE = () =>
   `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
-async function firestoreRequest(path, options = {}) {
+export async function firestoreRequest(path, options = {}) {
   const token = await getAccessToken();
   const response = await fetch(`${FS_BASE()}${path}`, {
     ...options,
@@ -179,7 +185,7 @@ function fromFirestoreValue(value) {
   return null;
 }
 
-function fromFirestoreDoc(fields) {
+export function fromFirestoreDoc(fields) {
   const output = {};
   for (const [key, value] of Object.entries(fields || {})) {
     output[key] = fromFirestoreValue(value);

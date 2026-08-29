@@ -7,6 +7,7 @@ import {
   listReports, fetchTarget, hidePost, restorePost, hideComment,
   resolveReport, countReportsForTarget,
 } from './admin-reports.mjs';
+import { deleteAccountData } from './account-deletion.mjs';
 
 const PORT = Number(process.env.PORT || 8787);
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || '';
@@ -410,6 +411,39 @@ async function handleAdminAction(req, res, origin) {
   throw error;
 }
 
+
+// ─── 계정 삭제 (본인 요청) ───
+// 관리자 권한이 아니라 "본인 확인"만 필요하다. 토큰의 uid만 지운다.
+
+async function handleAccountDelete(req, res, origin) {
+  if (!adminConfigured) {
+    const error = new Error('service_unavailable');
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) {
+    const error = new Error('missing_token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  let uid;
+  try {
+    uid = await verifyIdToken(token);
+  } catch (cause) {
+    const error = new Error('invalid_token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // 다른 사람의 계정을 지울 수 없다. 토큰에서 얻은 uid만 사용한다.
+  const summary = await deleteAccountData(uid);
+  return sendJson(res, 200, { ok: true, deleted: summary }, origin);
+}
+
 const server = createServer(async (req, res) => {
   const origin = String(req.headers.origin || '');
 
@@ -448,6 +482,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
     if (req.method === 'GET' && requestUrl.pathname === '/api/admin/reports') return await handleAdminReports(req, requestUrl, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/admin/action') return await handleAdminAction(req, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/account/delete') return await handleAccountDelete(req, res, origin);
     return sendJson(res, 404, { error: 'not_found', errorCode: 'ROUTE_404' }, origin);
   } catch (error) {
     const status = Number(error?.statusCode) || 500;

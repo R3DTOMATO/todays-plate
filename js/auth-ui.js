@@ -8,7 +8,7 @@
 import {
   FIREBASE_READY, onAuthChange, getCurrentUser,
   signInWithGoogle, signInWithApple,
-  signInWithEmail, signUpWithEmail, resetPassword, signOutUser
+  signInWithEmail, signUpWithEmail, resetPassword, signOutUser, deleteAccount
 } from './auth.js';
 
 let resolveModal = null;
@@ -182,11 +182,13 @@ function renderAuthState(user) {
       <div class="auth-status-row">
         <div class="auth-status-name">${escapeHtml(name)}</div>
         <button type="button" class="profile-utility-btn" id="authSignOutBtn">로그아웃</button>
-      </div>`;
+      </div>
+      <button type="button" class="auth-delete-link" id="authDeleteBtn">계정 삭제</button>`;
     el('authSignOutBtn')?.addEventListener('click', async () => {
       await signOutUser();
       toast('로그아웃했어요.');
     });
+    el('authDeleteBtn')?.addEventListener('click', openDeleteModal);
   } else {
     box.innerHTML = `
       <div class="auth-status-row">
@@ -202,6 +204,59 @@ function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
+}
+
+
+// ─── 계정 삭제 ───
+// 실수로 누르는 일이 없도록 "삭제"를 직접 입력해야 버튼이 활성화된다.
+
+function openDeleteModal() {
+  const overlay = el('deleteAccountModal');
+  if (!overlay) return;
+
+  const input = el('deleteConfirmInput');
+  const confirmBtn = el('deleteAccountConfirm');
+  if (input) input.value = '';
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '계정 삭제'; }
+
+  const errorBox = el('deleteAccountError');
+  if (errorBox) { errorBox.hidden = true; errorBox.textContent = ''; }
+
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  setTimeout(() => input?.focus(), 80);
+}
+
+function closeDeleteModal() {
+  const overlay = el('deleteAccountModal');
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
+async function runDeleteAccount() {
+  const confirmBtn = el('deleteAccountConfirm');
+  const errorBox = el('deleteAccountError');
+  if (!confirmBtn) return;
+
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = '삭제 중…';
+  if (errorBox) errorBox.hidden = true;
+
+  try {
+    await deleteAccount();
+    closeDeleteModal();
+    toast('계정을 삭제했어요. 그동안 이용해 주셔서 감사합니다.');
+  } catch (error) {
+    if (errorBox) {
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+    }
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = '계정 삭제';
+  }
 }
 
 // ─── 초기화 ───
@@ -223,6 +278,13 @@ function init() {
   el('authToReset')?.addEventListener('click', () => setMode('reset'));
 
   el('authCloseBtn')?.addEventListener('click', () => closeAuthModal(null));
+
+  el('deleteAccountCancel')?.addEventListener('click', closeDeleteModal);
+  el('deleteAccountConfirm')?.addEventListener('click', runDeleteAccount);
+  el('deleteConfirmInput')?.addEventListener('input', event => {
+    const btn = el('deleteAccountConfirm');
+    if (btn) btn.disabled = event.target.value.trim() !== '삭제';
+  });
   el('authModal')?.addEventListener('click', event => {
     if (event.target === el('authModal')) closeAuthModal(null);
   });

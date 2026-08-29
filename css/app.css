@@ -5670,3 +5670,44 @@ body::before { display: none; }
   line-height: 1.5;
   color: var(--tt-text-secondary, #7d6f68);
 }
+
+/* ── 계정 삭제 ── */
+.auth-delete-link {
+  display: block;
+  margin-top: 10px;
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.auth-delete-link:hover { color: var(--tt-text-brand, #c93f31); }
+
+.delete-list {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  color: var(--tt-text-primary, #201a17);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.delete-note {
+  margin: 12px 0 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.delete-note strong { color: var(--tt-text-primary, #201a17); }
+
+.btn-confirm.danger {
+  background: var(--tt-bg-brand, #c93f31);
+  border-color: var(--tt-bg-brand, #c93f31);
+}
+.btn-confirm.danger:disabled { opacity: .45; cursor: default; }

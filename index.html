@@ -391,6 +391,41 @@
 
 
 <!-- Recommendation rejection reason modal -->
+<!-- 계정 삭제(탈퇴) 확인 -->
+<div class="modal-overlay" id="deleteAccountModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteAccountTitle">
+    <div class="modal-title" id="deleteAccountTitle">계정 삭제</div>
+    <p class="modal-sub">삭제하면 되돌릴 수 없어요. 아래 내용이 모두 사라집니다.</p>
+
+    <ul class="delete-list">
+      <li>피드에 공개한 게시물과 사진</li>
+      <li>내가 누른 좋아요와 저장 목록</li>
+      <li>계정 정보와 차단 목록</li>
+    </ul>
+
+    <p class="delete-note">
+      다른 사람 글에 남긴 댓글은 <strong>‘탈퇴한 사용자’</strong>로 표시되며 내용은 남습니다.
+      대화 맥락이 끊기지 않도록 하기 위해서예요.
+    </p>
+    <p class="delete-note">
+      이 기기에 저장된 식사 기록은 앱에만 남아 있어요.
+      함께 지우려면 <strong>모든 앱 데이터 초기화</strong>를 이용해 주세요.
+    </p>
+
+    <div class="auth-field">
+      <label for="deleteConfirmInput">확인을 위해 <strong>삭제</strong>를 입력해 주세요</label>
+      <input type="text" id="deleteConfirmInput" autocomplete="off" placeholder="삭제">
+    </div>
+
+    <p class="auth-error" id="deleteAccountError" role="alert" hidden></p>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" id="deleteAccountCancel">취소</button>
+      <button class="btn-confirm danger" type="button" id="deleteAccountConfirm" disabled>계정 삭제</button>
+    </div>
+  </div>
+</div>
+
 <!-- 신고 · 차단 시트 -->
 <div class="modal-overlay feed-sheet-overlay" id="feedSafetySheet" aria-hidden="true">
   <div class="feed-sheet" role="dialog" aria-modal="true" aria-labelledby="feedSheetTitle">
