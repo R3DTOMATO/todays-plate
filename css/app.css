@@ -4990,3 +4990,168 @@ body::before { display: none; }
   font-weight: 800;
 }
 .occasion-next:disabled { opacity: .42; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════
+   AUTH — 로그인 / 회원가입 모달
+   ═══════════════════════════════════════════════ */
+
+.auth-modal {
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px 20px 20px;
+}
+.modal-overlay.busy .auth-modal { opacity: .7; pointer-events: none; }
+
+/* 소셜 로그인 */
+.auth-social-group { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+
+.auth-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: 15px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease;
+}
+.auth-social-btn:active { transform: scale(.985); }
+.auth-social-btn span { font-size: 17px; font-weight: 800; }
+.auth-social-btn.apple {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+}
+
+.auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 16px 0 4px;
+}
+.auth-divider::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: var(--tt-border-default, #f2e7e1);
+}
+.auth-divider span {
+  position: relative;
+  padding: 0 12px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* 입력 필드 */
+.auth-field { margin-top: 13px; }
+.auth-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tt-text-secondary, #7d6f68);
+  letter-spacing: -.02em;
+}
+.auth-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--tt-bg-brand, #c93f31);
+  background: var(--tt-bg-surface, #fff);
+}
+
+.auth-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.auth-submit { width: 100%; margin-top: 18px; }
+.auth-submit:disabled { opacity: .55; cursor: default; }
+
+/* 모드 전환 링크 */
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin-top: 14px;
+}
+.auth-link {
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.auth-link:hover { color: var(--tt-text-brand, #c93f31); }
+
+.auth-consent {
+  margin: 14px 0 0;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 11.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* 프로필 화면의 로그인 상태 */
+.auth-status-box {
+  margin: 14px 0 4px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+}
+.auth-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.auth-status-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auth-status-name.muted { color: var(--tt-text-secondary, #7d6f68); font-weight: 600; }
+.auth-status-hint {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tt-text-secondary, #7d6f68);
+}

@@ -12,10 +12,11 @@ window.APP_CONFIG = {
 // 이 값들은 비밀값이 아니며 브라우저에 노출되어도 됩니다.
 // 실제 접근 제어는 Firestore 보안 규칙(docs/firebase-rules.example)이 담당합니다.
 window.FIREBASE_CONFIG = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: ''
+  apiKey: "AIzaSyAl61ersZFkoNURuhJcz8AQ_LInFymCCi4",
+  authDomain: "todays-plate.firebaseapp.com",
+  projectId: "todays-plate",
+  storageBucket: "todays-plate.firebasestorage.app",
+  messagingSenderId: "825515742524",
+  appId: "1:825515742524:web:c7a893f0a6ce19ed833a39",
+  measurementId: "G-LN4YQC9VXT",
 };

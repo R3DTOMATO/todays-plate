@@ -8,10 +8,8 @@
 //  - 세션 ID는 추측 불가능해야 한다(링크 = 접근 권한).
 // ─────────────────────────────────────────────────────────────
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {
-  getAuth, signInAnonymously, onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { requireAuth, getCurrentUser, FIREBASE_READY as AUTH_READY } from './auth.js';
 import {
   getFirestore, doc, setDoc, getDoc, updateDoc, collection,
   onSnapshot, serverTimestamp, Timestamp
@@ -26,12 +24,11 @@ const FIREBASE_READY = Boolean(
 );
 
 let firebaseApp = null;
-let auth = null;
 let db = null;
 
 if (FIREBASE_READY) {
-  firebaseApp = initializeApp(window.FIREBASE_CONFIG);
-  auth = getAuth(firebaseApp);
+  // auth.js가 먼저 초기화했을 수 있으므로 기존 앱 인스턴스를 재사용한다
+  firebaseApp = getApps().length ? getApps()[0] : initializeApp(window.FIREBASE_CONFIG);
   db = getFirestore(firebaseApp);
 } else {
   console.info('[group-vote] Firebase 설정이 없어 그룹 투표 기능이 비활성화되었습니다. js/config.js의 FIREBASE_CONFIG를 채워 주세요.');
@@ -110,19 +107,25 @@ function isClosed(session) {
 
 // ─── 인증 ───
 
-function ensureSignedIn() {
-  return new Promise((resolve, reject) => {
-    if (!FIREBASE_READY) return reject(new Error('그룹 투표 기능이 아직 설정되지 않았어요.'));
-    if (currentUid) return resolve(currentUid);
-    const stop = onAuthStateChanged(auth, user => {
-      if (user) {
-        stop();
-        currentUid = user.uid;
-        resolve(user.uid);
-      }
-    }, reject);
-    signInAnonymously(auth).catch(reject);
-  });
+/**
+ * 그룹 투표는 정식 계정을 요구한다.
+ * 익명 계정은 차단/신고가 우회되고, 나중에 내 투표 이력을 되찾을 수 없기 때문이다.
+ * 로그인이 안 되어 있으면 로그인 모달이 뜨고, 사용자가 취소하면 예외를 던진다.
+ */
+async function ensureSignedIn(reason = '그룹 투표는 로그인이 필요해요') {
+  if (!FIREBASE_READY || !AUTH_READY) {
+    throw new Error('그룹 투표 기능이 아직 설정되지 않았어요.');
+  }
+  const user = await requireAuth(reason);
+  if (!user) throw new Error('로그인을 취소했어요.');
+  currentUid = user.uid;
+  return user.uid;
+}
+
+/** 로그인한 사용자의 표시 이름을 가져온다. 참여자가 따로 이름을 입력하지 않아도 된다. */
+function currentDisplayName() {
+  const user = getCurrentUser();
+  return user?.displayName || user?.email?.split('@')[0] || '식탁친구';
 }
 
 // ─── 세션 생성 (주최자) ───
@@ -141,9 +144,9 @@ export async function createVoteSession(candidates, durationMinutes, hostName) {
     throw new Error(`메뉴 후보는 ${MIN_CANDIDATES}~${MAX_CANDIDATES}개여야 합니다.`);
   }
 
-  const uid = await ensureSignedIn();
+  const uid = await ensureSignedIn('투표를 만들려면 로그인이 필요해요');
   const sessionId = generateSessionId();
-  const name = sanitizeName(hostName);
+  const name = sanitizeName(hostName || currentDisplayName());
   const closesAt = Timestamp.fromDate(new Date(Date.now() + durationMinutes * 60 * 1000));
 
   await setDoc(doc(db, 'voteSessions', sessionId), {
@@ -187,7 +190,8 @@ export async function createVoteSession(candidates, durationMinutes, hostName) {
 // ─── 세션 참여 (링크로 들어온 사람) ───
 
 export async function joinVoteSession(sessionId, displayName) {
-  const uid = await ensureSignedIn();
+  const uid = await ensureSignedIn('투표에 참여하려면 로그인이 필요해요');
+  const name = displayName || currentDisplayName();
   const sessionRef = doc(db, 'voteSessions', sessionId);
   const snapshot = await getDoc(sessionRef);
 
@@ -201,12 +205,12 @@ export async function joinVoteSession(sessionId, displayName) {
   if (existing.exists()) {
     // 재방문 — 이름만 갱신하고 기존 투표 유지
     if (displayName) {
-      await updateDoc(participantRef, { name: sanitizeName(displayName) });
+      await updateDoc(participantRef, { name: sanitizeName(name) });
     }
     myVoteMenuId = existing.data().votedMenuId ?? null;
   } else {
     await setDoc(participantRef, {
-      name: sanitizeName(displayName),
+      name: sanitizeName(name),
       votedMenuId: null,
       votedAt: null,
       joinedAt: serverTimestamp(),
@@ -231,7 +235,7 @@ export async function castVote(menuId) {
     return;
   }
 
-  const uid = await ensureSignedIn();
+  const uid = await ensureSignedIn('투표하려면 로그인이 필요해요');
   await updateDoc(doc(db, 'voteSessions', currentSessionId, 'participants', uid), {
     votedMenuId: String(menuId),
     votedAt: serverTimestamp()
@@ -473,25 +477,17 @@ export async function shareCurrentSession() {
 export async function handleIncomingVoteLink() {
   const sessionId = new URLSearchParams(window.location.search).get('vote');
   if (!sessionId) return false;
-  if (!FIREBASE_READY) {
+  if (!FIREBASE_READY || !AUTH_READY) {
     toast('그룹 투표 기능이 아직 준비 중이에요.');
     return false;
   }
 
   try {
-    await ensureSignedIn();
-    const participantRef = doc(db, 'voteSessions', sessionId, 'participants', currentUid);
-    const existing = await getDoc(participantRef);
+    // 링크로 들어온 사람에게는 왜 로그인이 필요한지 맥락을 준다
+    await ensureSignedIn('투표에 참여하려면 로그인이 필요해요');
 
     if (typeof window.switchPanel === 'function') window.switchPanel('group');
-
-    if (existing.exists()) {
-      await joinVoteSession(sessionId, existing.data().name);
-    } else {
-      const name = window.prompt('투표에 참여할 이름을 알려 주세요', '');
-      if (name === null) return false; // 취소
-      await joinVoteSession(sessionId, name);
-    }
+    await joinVoteSession(sessionId, currentDisplayName());
     return true;
   } catch (error) {
     console.error('투표 참여 실패:', error);
