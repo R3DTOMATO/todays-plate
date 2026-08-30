@@ -6724,6 +6724,9 @@
 
   function setAnalyticsConsent(enabled) {
     localStorage.setItem(STORAGE.analyticsConsent, enabled ? 'true' : 'false');
+    // 오류 모니터링(js/monitoring.js)도 이 동의를 따른다.
+    // 동의는 앱 실행 후에 누를 수 있으므로 그 시점에 알려 준다.
+    document.dispatchEvent(new CustomEvent('analyticsConsentChanged', { detail: { enabled } }));
     if (!enabled) {
       localStorage.removeItem(STORAGE.analytics);
     } else {
