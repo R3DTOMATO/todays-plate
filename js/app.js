@@ -953,8 +953,16 @@
       menu.familiarity = getMenuFamiliarity(menu);
     });
   }
+  // ─── 질문 흐름 v6 ───
+  // 순서: 상황 → 음식 종류 → 맛 취향 → 예산 → 식사 방식
+  //
+  // 이전에는 종류·맛·예산이 한 화면에 뭉쳐 있어 무엇을 고르는지 불분명했다.
+  // 단계를 나누면 화면당 판단이 하나라 답하기 쉽고, 각 답을 점수에 따로 반영할 수 있다.
+  //
+  // 각 단계는 '상관없음'을 항상 제공한다. 조건을 강제하면 결과가 좁아지고,
+  // 어차피 점수제라 비워 두어도 추천이 나온다.
   const questions = [
-    { step:1, total:3, title:'누구와 먹나요?', sub:'상황에 맞는 메뉴 분위기를 먼저 맞출게요.', key:'situation', grid:2,
+    { step:1, total:5, title:'누구와 먹나요?', sub:'상황에 맞는 분위기를 먼저 맞출게요.', key:'situation', grid:2,
       options: [
         { emoji:'🙂', text:'혼자', hint:'빠르고 편안하게', value:'혼밥' },
         { emoji:'👥', text:'친구', hint:'함께 나눠 먹기', value:'친구와' },
@@ -963,20 +971,41 @@
         { emoji:'🥂', text:'회식', hint:'여럿이 즐기기', value:'회식' },
         { emoji:'💻', text:'팀프로젝트', hint:'간편하게 집중하기', value:'팀프로젝트' }
       ] },
-    { step:2, total:3, title:'어떤 한 끼가 당기나요?', sub:'두 개까지 골라도 괜찮아요.', key:'preferenceBundle', bundle:true, grid:3,
+
+    { step:2, total:5, title:'어떤 종류가 당기나요?', sub:'끌리는 쪽을 골라 주세요.', key:'type', grid:2,
       options: [
-        { text:'한식', value:'type:한식' },
-        { text:'매콤한', value:'need:spicy' },
-        { text:'국물', value:'need:hangover' },
-        { text:'든든한', value:'need:full' },
-        { text:'가벼운', value:'need:light' },
-        { text:'상관없음', value:'any' }
-      ],
-      budgets: [
-        { text:'1만원대', value:'10000' },
-        { text:'3만원대', value:'30000' },
-        { text:'5만원대', value:'50000' },
-        { text:'가격 상관없음', value:'any' }
+        { emoji:'🍚', text:'한식', hint:'익숙하고 편안한', value:'한식' },
+        { emoji:'🍝', text:'양식', hint:'파스타 · 스테이크', value:'양식' },
+        { emoji:'🥟', text:'중식', hint:'짜장 · 짬뽕 · 마라', value:'중식' },
+        { emoji:'🍣', text:'일식', hint:'초밥 · 라멘 · 돈카츠', value:'일식' },
+        { emoji:'🌮', text:'세계음식', hint:'새로운 맛 탐험', value:'세계음식' },
+        { emoji:'🤷', text:'상관없음', hint:'다 좋아요', value:null }
+      ] },
+
+    { step:3, total:5, title:'오늘 입맛은 어떤가요?', sub:'가장 끌리는 하나를 골라 주세요.', key:'need', grid:2,
+      options: [
+        { emoji:'🌶️', text:'매콤한', hint:'얼큰하게 풀고 싶을 때', value:'spicy' },
+        { emoji:'🍲', text:'국물 있는', hint:'따뜻하게 속 풀기', value:'hangover' },
+        { emoji:'🥗', text:'가벼운', hint:'부담 없이', value:'light' },
+        { emoji:'🍖', text:'든든한', hint:'배부르게 채우기', value:'full' },
+        { emoji:'😌', text:'순한', hint:'맵지 않게', value:'mild' },
+        { emoji:'🤷', text:'상관없음', hint:'뭐든 좋아요', value:null }
+      ] },
+
+    { step:4, total:5, title:'예산은 어느 정도인가요?', sub:'1인 기준이에요. 넘어도 괜찮으면 상관없음을 골라 주세요.', key:'budget', grid:2,
+      options: [
+        { emoji:'💸', text:'8천원 이하', hint:'가볍게', value:'8000' },
+        { emoji:'💵', text:'1만 2천원 이하', hint:'보통', value:'12000' },
+        { emoji:'💰', text:'2만원 이하', hint:'조금 여유 있게', value:'20000' },
+        { emoji:'🤷', text:'상관없음', hint:'가격은 신경 안 써요', value:null }
+      ] },
+
+    { step:5, total:5, title:'어떻게 먹을까요?', sub:'마지막이에요.', key:'mode', grid:2,
+      options: [
+        { emoji:'🏠', text:'집밥', hint:'직접 만들어 먹기', value:'집밥' },
+        { emoji:'🍽️', text:'외식', hint:'나가서 먹기', value:'외식' },
+        { emoji:'🛵', text:'배달', hint:'집에서 시켜 먹기', value:'배달' },
+        { emoji:'🤷', text:'상관없음', hint:'아직 안 정했어요', value:null }
       ] },
   ];
 
@@ -2308,6 +2337,7 @@
 
   function showResultForMenu(menu) {
     if (!menu) return;
+    clearDecidedActions();
     currentMenu = menu;
     rememberViewedMenu(menu.name);
     const topEl = document.getElementById('topPick');
@@ -2395,26 +2425,24 @@
   function filterMenus(ans, poolOptions = {}) {
     const pool = getAvailableMenuPool(poolOptions);
     return pool.filter(m => {
-      const preferredTypes = personalProfile?.preferredTypes || [];
-      // 내 입맛에서 선택한 음식 종류는 단순 가중치가 아니라 기본 허용 범위입니다.
-      // 추천 질문에서 음식 종류를 직접 고르면 그 선택이 입맛 기본값보다 우선합니다.
-      if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;
+      // ─── 하드 필터는 "먹을 수 없는 경우"에만 적용합니다 ───
+      //
+      // 예전에는 음식 종류·예산·맛까지 전부 여기서 걸러냈습니다.
+      // 그 결과 "한식 + 매콤 + 8천원 + 외식" 같은 조합에서 후보가 0개가 되어
+      // 5단계를 다 답한 사용자가 빈 화면을 보는 일이 생겼습니다.
+      // 취향과 예산은 scoreMenu()에서 점수로만 반영하고, 여기서는 제외하지 않습니다.
+
+      // 시간대는 명시적으로 고른 경우에만 제한합니다.
       if (ans.time && m.time !== ans.time) return false;
-      if (ans.type && m.type !== ans.type) return false;
-      if (ans.weight && m.weight !== ans.weight) return false;
-      if (ans.soup !== undefined && ans.soup !== null && m.soup !== ans.soup) return false;
-      if (ans.spicy) {
-        if (ans.spicy === 'mild' && m.spicy > 0) return false;
-        if (ans.spicy === 'mid' && (m.spicy < 1 || m.spicy > 2)) return false;
-        if (ans.spicy === 'hot' && m.spicy < 2) return false;
-      }
-      if (ans.method && m.method !== ans.method) return false;
-      if (ans.mode === '외식' && m.method !== '외식') return false;
-      if (ans.mode === '배달' && m.method !== '외식') return false;
-      if (ans.mode === '집밥' && !['간단','요리'].includes(m.method)) return false;
+
+      // 조리 방식은 물리적으로 불가능한 조합만 막습니다.
+      if (ans.mode === '집밥' && getHomeSuitability(m) === 'outside') return false;
+      if (ans.mode === '배달' && m.delivery === 'no') return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
+
+      // 아침 전용 메뉴를 저녁에 추천하지 않습니다.
       if (!ans.time && ans.contextTime && ans.contextTime !== '아침' && isBreakfastOnlyMenu(m)) return false;
-      if (!isWithinBudget(m.price, ans.budget)) return false;
+
       return true;
     });
   }
@@ -2534,11 +2562,50 @@
     return familiar.length >= 3 ? familiar : scored;
   }
 
+  // 완전 불일치보다는 낫다고 보는 인접 카테고리
+  const TYPE_NEIGHBORS = {
+    한식: ['중식'],
+    중식: ['한식', '일식'],
+    일식: ['중식', '한식'],
+    양식: ['세계음식'],
+    세계음식: ['양식', '중식']
+  };
+
   function scoreMenu(m, ans = {}) {
     // 후보 필터링은 이미 엄격하게 끝났으므로, 여기서는 후보 안에서의 품질 순위를 계산합니다.
     let score = 62;
 
-    if (ans.type && m.type === ans.type) score += 10;
+    // ─── 취향·예산은 하드 필터가 아니라 여기서 점수로 반영합니다 ───
+    // 필터에서 제외하지 않으므로 배점을 크게 두어 실제 순위를 좌우하게 합니다.
+
+    // 음식 종류
+    if (ans.type) {
+      if (m.type === ans.type) score += 30;
+      else if ((TYPE_NEIGHBORS[ans.type] || []).includes(m.type)) score += 8;
+      else score -= 6;
+    } else {
+      // 종류를 고르지 않았으면 '내 입맛' 설정을 선호로만 반영합니다(제외하지 않음).
+      const preferredTypes = personalProfile?.preferredTypes || [];
+      if (preferredTypes.length && preferredTypes.includes(m.type)) score += 12;
+    }
+
+    // 입맛(맛/무게)
+    if (ans.need === 'spicy') score += m.spicy >= 2 ? 22 : (m.spicy === 1 ? 8 : -8);
+    if (ans.need === 'mild') score += m.spicy === 0 ? 20 : (m.spicy === 1 ? 4 : -14);
+    if (ans.need === 'hangover') score += m.soup ? 22 : -8;
+    if (ans.need === 'light') score += m.weight === '가벼움' ? 22 : (m.weight === '중간' ? 6 : -10);
+    if (ans.need === 'full') score += m.weight === '든든' ? 22 : (m.weight === '중간' ? 6 : -10);
+
+    // 예산 — 초과해도 후보에서 빼지 않고 감점만 합니다.
+    // 딱 맞는 메뉴가 없을 때 "조금 넘지만 잘 맞는" 메뉴를 보여줄 수 있어야 합니다.
+    const budgetLimit = Number(ans.budget);
+    if (Number.isFinite(budgetLimit) && budgetLimit > 0) {
+      const price = Number(m.price || 0);
+      if (price <= budgetLimit) score += 20;
+      else if (price <= budgetLimit * 1.2) score -= 12;
+      else score -= 34;
+    }
+
     if (ans.time && m.time === ans.time) score += 7;
     if (!ans.time && ans.contextTime && m.time === ans.contextTime) score += 10;
     else if (!ans.time && ans.contextTime && m.time && m.time !== ans.contextTime) score -= 5;
@@ -2546,7 +2613,7 @@
     if (ans.soup !== undefined && ans.soup !== null && m.soup === ans.soup) score += 5;
     if (ans.method && m.method === ans.method) score += 5;
     if (ans.mode === '외식' && m.method === '외식') score += 8;
-    if (ans.mode === '배달' && m.method === '외식') score += 7;
+    if (ans.mode === '배달' && m.delivery !== 'no') score += 7;
     if (ans.mode === '집밥' && ['간단','요리'].includes(m.method)) {
       score += 7;
       const homeSuitability = getHomeSuitability(m);
@@ -2989,7 +3056,47 @@
     decidedMenuName = currentMenu.name;
     trackEvent('menu_selected', { menuId: currentMenu.id || currentMenu.name, menuName: currentMenu.name });
     showToast(`'${currentMenu.name}' 선호를 학습했어요`);
-    openRecordModal();
+    // 곧바로 기록 모달을 띄우지 않고 다음 행동을 고를 수 있게 한다.
+    // 메뉴를 정한 직후에 가장 자주 필요한 것은 "어떻게 먹지?"와 "어디서 먹지?"다.
+    renderDecidedActions();
+  }
+
+  // ─── 결정 후 다음 행동 ───
+
+  function renderDecidedActions() {
+    const host = document.getElementById('resultDecidedActions');
+    if (!host || !currentMenu) return;
+
+    const canCook = currentMenu.homeSuitability !== 'outside';
+    host.innerHTML = `
+      <div class="decided-banner">
+        <strong>${escapeHtml(currentMenu.name)}(으)로 정했어요</strong>
+        <span>이제 뭘 해볼까요?</span>
+      </div>
+      <div class="decided-actions">
+        <button class="decided-btn" type="button" onclick="goRecipe()">
+          <span aria-hidden="true">📖</span>
+          <b>메뉴 정보</b>
+          <small>${canCook ? '재료와 만드는 법' : '메뉴 상세 정보'}</small>
+        </button>
+        <button class="decided-btn" type="button" onclick="goNearby()">
+          <span aria-hidden="true">📍</span>
+          <b>주변 식당</b>
+          <small>가까운 가게 찾기</small>
+        </button>
+      </div>
+      <button class="decided-record-btn" type="button" onclick="openRecordModal()">
+        먹고 나서 기록하기
+      </button>`;
+    host.hidden = false;
+    host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearDecidedActions() {
+    const host = document.getElementById('resultDecidedActions');
+    if (!host) return;
+    host.hidden = true;
+    host.innerHTML = '';
   }
 
   function rejectCurrentMenu() {
@@ -7045,4 +7152,17 @@
     }
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, limit).map(item => item.menu);
+  };
+
+  // 피드 검색 결과에서 메뉴를 누르면 바로 상세 정보를 보여준다.
+  // 기존 음식 탐색의 동작을 그대로 재사용한다.
+  window.openMenuDetail = function (menuName) {
+    const menu = findMenuByName(menuName);
+    if (!menu) {
+      // 피드 게시물의 메뉴명이 데이터베이스에 없을 수 있다(사용자 직접 입력 메뉴 등).
+      // 조용히 무시하면 눌러도 아무 일이 없어 고장으로 보이므로 알려 준다.
+      showToast(`'${menuName}' 상세 정보를 찾지 못했어요.`);
+      return;
+    }
+    openMenuFromExplorer(menuName);
   };
