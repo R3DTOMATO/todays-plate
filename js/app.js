@@ -5421,14 +5421,14 @@
       const places = await searchPlacesForExactMenuOnly(currentMenu, location);
       trackEvent('restaurant_search_completed', { menuId: currentMenu.id || currentMenu.name, source, resultCount: places.length });
       if (!places.length) {
-        renderNearbyMapMarkers([]);
+        renderNearbyMapMarkers([], location);
         c.innerHTML = strategy + renderNearbyNoData(currentMenu, `${label} 주변에는 이 추천 메뉴를 파는 식당이 검색되지 않았습니다.`) + renderManualLocationForm();
         return;
       }
       const formatted = places.map(place => formatPlace(place, currentMenu));
-      renderNearbyMapMarkers(formatted);
-      c.innerHTML = renderNearbySheet(formatted, label)
-        + `<details class="nb-more"><summary>검색 방식과 안내</summary>${strategy + renderNearbySearchDebug() + renderManualLocationForm()}</details>`;
+      renderNearbyMapMarkers(formatted, location);
+      // 검색 방식·전략 안내는 제거하고, 위치 변경 수단만 남긴다.
+      c.innerHTML = renderNearbySheet(formatted, label) + renderManualLocationForm();
     } catch (error) {
       console.error('Nearby search failed:', error);
       c.innerHTML = strategy + renderNearbyNoData(currentMenu, `식당 검색에 실패했습니다. ${error.message || ''}`.trim()) + renderManualLocationForm();
@@ -6413,6 +6413,9 @@
       price: '',
       addr: place.road_address_name || place.address_name || '',
       subcategory: category,
+      // 카카오는 x=경도, y=위도로 준다. 지도 마커를 찍으려면 반드시 보존해야 한다.
+      lat: Number(place.y),
+      lng: Number(place.x),
       placeUrl: place.place_url,
       phone: place.phone || '',
       query: place.query || '',
@@ -6858,7 +6861,36 @@
 
   // 지도 마커. 디자인은 가격을 보여주지만 카카오 API는 가격을 주지 않으므로
   // 실제로 아는 값인 "거리"를 표시한다. 없는 정보를 지어내지 않는다.
-  function renderNearbyMapMarkers(list) {
+  // 실제 지도를 그린다. 실패하면 일러스트 마커로 되돌아간다.
+  async function renderNearbyMapMarkers(list, center) {
+    const canvas = document.getElementById('nbMapCanvas');
+    const artWrap = document.getElementById('nbMapArtWrap');
+    const origin = center || userLocation;
+
+    if (window.kakaoMap && window.kakaoMap.usable() && origin) {
+      try {
+        const ok = await window.kakaoMap.render(origin, list, index => {
+          const place = list[index];
+          if (place) openRestaurantResult(place.id || place.name, place.name, place.addr || '', place.placeUrl || '');
+        });
+        if (ok) {
+          if (canvas) canvas.hidden = false;
+          if (artWrap) artWrap.hidden = true;
+          return;
+        }
+      } catch (error) {
+        // 키가 잘못됐거나 도메인 미등록이면 여기로 온다.
+        // 주변 식당 기능 자체는 계속 써야 하므로 일러스트로 넘어간다.
+        console.warn('[nearby] 지도를 불러오지 못해 일러스트로 대체합니다:', error.message);
+      }
+    }
+
+    if (canvas) canvas.hidden = true;
+    if (artWrap) artWrap.hidden = false;
+    renderIllustratedMarkers(list);
+  }
+
+  function renderIllustratedMarkers(list) {
     const host = document.getElementById('nbMarkers');
     if (!host) return;
 

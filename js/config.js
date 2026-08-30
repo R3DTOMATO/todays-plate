@@ -6,6 +6,7 @@ window.APP_CONFIG = {
   NEARBY_PROXY_URL: 'https://todays-plate.up.railway.app/api/nearby',
   NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000],
   SENTRY_DSN: 'https://34821251de57c83695bad555a61f4cbb@o4511997253517312.ingest.us.sentry.io/4511997266296832',
+  KAKAO_JS_KEY: '5bcc1201ea8f00973a8689dbfe3fd6e5',
 };
 
 // Firebase 설정 — 그룹 투표(js/group-vote.js)와 소셜 피드에서 사용합니다.

@@ -6874,3 +6874,50 @@ body::before { display: none; }
   color: var(--tt-text-secondary, #7d6f68);
   padding: 8px 0;
 }
+
+/* ── 실제 카카오 지도 ── */
+.nb-map-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.nb-map-canvas[hidden] { display: none; }
+.nb-map-art-wrap { position: absolute; inset: 0; }
+.nb-map-art-wrap[hidden] { display: none; }
+
+/* 내 위치 — 디자인의 점 표시 */
+.nb-map-me {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2f7d5c;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgba(47, 125, 92, .18);
+}
+
+/* 지도 위 식당 마커 — 디자인의 알약형 마커와 같은 규칙 */
+.nb-map-pin {
+  min-width: 56px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-brand, #c93f31);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(46, 28, 20, .18);
+}
+.nb-map-pin.is-primary {
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+}
+.nb-map-pin:active { transform: scale(.96); }
+
+/* 지도 컨트롤이 지도 위에 떠 있어야 한다 */
+.nb-controls { z-index: 3; }

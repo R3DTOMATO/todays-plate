@@ -297,8 +297,12 @@
     <div class="nb-screen">
       <!-- Nearby Map -->
       <div class="nb-map">
-        <img class="nb-map-art" src="./assets/figma/nearby/map-art.svg" alt="" aria-hidden="true">
-        <div class="nb-markers" id="nbMarkers" aria-hidden="true"></div>
+        <!-- 실제 카카오 지도. 키가 없거나 로드 실패 시 아래 일러스트로 대체된다. -->
+        <div class="nb-map-canvas" id="nbMapCanvas"></div>
+        <div class="nb-map-art-wrap" id="nbMapArtWrap">
+          <img class="nb-map-art" src="./assets/figma/nearby/map-art.svg" alt="" aria-hidden="true">
+          <div class="nb-markers" id="nbMarkers" aria-hidden="true"></div>
+        </div>
 
         <div class="nb-controls">
           <button class="nb-round-btn" type="button" onclick="goBackFromNearby()" aria-label="뒤로">←</button>
@@ -749,6 +753,7 @@
 <script src="./js/config.js"></script>
 <script src="./js/app.js?v=5.1.0" defer></script>
 <!-- 그룹 투표 (GROUP TABLE). FIREBASE_CONFIG가 비어 있으면 자동으로 비활성화됩니다. -->
+<script type="module" src="./js/kakao-map.js?v=6.0.0"></script>
 <script type="module" src="./js/monitoring.js?v=6.0.0"></script>
 <script type="module" src="./js/auth.js?v=6.0.0"></script>
 <script type="module" src="./js/auth-ui.js?v=6.0.0"></script>
