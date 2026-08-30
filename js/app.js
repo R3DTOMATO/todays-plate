@@ -5394,7 +5394,8 @@
       return;
     }
     const c = document.getElementById('nearbyContent');
-    const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
+    // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
+    const strategy = renderExternalSearchLinks(currentMenu);
     c.innerHTML = strategy + `<div class="empty-state"><div class="empty-icon">🔍</div><p class="empty-text">${escapeHtml(query)} 위치를 확인하고 있어요.</p></div>`;
     try {
       const location = await resolveManualLocation(query);
@@ -5410,7 +5411,8 @@
 
   async function searchNearbyAtLocation(location, source = 'device') {
     const c = document.getElementById('nearbyContent');
-    const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
+    // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
+    const strategy = renderExternalSearchLinks(currentMenu);
     const label = source === 'manual' && userLocationLabel ? userLocationLabel : '현재 위치';
     c.innerHTML = strategy + `
       <div class="empty-state">
@@ -5451,7 +5453,8 @@
     // 디자인의 검색바가 부제 역할을 대신한다 (지금 무엇을 찾는 중인지 표시)
     const searchLabel = document.getElementById('nbSearchLabel');
     if (searchLabel) searchLabel.textContent = currentMenu.name;
-    const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
+    // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
+    const strategy = renderExternalSearchLinks(currentMenu);
 
     if (!isProviderConfigured()) {
       c.innerHTML = strategy + renderNearbyProviderNotice() + renderNearbyNoData(currentMenu, '주변 식당 서버 프록시가 연결되지 않아 앱 안에서는 실제 식당을 확인할 수 없습니다. 지도 버튼은 직접 검색용입니다.');
