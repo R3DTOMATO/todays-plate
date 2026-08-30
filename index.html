@@ -257,16 +257,32 @@
   <!-- ═══════════════════════════════ -->
   <!-- RECIPE PANEL                     -->
   <!-- ═══════════════════════════════ -->
+  <!-- ═══════════════════════════════ -->
+  <!-- RECIPE (Figma 159:471)           -->
+  <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-recipe">
-    <div class="sub-panel">
-      <h2 class="sub-title">레시피</h2>
-      <p class="sub-subtitle" id="recipeSubtitle">선택한 메뉴를 직접 만들어보세요</p>
-      <div id="recipeContent">
-        <div class="empty-state">
-          <div class="empty-icon">📖</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+    <div class="rc-screen">
+      <!-- Hero / Meal (photo) -->
+      <div class="rc-hero">
+        <img class="rc-hero-photo" id="rcHeroPhoto" src="" alt="" loading="lazy" decoding="async">
+        <div class="rc-hero-fallback" id="rcHeroFallback" aria-hidden="true">🍽️</div>
+        <div class="rc-readability" aria-hidden="true"></div>
+
+        <div class="rc-top-actions">
+          <button class="rc-round-btn" type="button" onclick="goBackFromRecipe()" aria-label="뒤로">←</button>
+          <div class="rc-right-actions">
+            <button class="rc-round-btn" type="button" id="rcShareBtn" aria-label="공유">↗</button>
+            <button class="rc-round-btn" type="button" id="rcBookmarkBtn" aria-label="저장">
+              <img src="./assets/figma/menu-detail/icon-bookmark.svg" alt="" aria-hidden="true">
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Recipe Details Sheet -->
+      <div class="rc-sheet">
+        <div class="rc-handle" aria-hidden="true"></div>
+        <div id="recipeContent"></div>
       </div>
     </div>
   </div>
@@ -274,15 +290,37 @@
   <!-- ═══════════════════════════════ -->
   <!-- NEARBY PANEL                     -->
   <!-- ═══════════════════════════════ -->
+  <!-- ═══════════════════════════════ -->
+  <!-- NEARBY RESTAURANTS (Figma 172:472) -->
+  <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-nearby">
-    <div class="sub-panel">
-      <h2 class="sub-title">주변 식당</h2>
-      <p class="sub-subtitle" id="nearbySubtitle">가까운 식당을 찾아드려요</p>
-      <div id="nearbyContent">
-        <div class="empty-state">
-          <div class="empty-icon">📍</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+    <div class="nb-screen">
+      <!-- Nearby Map -->
+      <div class="nb-map">
+        <img class="nb-map-art" src="./assets/figma/nearby/map-art.svg" alt="" aria-hidden="true">
+        <div class="nb-markers" id="nbMarkers" aria-hidden="true"></div>
+
+        <div class="nb-controls">
+          <button class="nb-round-btn" type="button" onclick="goBackFromNearby()" aria-label="뒤로">←</button>
+          <button class="nb-search" type="button" id="nbSearchBtn">
+            <img src="./assets/figma/nearby/icon-search.svg" alt="" aria-hidden="true">
+            <span id="nbSearchLabel">메뉴를 먼저 골라 주세요</span>
+          </button>
+          <button class="nb-filter" type="button" id="nbFilterBtn" aria-label="검색 반경 변경">
+            <img src="./assets/figma/nearby/icon-filter.svg" alt="" aria-hidden="true">
+          </button>
+        </div>
+      </div>
+
+      <!-- Restaurant List Sheet -->
+      <div class="nb-sheet">
+        <div class="nb-handle" aria-hidden="true"></div>
+        <div id="nearbyContent">
+          <div class="empty-state">
+            <div class="empty-icon">📍</div>
+            <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
+            <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+          </div>
         </div>
       </div>
     </div>

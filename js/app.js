@@ -3182,6 +3182,7 @@
 
   function goRecipe() {
     if (currentMenu) trackEvent('recipe_viewed', { menuId: currentMenu.id || currentMenu.name });
+    recipeReturnPanel = document.body.dataset.panel || 'home';
     switchPanel('recipe');
   }
 
@@ -3457,6 +3458,7 @@
   }
 
   function goNearby() {
+    nearbyReturnPanel = document.body.dataset.panel || 'home';
     if (currentMenu) trackEvent('restaurant_search_started', { menuId: currentMenu.id || currentMenu.name });
     switchPanel('nearby');
   }
@@ -5419,11 +5421,14 @@
       const places = await searchPlacesForExactMenuOnly(currentMenu, location);
       trackEvent('restaurant_search_completed', { menuId: currentMenu.id || currentMenu.name, source, resultCount: places.length });
       if (!places.length) {
+        renderNearbyMapMarkers([]);
         c.innerHTML = strategy + renderNearbyNoData(currentMenu, `${label} 주변에는 이 추천 메뉴를 파는 식당이 검색되지 않았습니다.`) + renderManualLocationForm();
         return;
       }
       const formatted = places.map(place => formatPlace(place, currentMenu));
-      c.innerHTML = strategy + `<div class="nearby-status-card">검색 기준 위치: ${escapeHtml(label)} · 결과 ${formatted.length}개</div>` + renderNearbySearchDebug() + formatted.map(restaurant => renderRestaurantCard(restaurant)).join('') + renderManualLocationForm();
+      renderNearbyMapMarkers(formatted);
+      c.innerHTML = renderNearbySheet(formatted, label)
+        + `<details class="nb-more"><summary>검색 방식과 안내</summary>${strategy + renderNearbySearchDebug() + renderManualLocationForm()}</details>`;
     } catch (error) {
       console.error('Nearby search failed:', error);
       c.innerHTML = strategy + renderNearbyNoData(currentMenu, `식당 검색에 실패했습니다. ${error.message || ''}`.trim()) + renderManualLocationForm();
@@ -5443,7 +5448,9 @@
       return;
     }
 
-    document.getElementById('nearbySubtitle').textContent = `'${currentMenu.name}' 실제 주변 식당 확인`;
+    // 디자인의 검색바가 부제 역할을 대신한다 (지금 무엇을 찾는 중인지 표시)
+    const searchLabel = document.getElementById('nbSearchLabel');
+    if (searchLabel) searchLabel.textContent = currentMenu.name;
     const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
 
     if (!isProviderConfigured()) {
@@ -5685,31 +5692,26 @@
   }
 
   function renderRecipe() {
-    const c = document.getElementById('recipeContent');
+    const host = document.getElementById('recipeContent');
+    if (!host) return;
+
     if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📖</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+      const hero = document.querySelector('.rc-hero');
+      if (hero) hero.classList.add('no-photo');
+      host.innerHTML = `
+        <div class="rc-content">
+          <div class="empty-state">
+            <div class="empty-icon">📖</div>
+            <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
+            <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+          </div>
         </div>`;
       return;
     }
-    const recipe = currentMenu.recipe || {};
-    document.getElementById('recipeSubtitle').textContent = `${currentMenu.name} · 출처 기반 레시피`;
-    c.innerHTML = `
-      <div class="recipe-header">
-        <span class="recipe-emoji">${escapeHtml(currentMenu.emoji || '🍽')}</span>
-        <div class="recipe-name">${escapeHtml(currentMenu.name)}</div>
-        <div class="recipe-meta">
-          <span>⏱ ${escapeHtml(recipe.time || (currentMenu.cook === 0 ? '외식/확인 필요' : currentMenu.cook + '분 기준'))}</span>
-          <span>👥 ${escapeHtml(recipe.servings || '1인분 기준')}</span>
-          <span>🔥 약 ${escapeHtml(currentMenu.kcal || '')}kcal</span>
-        </div>
-      </div>
-      ${renderRecipePremiumNote(currentMenu)}
-      ${recipe.verified === true ? renderVerifiedRecipe(recipe) : renderUnverifiedRecipe(currentMenu)}
-    `;
+
+    cookingMode = false;
+    renderRecipeHero(currentMenu);
+    renderRecipeSheet(currentMenu);
   }
 
 
@@ -6654,3 +6656,311 @@
 
   window.goMenuDetail = goMenuDetail;
   window.goBackFromMenuDetail = goBackFromMenuDetail;
+
+  // ─── 레시피 화면 (Figma 159:471) ───
+
+  // 어디서 레시피로 들어왔는지. 뒤로 가기를 고정하면 엉뚱한 곳에 떨어진다.
+  let recipeReturnPanel = 'home';
+
+  function goBackFromRecipe() {
+    switchPanel(recipeReturnPanel || 'home');
+  }
+
+  // 디자인의 "양념 · 고추장 1T · 간장 1T" 줄을 만들기 위해
+  // 재료를 주재료와 양념으로 나눈다.
+  const SEASONING_WORDS = [
+    '고추장', '고춧가루', '간장', '국간장', '진간장', '된장', '쌈장', '설탕', '올리고당', '물엿',
+    '소금', '후추', '마늘', '생강', '참기름', '들기름', '식용유', '올리브유', '식초', '맛술',
+    '액젓', '멸치액젓', '까나리', '굴소스', '케첩', '마요네즈', '머스터드', '미림', '청주', '깨'
+  ];
+
+  function isSeasoning(name) {
+    return SEASONING_WORDS.some(word => String(name || '').includes(word));
+  }
+
+  function renderRecipeHero(menu) {
+    const hero = document.querySelector('.rc-hero');
+    const photo = document.getElementById('rcHeroPhoto');
+    const fallback = document.getElementById('rcHeroFallback');
+    if (!hero || !photo) return;
+
+    const src = typeof getMenuImage === 'function' ? getMenuImage(menu, 900) : '';
+    if (src) {
+      hero.classList.remove('no-photo');
+      photo.src = src;
+      photo.alt = `${menu.name} 사진`;
+      // 로드 실패 시 이모지로 대체한다. 깨진 이미지 아이콘이 보이는 것보다 낫다.
+      photo.onerror = () => hero.classList.add('no-photo');
+    } else {
+      hero.classList.add('no-photo');
+    }
+    if (fallback) fallback.textContent = menu.emoji || '🍽️';
+
+    const bookmark = document.getElementById('rcBookmarkBtn');
+    if (bookmark) {
+      const saved = isFavorited(menu.name);
+      bookmark.classList.toggle('selected', saved);
+      bookmark.setAttribute('aria-pressed', String(saved));
+    }
+  }
+
+  function renderRecipeSheet(menu) {
+    const host = document.getElementById('recipeContent');
+    if (!host) return;
+
+    // 레시피는 로딩 시 메뉴 객체에 붙는다(menu.recipe).
+    const recipe = menu.recipe && typeof menu.recipe === 'object' && menu.recipe.name
+      ? menu.recipe
+      : null;
+
+    // 외식 전용 메뉴는 레시피가 없다. 빈 화면 대신 다음 행동을 준다.
+    if (!recipe) {
+      host.innerHTML = `
+        <div class="rc-content">
+          <div class="rc-header">
+            <h2 class="rc-name">${escapeHtml(menu.name)}</h2>
+            <p class="rc-summary">${escapeHtml(menu.desc || '')}</p>
+          </div>
+          <div class="rc-ingredient-card">
+            <p class="rc-seasoning">이 메뉴는 사 먹는 쪽이 더 잘 맞아요. 주변 식당을 찾아볼까요?</p>
+          </div>
+          <div class="rc-bottom">
+            <button class="rc-start-btn" type="button" onclick="goNearby()">주변 식당 보기</button>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const ingredients = (recipe.ingredients || []).filter(pair => Array.isArray(pair) && pair[0]);
+    const main = ingredients.filter(pair => !isSeasoning(pair[0]));
+    const seasoning = ingredients.filter(pair => isSeasoning(pair[0]));
+    const steps = recipe.steps || [];
+
+    const statChips = [
+      { label: recipe.time || `${menu.cook || 0}분`, brand: false },
+      { label: recipe.difficulty || '보통', brand: true },
+      { label: recipe.servings || '1인분', brand: false }
+    ];
+
+    host.innerHTML = `
+      <div class="rc-content">
+        <div class="rc-header">
+          <h2 class="rc-name">${escapeHtml(recipe.name || menu.name)}</h2>
+          <p class="rc-summary">${escapeHtml(recipe.summary || menu.desc || '')}</p>
+          <div class="rc-stats">
+            ${statChips.map(chip =>
+              `<span class="rc-stat${chip.brand ? ' is-brand' : ''}">${escapeHtml(chip.label)}</span>`
+            ).join('')}
+          </div>
+        </div>
+
+        <div class="rc-block">
+          <div class="rc-block-head">
+            <h3 class="rc-block-title">준비 재료</h3>
+            <span class="rc-serving">${escapeHtml(recipe.servings || '1인분')}</span>
+          </div>
+          <div class="rc-ingredient-card">
+            <div class="rc-ingredient-grid">
+              ${main.map(pair => `
+                <span class="rc-ingredient-name">${escapeHtml(pair[0])}</span>
+                <span class="rc-ingredient-amount">${escapeHtml(pair[1] || '')}</span>
+              `).join('')}
+            </div>
+            ${seasoning.length ? `<p class="rc-seasoning">양념 · ${
+              seasoning.map(pair => escapeHtml(`${pair[0]} ${pair[1] || ''}`.trim())).join(' · ')
+            }</p>` : ''}
+          </div>
+        </div>
+
+        <div class="rc-block">
+          <h3 class="rc-block-title">${steps.length}단계로 완성</h3>
+          <div class="rc-steps" id="rcSteps">
+            ${steps.map((step, index) => `
+              <div class="rc-step" data-step="${index}">
+                <span class="rc-step-num">${index + 1}</span>
+                <div class="rc-step-body">
+                  <p>${escapeHtml(step.main || '')}</p>
+                  ${step.time ? `<span class="rc-step-time">${escapeHtml(step.time)}</span>` : ''}
+                  ${step.why ? `<details class="rc-step-why"><summary>왜 이렇게 하나요?</summary>${escapeHtml(step.why)}</details>` : ''}
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="rc-bottom">
+          <button class="rc-start-btn" type="button" id="rcStartBtn">
+            요리 시작하기${recipe.time ? ` · ${escapeHtml(recipe.time)}` : ''}
+          </button>
+        </div>
+      </div>`;
+
+    document.getElementById('rcStartBtn')?.addEventListener('click', startCookingMode);
+  }
+
+  // 요리 시작: 단계를 눌러 완료 표시할 수 있게 한다.
+  let cookingMode = false;
+
+  function startCookingMode() {
+    const button = document.getElementById('rcStartBtn');
+    const stepHost = document.getElementById('rcSteps');
+    if (!stepHost || !button) return;
+
+    cookingMode = !cookingMode;
+    button.textContent = cookingMode ? '요리 끝내기' : '요리 시작하기';
+    button.classList.toggle('secondary', cookingMode);
+
+    stepHost.querySelectorAll('.rc-step').forEach(step => {
+      step.classList.remove('is-done');
+      step.onclick = cookingMode
+        ? () => step.classList.toggle('is-done')
+        : null;
+      step.style.cursor = cookingMode ? 'pointer' : '';
+    });
+
+    if (cookingMode) {
+      showToast('완료한 단계를 눌러 표시해 보세요.');
+      trackEvent('recipe_cooking_started', { menuId: currentMenu?.id || currentMenu?.name });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('rcBookmarkBtn')?.addEventListener('click', () => {
+      if (!currentMenu) return;
+      toggleFavoriteByName(currentMenu.name);
+      renderRecipeHero(currentMenu);
+    });
+    document.getElementById('rcShareBtn')?.addEventListener('click', () => {
+      if (!currentMenu) return;
+      const text = `${currentMenu.name} 레시피 — 오늘의 식탁`;
+      if (navigator.share) navigator.share({ title: '오늘의 식탁', text }).catch(() => {});
+      else showToast('공유를 지원하지 않는 브라우저예요.');
+    });
+  });
+
+  window.goBackFromRecipe = goBackFromRecipe;
+
+  // ─── 주변 식당 화면 (Figma 172:472) ───
+
+  let nearbyReturnPanel = 'home';
+
+  function goBackFromNearby() {
+    switchPanel(nearbyReturnPanel || 'home');
+  }
+
+  // 거리를 도보 시간으로 바꾼다. 성인 보행 속도 약 67m/분 기준.
+  function walkMinutes(distText) {
+    const km = /([\d.]+)km/.exec(distText || '');
+    const m = /(\d+)m/.exec(distText || '');
+    const meters = km ? Number(km[1]) * 1000 : (m ? Number(m[1]) : NaN);
+    if (!Number.isFinite(meters)) return '';
+    return `도보 ${Math.max(1, Math.round(meters / 67))}분`;
+  }
+
+  // 지도 마커. 디자인은 가격을 보여주지만 카카오 API는 가격을 주지 않으므로
+  // 실제로 아는 값인 "거리"를 표시한다. 없는 정보를 지어내지 않는다.
+  function renderNearbyMapMarkers(list) {
+    const host = document.getElementById('nbMarkers');
+    if (!host) return;
+
+    // 디자인의 마커 좌표(224,122 / 76,230 / 278,252)와 현재 위치(177,182)
+    const spots = [
+      { left: 224, top: 122, primary: true },
+      { left: 76,  top: 230, primary: false },
+      { left: 278, top: 252, primary: false }
+    ];
+
+    const markers = (list || []).slice(0, 3).map((place, index) => {
+      const spot = spots[index];
+      const label = place.dist || '근처';
+      return `<span class="nb-marker${spot.primary ? ' is-primary' : ''}"
+        style="left:${spot.left}px; top:${spot.top}px;">${escapeHtml(label)}</span>`;
+    }).join('');
+
+    host.innerHTML = markers +
+      `<span class="nb-current" style="left:177px; top:182px;">
+         <img src="./assets/figma/nearby/current-location.svg" alt="">
+       </span>`;
+  }
+
+  function renderNearbySheet(list, label) {
+    const openCount = list.filter(place => place.tier === 'verified_name_match').length;
+
+    const header = `
+      <div class="nb-header">
+        <div class="nb-header-row">
+          <h2 class="nb-title">가까운 식당 ${list.length}곳</h2>
+          <span class="nb-sort">추천순</span>
+        </div>
+        <p class="nb-subtitle">${escapeHtml(label)} 기준${
+          openCount ? ` · 상호 확인 ${openCount}곳` : ''
+        }</p>
+      </div>`;
+
+    const [featured, ...rest] = list;
+    return `<div class="nb-content">
+      ${header}
+      ${featured ? renderNearbyFeatured(featured) : ''}
+      ${rest.length ? `<div class="nb-list">${
+        rest.slice(0, 4).map((place, index) => renderNearbyRow(place, index + 2)).join('')
+      }</div>` : ''}
+      ${list.length > 5 ? `
+        <button class="nb-view-all" type="button" onclick="openNearbyExternalSearch()">
+          전체 ${list.length}곳 보기
+        </button>` : ''}
+    </div>`;
+  }
+
+  function renderNearbyFeatured(place) {
+    const walk = walkMinutes(place.dist);
+    const photo = typeof getMenuImage === 'function' ? getMenuImage(currentMenu, 300) : '';
+
+    // 디자인의 '취향 96%'는 적합도 라벨로, '영업 중'은 상호 검증 상태로 대체한다.
+    // 평점·리뷰 수·영업 상태는 카카오 로컬 API가 제공하지 않는다.
+    const badges = [];
+    if (place.fitLabel) badges.push(place.fitLabel);
+    if (place.tier === 'verified_name_match') badges.push('상호 일치');
+    else if (place.tier === 'menu_query_candidate') badges.push('메뉴 검색');
+
+    const meta = [place.subcategory, walk || place.dist].filter(Boolean).join(' · ');
+
+    return `
+      <button class="nb-featured" type="button"
+              onclick="openRestaurantResult('${escapeJsString(place.id || place.name)}', '${escapeJsString(place.name)}', '${escapeJsString(place.addr || '')}', '${escapeJsString(place.placeUrl || '')}')">
+        <span class="nb-featured-photo">
+          ${photo ? `<img src="${escapeHtml(photo)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span class="nb-featured-emoji" aria-hidden="true">${place.emoji || '🍽️'}</span>
+        </span>
+        <span class="nb-featured-info">
+          ${badges.length ? `<span class="nb-badges">${
+            badges.map(badge => `<span class="nb-badge">${escapeHtml(badge)}</span>`).join('')
+          }</span>` : ''}
+          <strong class="nb-featured-name">${escapeHtml(place.name)}</strong>
+          <small class="nb-featured-meta">${escapeHtml(meta)}</small>
+          <small class="nb-featured-addr">${escapeHtml(place.addr || '')}</small>
+        </span>
+      </button>`;
+  }
+
+  function renderNearbyRow(place, rank) {
+    const walk = walkMinutes(place.dist);
+    const meta = [place.subcategory, walk || place.dist, place.phone].filter(Boolean).join(' · ');
+    return `
+      <button class="nb-row" type="button"
+              onclick="openRestaurantResult('${escapeJsString(place.id || place.name)}', '${escapeJsString(place.name)}', '${escapeJsString(place.addr || '')}', '${escapeJsString(place.placeUrl || '')}')">
+        <span class="nb-rank">${rank}</span>
+        <span class="nb-row-copy">
+          <strong>${escapeHtml(place.name)}</strong>
+          <small>${escapeHtml(meta)}</small>
+        </span>
+        <span class="nb-row-arrow" aria-hidden="true">›</span>
+      </button>`;
+  }
+
+  function openNearbyExternalSearch() {
+    if (!currentMenu) return;
+    const query = encodeURIComponent(`${currentMenu.name} 맛집`);
+    window.open(`https://map.kakao.com/?q=${query}`, '_blank', 'noopener');
+  }
+
+  window.goBackFromNearby = goBackFromNearby;
+  window.openNearbyExternalSearch = openNearbyExternalSearch;
