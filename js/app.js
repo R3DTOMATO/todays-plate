@@ -3001,6 +3001,8 @@
 
   // ─── Show Result ───
   function showResult() {
+    // 이전 메뉴의 결정 상태가 남아 있으면 새 추천 결과에 엉뚱한 배너가 뜬다
+    clearDecidedActions();
     const candidates = filterMenusSoft(answers);
     let scored = candidates.map(m => ({ ...m, score: scoreMenu(m, answers) }));
     scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'ko'));
@@ -3172,6 +3174,7 @@
     temporaryExcluded = new Set();
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
+    clearDecidedActions();
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'figma_three_step', mealTime: answers.contextTime });
     switchPanel('quiz', false);
@@ -3188,6 +3191,7 @@
     temporaryExcluded = new Set();
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
+    clearDecidedActions();
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'instant', mealTime });
     showResult();
@@ -3798,28 +3802,9 @@
     trackEvent('group_vote_opened', { source:'home' });
   }
 
-  function selectGroupVote(button, menuName) {
-    selectedGroupVote = menuName;
-    document.querySelectorAll('#groupVoteOptions button').forEach(option => option.classList.remove('selected'));
-    button.classList.add('selected');
-    const lead = document.getElementById('groupLead');
-    if (lead) lead.innerHTML = `<strong>${escapeHtml(menuName)}에 투표할까요?</strong><span>투표 후에도 마감 전까지 다시 고를 수 있어요.</span>`;
-  }
-
-  function submitGroupVote() {
-    if (!selectedGroupVote) {
-      showToast('투표할 메뉴를 먼저 골라 주세요.');
-      return;
-    }
-    try {
-      localStorage.setItem('todaysPlateGroupVoteDraft', JSON.stringify({
-        menuName:selectedGroupVote,
-        votedAt:new Date().toISOString()
-      }));
-    } catch (_) {}
-    trackEvent('group_vote_submitted', { menuName:selectedGroupVote, localOnly:true });
-    showToast(`${selectedGroupVote} 투표를 이 기기에 저장했어요.`);
-  }
+  // 그룹 투표의 실제 동작은 js/group-vote.js가 담당합니다.
+  // 예전 목업 함수(selectGroupVote/submitGroupVote)는 로컬 저장만 하고
+  // 다른 사람과 연동되지 않아 제거했습니다.
 
   // ─── Diary ───
   function renderToday() {

@@ -363,8 +363,13 @@ function render() {
   const closed = isClosed(currentSession);
   const votedCount = participants.filter(p => p.votedMenuId).length;
 
+  showLiveView();
+
+  const titleEl = document.getElementById('groupLiveTitle');
+  if (titleEl) titleEl.textContent = currentSession.title || '오늘 뭐 먹지?';
+
   // 부제: 참여 현황 + 마감
-  const subtitle = document.querySelector('#panel-group .sub-subtitle');
+  const subtitle = document.getElementById('groupLiveSub');
   if (subtitle) {
     subtitle.textContent = closed
       ? `${participants.length}명 참여 · 마감됨`
@@ -372,7 +377,7 @@ function render() {
   }
 
   // 참여자 아바타
-  const avatars = document.querySelector('#panel-group .group-avatars');
+  const avatars = document.getElementById('groupAvatars');
   if (avatars) {
     const shown = participants.slice(0, 5);
     const rest = participants.length - shown.length;
@@ -425,7 +430,7 @@ function render() {
   }
 
   // 제출 버튼 → 마감 후에는 식당 찾기로 전환
-  const submit = document.querySelector('.group-vote-submit');
+  const submit = document.getElementById('groupShareBtn');
   if (submit) {
     const winner = tally[0];
     if (closed && winner && winner.votes > 0) {
@@ -507,6 +512,193 @@ window.groupVote = {
   handleIncomingLink: handleIncomingVoteLink
 };
 
+
+// ─────────────────────────────────────────────────────────────
+// 투표 만들기 화면
+// ─────────────────────────────────────────────────────────────
+
+const MAX_PICKS = 5;
+const MIN_PICKS = 2;
+
+let picked = [];              // [{name, emoji, area}]
+let deadlineMinutes = 30;
+
+function el(id) { return document.getElementById(id); }
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function showCreateView() {
+  const create = el('groupCreateView');
+  const live = el('groupLiveView');
+  if (create) create.hidden = false;
+  if (live) live.hidden = true;
+}
+
+function showLiveView() {
+  const create = el('groupCreateView');
+  const live = el('groupLiveView');
+  if (create) create.hidden = true;
+  if (live) live.hidden = false;
+}
+
+// ─── 메뉴 검색 ───
+
+function renderSuggestions(term) {
+  const box = el('groupMenuSuggestions');
+  if (!box) return;
+
+  const keyword = String(term || '').trim();
+  if (!keyword) { box.innerHTML = ''; return; }
+
+  const results = typeof window.searchMenusByName === 'function'
+    ? window.searchMenusByName(keyword, 6)
+    : [];
+
+  if (results.length === 0) {
+    box.innerHTML = '<p class="group-empty">검색 결과가 없어요.</p>';
+    return;
+  }
+
+  box.innerHTML = results.map(menu => {
+    const already = picked.some(p => p.name === menu.name);
+    return `<button type="button" class="group-suggest-row${already ? ' picked' : ''}"
+      data-add="${escapeAttr(menu.name)}" data-emoji="${escapeAttr(menu.emoji || '🍽️')}"
+      ${already ? 'disabled' : ''}>
+      <span>${escapeHtml(menu.emoji || '🍽️')}</span>
+      <strong>${escapeHtml(menu.name)}</strong>
+      <small>${escapeHtml(menu.type || '')}</small>
+      ${already ? '<em>추가됨</em>' : ''}
+    </button>`;
+  }).join('');
+
+  box.querySelectorAll('[data-add]').forEach(button => {
+    button.addEventListener('click', () => {
+      addCandidate(button.dataset.add, button.dataset.emoji);
+    });
+  });
+}
+
+function addCandidate(name, emoji) {
+  if (picked.length >= MAX_PICKS) {
+    toast(`후보는 최대 ${MAX_PICKS}개까지 고를 수 있어요.`);
+    return;
+  }
+  if (picked.some(p => p.name === name)) return;
+  picked.push({ name, emoji: emoji || '🍽️' });
+
+  const input = el('groupMenuSearch');
+  if (input) { input.value = ''; }
+  renderSuggestions('');
+  renderPicked();
+}
+
+function removeCandidate(name) {
+  picked = picked.filter(p => p.name !== name);
+  renderPicked();
+}
+
+function renderPicked() {
+  const list = el('groupPickedList');
+  if (list) {
+    list.innerHTML = picked.length === 0
+      ? '<p class="group-empty">아직 고른 메뉴가 없어요.</p>'
+      : picked.map(p => `
+        <div class="group-picked-chip">
+          <span>${escapeHtml(p.emoji)}</span>
+          <strong>${escapeHtml(p.name)}</strong>
+          <button type="button" data-remove="${escapeAttr(p.name)}" aria-label="${escapeHtml(p.name)} 빼기">×</button>
+        </div>`).join('');
+
+    list.querySelectorAll('[data-remove]').forEach(button =>
+      button.addEventListener('click', () => removeCandidate(button.dataset.remove)));
+  }
+
+  const createBtn = el('groupCreateBtn');
+  const hint = el('groupCreateHint');
+  const ready = picked.length >= MIN_PICKS;
+
+  if (createBtn) createBtn.disabled = !ready;
+  if (hint) {
+    if (!AUTH_READY || !FIREBASE_READY) {
+      hint.textContent = '그룹 투표 기능이 아직 준비 중이에요.';
+    } else if (picked.length === 0) {
+      hint.textContent = `메뉴를 ${MIN_PICKS}개 이상 골라 주세요.`;
+    } else if (!ready) {
+      hint.textContent = `${MIN_PICKS - picked.length}개만 더 골라 주세요.`;
+    } else {
+      hint.textContent = `${picked.length}개 후보로 투표를 만들어요. 만들면 로그인이 필요해요.`;
+    }
+  }
+}
+
+// ─── 만들기 ───
+
+async function handleCreate() {
+  const button = el('groupCreateBtn');
+  if (!button || picked.length < MIN_PICKS) return;
+
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = '만드는 중…';
+
+  try {
+    const candidates = picked.map(p => ({
+      menuId: p.name, menuName: p.name, emoji: p.emoji, area: null,
+    }));
+    const { sessionId } = await createVoteSession(candidates, deadlineMinutes, '');
+    await joinVoteSession(sessionId, currentDisplayName());
+    showLiveView();
+    await shareCurrentSession();
+  } catch (error) {
+    console.error('[group] 투표 생성 실패:', error);
+    toast(error.message || '투표를 만들지 못했어요.');
+    button.disabled = false;
+    button.textContent = original;
+  }
+}
+
+// ─── 초기화 ───
+
+function initCreateUI() {
+  const search = el('groupMenuSearch');
+  if (search) {
+    let timer = null;
+    search.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => renderSuggestions(search.value), 180);
+    });
+  }
+
+  document.querySelectorAll('[data-minutes]').forEach(button => {
+    button.addEventListener('click', () => {
+      deadlineMinutes = Number(button.dataset.minutes);
+      document.querySelectorAll('[data-minutes]').forEach(b =>
+        b.classList.toggle('active', b === button));
+    });
+  });
+
+  el('groupCreateBtn')?.addEventListener('click', handleCreate);
+  el('groupShareBtn')?.addEventListener('click', shareCurrentSession);
+  el('groupLeaveBtn')?.addEventListener('click', () => {
+    stopListening();
+    picked = [];
+    renderPicked();
+    showCreateView();
+    // 공유 링크로 들어온 상태라면 주소에서 파라미터를 지운다
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('vote')) {
+      url.searchParams.delete('vote');
+      history.replaceState({}, '', url.toString());
+    }
+  });
+
+  renderPicked();
+  showCreateView();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initCreateUI();
   handleIncomingVoteLink();
 });
