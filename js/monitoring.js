@@ -86,17 +86,30 @@ function shouldIgnore(event) {
   return false;
 }
 
+function loadSentryScript() {
+  return new Promise(resolve => {
+    if (window.Sentry) return resolve();
+    const script = document.createElement('script');
+    script.src = 'https://browser.sentry-cdn.com/8.26.0/bundle.min.js';
+    script.crossOrigin = 'anonymous';
+    script.onload = () => resolve();
+    script.onerror = () => resolve();   // 실패해도 앱은 계속 동작해야 한다
+    document.head.appendChild(script);
+  });
+}
+
 export function initErrorMonitoring() {
   if (!DSN) {
     console.info('[monitoring] SENTRY_DSN이 없어 오류 수집이 비활성화되었습니다.');
     return;
   }
-  import('https://browser.sentry-cdn.com/8.26.0/bundle.tracing.min.js')
-    .catch(() => null)
+  // Sentry CDN 번들은 ES 모듈이 아니라 일반 스크립트다.
+  // import()로는 불러올 수 없으므로 script 태그로 넣는다.
+  loadSentryScript()
     .then(() => {
       const Sentry = window.Sentry;
       if (!Sentry) {
-        console.warn('[monitoring] Sentry를 불러오지 못했습니다.');
+        console.warn('[monitoring] Sentry를 불러오지 못했습니다. (광고 차단 확장 프로그램일 수 있습니다)');
         return;
       }
 
@@ -104,9 +117,6 @@ export function initErrorMonitoring() {
         dsn: DSN,
         release: RELEASE,
         environment: location.hostname === 'localhost' ? 'development' : 'production',
-
-        // 전체가 아니라 일부만 추적한다. 무료 할당량을 아끼기 위해서다.
-        tracesSampleRate: 0.1,
 
         // 사용자 IP를 보내지 않는다
         sendDefaultPii: false,

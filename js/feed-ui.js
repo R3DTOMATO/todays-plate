@@ -131,6 +131,9 @@ async function loadMySaves() {
 }
 
 async function loadCommentCounts(posts) {
+  // 보안 규칙상 댓글은 로그인 사용자만 읽을 수 있다.
+  // 비로그인 상태에서 호출하면 게시물 수만큼 권한 오류가 쌓인다.
+  if (!getCurrentUser() || posts.length === 0) return;
   const results = await Promise.all(posts.map(post =>
     countComments(post.id).then(n => [post.id, n]).catch(() => [post.id, 0])
   ));
@@ -303,6 +306,14 @@ function feedHtml() {
   }, 30);
 
   if (ranked.posts.length === 0) {
+    // 게시물 읽기에도 로그인이 필요하므로, 비로그인은 다른 안내를 보여준다.
+    // 그냥 "기록이 없어요"라고 하면 고장으로 오해한다.
+    if (!getCurrentUser()) {
+      return emptyState(
+        '로그인하면 피드를 볼 수 있어요',
+        '메뉴 추천과 검색, 식사 기록은 로그인 없이도 계속 쓸 수 있어요.'
+      );
+    }
     return emptyState(
       '아직 올라온 기록이 없어요',
       '식사 기록에서 <strong>피드에 공개</strong>를 켜면 첫 게시물이 됩니다.'

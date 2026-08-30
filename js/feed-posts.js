@@ -255,9 +255,17 @@ export async function searchPostsByMenu(term, max = 20) {
 export async function countComments(postId) {
   if (!FIREBASE_READY || !db) return 0;
   try {
-    const snapshot = await getCountFromServer(collection(db, 'posts', postId, 'comments'));
+    // 보안 규칙이 status == 'visible' 문서만 읽도록 허용하므로,
+    // 집계 쿼리에도 같은 조건을 걸어야 한다.
+    // 조건 없이 컬렉션 전체를 세면 permission-denied가 난다.
+    const q = query(
+      collection(db, 'posts', postId, 'comments'),
+      where('status', '==', 'visible')
+    );
+    const snapshot = await getCountFromServer(q);
     return snapshot.data().count;
   } catch (error) {
+    console.error('[feed] 댓글 수 조회 실패:', error);
     return 0;
   }
 }

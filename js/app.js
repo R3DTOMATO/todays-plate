@@ -1173,27 +1173,7 @@
   }
 
   // 카카오 응답을 UI 형식으로 변환
-  function formatPlace(place, menu) {
-    const dist = parseInt(place.distance);
-    const distStr = dist >= 1000 ? `${(dist/1000).toFixed(1)}km` : `${dist}m`;
-
-    // 카테고리 마지막 단어를 부제목으로 (예: "음식점 > 한식 > 찌개" → "찌개")
-    const categoryParts = (place.category_name || '').split('>').map(s => s.trim());
-    const subcategory = categoryParts[categoryParts.length - 1] || '';
-
-    return {
-      id: place.id || '',
-      emoji: menu.emoji,
-      name: place.place_name,
-      dist: distStr,
-      rating: '',  // 카카오 로컬 API는 평점 없음 (place_url로 카카오맵 페이지에서 확인 가능)
-      price: '',
-      addr: place.road_address_name || place.address_name || '',
-      subcategory: subcategory,
-      placeUrl: place.place_url, // 카카오맵 상세 페이지 URL
-      phone: place.phone || '',
-    };
-  }
+  // (중복 선언 제거됨: formatPlace — 아래쪽 최신 정의를 사용)
 
   // Mock 데이터 (API 키 없거나 실패 시 폴백)
   const mockRestaurantsByType = {
@@ -3076,7 +3056,7 @@
         <span>이제 뭘 해볼까요?</span>
       </div>
       <div class="decided-actions">
-        <button class="decided-btn" type="button" onclick="goRecipe()">
+        <button class="decided-btn" type="button" onclick="goMenuDetail()">
           <span aria-hidden="true">📖</span>
           <b>메뉴 정보</b>
           <small>${canCook ? '재료와 만드는 법' : '메뉴 상세 정보'}</small>
@@ -3198,44 +3178,7 @@
   }
 
   // ─── Recipe ───
-  function renderRecipe() {
-    const c = document.getElementById('recipeContent');
-    if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📖</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-    document.getElementById('recipeSubtitle').textContent = `${currentMenu.name} 만드는 법`;
-    c.innerHTML = `
-      <div class="recipe-header">
-        <span class="recipe-emoji">${currentMenu.emoji}</span>
-        <div class="recipe-name">${currentMenu.name}</div>
-        <div class="recipe-meta">
-          <span>⏱ ${currentMenu.cook === 0 ? '외식' : currentMenu.cook + '분'}</span>
-          <span>👥 1인분</span>
-          <span>🔥 ${currentMenu.kcal}kcal</span>
-        </div>
-      </div>
-      ${renderRecipePremiumNote(currentMenu)}
-      <div class="section">
-        <h3>재료</h3>
-        <ul class="ingredient-list">
-          ${currentMenu.ingredients.map(i => `<li><span>${i[0]}</span><span class="qty">${i[1]}</span></li>`).join('')}
-        </ul>
-      </div>
-      <div class="section">
-        <h3>만드는 법</h3>
-        <ol class="step-list">
-          ${currentMenu.steps.map(s => `<li>${s}</li>`).join('')}
-        </ol>
-      </div>
-    `;
-  }
+  // (중복 선언 제거됨: renderRecipe — 아래쪽 최신 정의를 사용)
 
   function goRecipe() {
     if (currentMenu) trackEvent('recipe_viewed', { menuId: currentMenu.id || currentMenu.name });
@@ -3243,121 +3186,14 @@
   }
 
   // ─── Nearby ───
-  async function renderNearby() {
-    const c = document.getElementById('nearbyContent');
-    if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📍</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-    document.getElementById('nearbySubtitle').textContent = `'${currentMenu.name}'을(를) 파는 가까운 곳`;
-
-    // Provider 설정 안 됐으면 mock 데이터로 폴백
-    if (!isProviderConfigured()) {
-      const list = mockRestaurantsByType[currentMenu.type] || [];
-      c.innerHTML = renderNearbyGuide(currentMenu) + renderMockNotice() + list.map(r => renderRestaurantCard(r)).join('');
-      return;
-    }
-
-    // 로딩 표시
-    c.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📍</div>
-        <p class="empty-text">주변 식당을 찾는 중...<br><span style="font-size:11px;">위치 권한을 허용해주세요</span></p>
-      </div>
-    `;
-
-    try {
-      const location = await getUserLocation();
-      const places = await searchPlaces(currentMenu, location);
-
-      if (places.length === 0) {
-        c.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <p class="empty-text">근처에서 '${currentMenu.name}'을(를)<br>파는 곳을 찾지 못했어요</p>
-            <button class="empty-cta" onclick="startQuiz()">다른 메뉴 찾기</button>
-          </div>
-        `;
-        return;
-      }
-
-      const formatted = places.map(p => formatPlace(p, currentMenu));
-      c.innerHTML = renderNearbyGuide(currentMenu) + formatted.map(r => renderRestaurantCard(r)).join('');
-    } catch (err) {
-      console.error('Nearby search failed:', err);
-      // 에러 시 mock 데이터로 폴백
-      const list = mockRestaurantsByType[currentMenu.type] || [];
-      const errMsg = err.code === 1 ? '위치 권한이 거부되어' : '주변 식당을 불러오지 못해';
-      c.innerHTML = renderNearbyGuide(currentMenu) + `
-        <div style="background:var(--cream); border:1px dashed var(--tomato); border-radius:12px; padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--ink-soft);">
-          ⚠️ ${errMsg} 예시 데이터를 보여드려요
-        </div>
-      ` + list.map(r => renderRestaurantCard(r)).join('');
-    }
-  }
+  // (중복 선언 제거됨: renderNearby — 아래쪽 최신 정의를 사용)
 
 
 
-  function renderNearbyGuide(menu) {
-    const info = premiumInfo(menu);
-    const soloFit = menu.method === '외식' && menu.weight === '든든' ? '보통' : '높음';
-    const crowd = menu.time === '점심' ? '12:00~13:00 혼잡 예상' : menu.time === '저녁' ? '18:30~20:00 혼잡 예상' : '오전 시간대 비교적 여유';
-    const orderTip = menu.soup ? '국물 메뉴는 회전율이 빠른 매장이 안정적' : menu.spicy >= 2 ? '맵기 조절 가능 여부 확인' : '사이드와 음료 조합 확인';
-    const keyword = kakaoSearchKeywords[menu.name] || menu.name;
-    return `
-      <div class="nearby-guide">
-        <div class="nearby-label">Restaurant Strategy</div>
-        <div class="nearby-title">근처에서 먹는다면 이렇게 고르세요</div>
-        <div class="nearby-guide-list">
-          <div class="nearby-guide-item"><span>검색 키워드</span><strong>${escapeHtml(keyword)}</strong></div>
-          <div class="nearby-guide-item"><span>예상 가격대</span><strong>약 ${Number(menu.price).toLocaleString()}원 · ${escapeHtml(info.priceTier)}</strong></div>
-          <div class="nearby-guide-item"><span>혼밥 적합도</span><strong>${soloFit}</strong></div>
-          <div class="nearby-guide-item"><span>혼잡 시간</span><strong>${crowd}</strong></div>
-          <div class="nearby-guide-item"><span>고르는 기준</span><strong>${escapeHtml(orderTip)}</strong></div>
-        </div>
-      </div>
-    `;
-  }
-  function renderMockNotice() {
-    return `
-      <div style="background:var(--cream); border:1px dashed var(--mustard); border-radius:12px; padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--ink-soft); line-height:1.6;">
-        💡 <strong>예시 데이터입니다.</strong><br>
-        실제 주변 식당을 보려면 <strong>카카오 디벨로퍼스</strong>에서 REST API 키를 받아<br>
-        서버의 Kakao API 키와 <code style="font-family:'JetBrains Mono',monospace; background:var(--paper); padding:2px 6px; border-radius:4px;">NEARBY_PROXY_URL</code>을 설정하세요.<br>
-      </div>
-    `;
-  }
+  // (중복 선언 제거됨: renderNearbyGuide — 아래쪽 최신 정의를 사용)
+  // (중복 선언 제거됨: renderMockNotice — 아래쪽 최신 정의를 사용)
 
-  function renderRestaurantCard(r) {
-    const metaParts = [];
-    if (r.subcategory) metaParts.push(`<span>${r.subcategory}</span>`);
-    if (r.dist) metaParts.push(`<span>${r.dist}</span>`);
-    if (r.phone) metaParts.push(`<span>${r.phone}</span>`);
-    if (r.rating) metaParts.push(`<span class="rest-rating">${r.rating}</span>`);
-    if (r.price) metaParts.push(`<span>${r.price}</span>`);
-
-    // 카카오맵 URL 있으면 그쪽으로, 없으면 mock일 경우 클릭만 처리
-    const onClick = r.placeUrl
-      ? `window.open('${r.placeUrl}', '_blank')`
-      : `openInMaps('${r.name.replace(/'/g, "\\'")}', '${(r.addr||'').replace(/'/g, "\\'")}')`;
-
-    return `
-      <div class="restaurant" onclick="${onClick}">
-        <div class="rest-emoji">${r.emoji}</div>
-        <div class="rest-info">
-          <div class="rest-name">${r.name}</div>
-          <div class="rest-meta">${metaParts.join('<span style="opacity:0.4;">·</span>')}</div>
-          ${r.addr ? `<div class="rest-meta" style="margin-top:4px; opacity:0.7;">${r.addr}</div>` : ''}
-        </div>
-      </div>
-    `;
-  }
+  // (중복 선언 제거됨: renderRestaurantCard — 아래쪽 최신 정의를 사용)
 
   function openRestaurantResult(restaurantId, name, addr, placeUrl) {
     trackEvent('restaurant_selected', {
@@ -3369,16 +3205,9 @@
     else openInMaps(name, addr);
   }
 
-  function openInMaps(name, addr) {
-    const query = encodeURIComponent(`${name} ${addr}`);
-    // Google Maps 검색 (글로벌 호환)
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-  }
+  // (중복 선언 제거됨: openInMaps — 아래쪽 최신 정의를 사용)
 
-  function goNearby() {
-    if (currentMenu) trackEvent('restaurant_search_started', { menuId: currentMenu.id || currentMenu.name });
-    switchPanel('nearby');
-  }
+  // (중복 선언 제거됨: goNearby — 아래쪽 최신 정의를 사용)
 
 
   // ─── Refined Nearby Search v2 ───
@@ -3443,31 +3272,7 @@
     return name.replace(/^(매운|얼큰한|담백한|맑은|특제|수제|치즈|불맛|간장|고추장|크림|토마토|바질|스파이시|갈릭|허브|칠리|소고기|돼지고기|닭고기|해물|새우|연어|비프|치킨|쉬림프|램|두부|버섯|전복|성게|들깨|바지락)\s+/g, '').trim() || name;
   }
 
-  function buildPlaceQueries(menu) {
-    const name = compactText(menu?.name);
-    const core = coreDishName(menu);
-    const typeCfg = NEARBY_CUISINE_CONFIG[menu?.type] || NEARBY_CUISINE_CONFIG['한식'];
-    const alias = DISH_TO_RESTAURANT_KEYWORDS[name] || DISH_TO_RESTAURANT_KEYWORDS[core] || [];
-    const base = kakaoSearchKeywords[name] || kakaoSearchKeywords[core] || core || name;
-    const soupOrDry = menu?.soup ? `${menu.type} 국물` : `${menu.type} ${menu.weight || ''}`;
-    const methodHint = menu?.method === '외식' ? `${base} 맛집` : base;
-
-    const exact = uniq([name, base, ...alias, methodHint]);
-    const specialty = uniq([
-      `${core} 전문점`,
-      `${base} 전문점`,
-      ...typeCfg.specialty,
-      ...(menu?.soup ? ['국물 맛집', '탕 전문점', '찌개 전문점'] : ['덮밥', '정식', '전문점'])
-    ]);
-    const fallback = uniq([
-      ...typeCfg.fallback,
-      soupOrDry,
-      kakaoTypeKeywords[menu?.type] || `${menu?.type || ''} 맛집`,
-      '음식점'
-    ]);
-
-    return { exact, specialty, fallback, primary: exact[0] || specialty[0] || fallback[0] || '음식점', core };
-  }
+  // (중복 선언 제거됨: buildPlaceQueries — 아래쪽 최신 정의를 사용)
 
   function searchQualityLabel(menu) {
     if (menu.method === '외식') return '외식 추천 메뉴라 정확 메뉴명을 1순위로 검색합니다.';
@@ -3477,24 +3282,7 @@
     return '메뉴명, 음식 분류, 전문점 키워드를 순서대로 검색합니다.';
   }
 
-  function renderNearbySearchStrategy(menu) {
-    const q = buildPlaceQueries(menu);
-    const chips = uniq([q.primary, q.core, ...(q.specialty.slice(0, 4)), ...(q.fallback.slice(0, 2))]);
-    return `
-      <div class="nearby-search-card">
-        <div class="nearby-label">Smart Place Search</div>
-        <div class="nearby-title">검색을 이렇게 정교화했어요</div>
-        <div class="nearby-chip-row">
-          ${chips.slice(0, 8).map(x => `<span class="nearby-chip">${escapeHtml(x)}</span>`).join('')}
-        </div>
-        <div class="nearby-tier-list">
-          <div class="nearby-tier"><span>1차</span><div><strong>${escapeHtml(q.exact.slice(0,3).join(' · '))}</strong><small>정확 메뉴명과 대표 별칭으로 먼저 검색</small></div></div>
-          <div class="nearby-tier"><span>2차</span><div><strong>${escapeHtml(q.specialty.slice(0,4).join(' · '))}</strong><small>전문점/요리군 키워드로 확장</small></div></div>
-          <div class="nearby-tier"><span>3차</span><div><strong>${escapeHtml(q.fallback.slice(0,4).join(' · '))}</strong><small>근처에 정확 메뉴가 없을 때 같은 음식군으로 폴백</small></div></div>
-        </div>
-      </div>
-    `;
-  }
+  // (중복 선언 제거됨: renderNearbySearchStrategy — 아래쪽 최신 정의를 사용)
 
   function externalMapQuery(menu) {
     const q = buildPlaceQueries(menu);
@@ -3540,20 +3328,7 @@
     return Math.max(0, Math.round(score));
   }
 
-  function qualityBadgesForPlace(place, menu) {
-    const badges = [];
-    const score = place.score || placeRelevanceScore(place, menu, place.tier || 'fallback', place.query || '');
-    const core = coreDishName(menu);
-    const name = compactText(place.name || place.place_name || '');
-    if (name.includes(menu.name) || (core && name.includes(core))) badges.push('메뉴명 일치');
-    if ((place.tier || '') === 'exact') badges.push('정확검색');
-    if ((place.tier || '') === 'specialty') badges.push('전문점후보');
-    if (menu.soup) badges.push('국물메뉴');
-    if (menu.method === '외식') badges.push('외식적합');
-    if (score >= 85) badges.push('우선확인');
-    else if (score >= 70) badges.push('검토가치');
-    return badges.slice(0, 4);
-  }
+  // (중복 선언 제거됨: qualityBadgesForPlace — 아래쪽 최신 정의를 사용)
 
   async function searchKakaoByQuery(query, location, radius, size = 8) {
     return searchPlacesKakao(query, location, { radius, size, pageLimit: 1, sort: 'distance' });
@@ -3668,121 +3443,13 @@
     return Math.max(0, Math.min(99, Math.round(score)));
   }
 
-  function restaurantFitLabel(value) {
-    const score = normalizeRestaurantScore(value);
-    if (score === null) return '';
-    if (score >= 85) return '추천도 높음';
-    if (score >= 70) return '추천도 보통';
-    return '관련 식당';
-  }
+  // (중복 선언 제거됨: restaurantFitLabel — 아래쪽 최신 정의를 사용)
 
-  function formatPlace(place, menu) {
-    const dist = parseInt(place.distance, 10);
-    const distStr = Number.isFinite(dist) ? (dist >= 1000 ? `${(dist/1000).toFixed(1)}km` : `${dist}m`) : '';
-    const categoryParts = (place.category_name || '').split('>').map(s => s.trim()).filter(Boolean);
-    const subcategory = categoryParts[categoryParts.length - 1] || menu.type;
-    const rawScore = place.score || placeRelevanceScore(place, menu, place.tier || 'fallback', place.query || '');
-    return {
-      id: place.id || '',
-      emoji: menu.emoji,
-      name: place.place_name,
-      dist: distStr,
-      score: rawScore,
-      fitLabel: restaurantFitLabel(rawScore),
-      price: '',
-      addr: place.road_address_name || place.address_name || '',
-      subcategory,
-      placeUrl: place.place_url,
-      phone: place.phone || '',
-      query: place.query || '',
-      tier: place.tier || 'fallback',
-      badges: qualityBadgesForPlace(place, menu)
-    };
-  }
+  // (중복 선언 제거됨: formatPlace — 아래쪽 최신 정의를 사용)
 
-  function renderRestaurantCard(r) {
-    const metaParts = [];
-    if (r.subcategory) metaParts.push(`<span>${escapeHtml(r.subcategory)}</span>`);
-    if (r.dist) metaParts.push(`<span>${escapeHtml(r.dist)}</span>`);
-    if (r.phone) metaParts.push(`<span>${escapeHtml(r.phone)}</span>`);
-    if (r.price) metaParts.push(`<span>${escapeHtml(r.price)}</span>`);
-    if (r.query) metaParts.push(`<span>검색: ${escapeHtml(r.query)}</span>`);
+  // (중복 선언 제거됨: renderRestaurantCard — 아래쪽 최신 정의를 사용)
 
-    const safeName = escapeJsString(r.name || '');
-    const safeAddr = escapeJsString(r.addr || '');
-    const safeUrl = escapeJsString(r.placeUrl || '');
-    const safeId = escapeJsString(r.id || r.name || '');
-    const onClick = `openRestaurantResult('${safeId}', '${safeName}', '${safeAddr}', '${safeUrl}')`;
-    const badges = r.badges || (currentMenu ? qualityBadgesForPlace(r, currentMenu) : []);
-    const fitLabel = r.fitLabel || restaurantFitLabel(r.score);
-    return `
-      <div class="restaurant" onclick="${onClick}">
-        <div class="rest-emoji">${r.emoji || '🍽️'}</div>
-        <div class="rest-info">
-          <div class="rest-heading">
-            <div class="rest-name">${escapeHtml(r.name || '식당')}</div>
-            ${fitLabel ? `<div class="rest-score">${escapeHtml(fitLabel)}</div>` : ''}
-          </div>
-          <div class="rest-meta">${metaParts.join('<span style="opacity:0.4;">·</span>')}</div>
-          ${r.addr ? `<div class="rest-meta" style="margin-top:4px; opacity:0.7;">${escapeHtml(r.addr)}</div>` : ''}
-          ${badges.length ? `<div class="rest-badge-row">${badges.map(b => `<span class="rest-badge">${escapeHtml(b)}</span>`).join('')}</div>` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-  async function renderNearby() {
-    const c = document.getElementById('nearbyContent');
-    if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📍</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-    document.getElementById('nearbySubtitle').textContent = `'${currentMenu.name}'을(를) 찾는 정교한 주변 검색`;
-    const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
-
-    if (!isProviderConfigured()) {
-      const list = buildSmartMockRestaurants(currentMenu);
-      c.innerHTML = strategy + renderMockNotice() + list.map(r => renderRestaurantCard(r)).join('');
-      return;
-    }
-
-    c.innerHTML = strategy + `
-      <div class="empty-state">
-        <div class="empty-icon">📍</div>
-        <p class="empty-text">정확 메뉴명 → 전문점 → 음식군 순서로 검색 중...<br><span style="font-size:11px;">위치 권한을 허용해주세요</span></p>
-      </div>
-    `;
-
-    try {
-      const location = await getUserLocation();
-      const places = await searchPlacesSmart(currentMenu, location);
-      if (!places.length) {
-        c.innerHTML = strategy + `
-          <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <p class="empty-text">근처에서 정확히 맞는 식당을 찾지 못했어요<br>지도 버튼으로 직접 검색해보세요</p>
-            <button class="empty-cta" onclick="startQuiz()">다른 메뉴 찾기</button>
-          </div>
-        `;
-        return;
-      }
-      const formatted = places.map(p => formatPlace(p, currentMenu));
-      c.innerHTML = strategy + formatted.map(r => renderRestaurantCard(r)).join('');
-    } catch (err) {
-      console.error('Nearby search failed:', err);
-      const list = buildSmartMockRestaurants(currentMenu);
-      const errMsg = err.code === 1 ? '위치 권한이 거부되어' : '주변 식당을 불러오지 못해';
-      c.innerHTML = strategy + `
-        <div class="nearby-warning">⚠️ ${errMsg} 정교화된 예시 데이터를 보여드려요.</div>
-      ` + list.map(r => renderRestaurantCard(r)).join('');
-    }
-  }
+  // (중복 선언 제거됨: renderNearby — 아래쪽 최신 정의를 사용)
 
   function openInMaps(name, addr) {
     const query = encodeURIComponent(`${name || ''} ${addr || ''}`.trim());
@@ -4479,7 +4146,10 @@
     currentMenu = menu;
     answers = {};
     rememberViewedMenu(menu.name);
-    showResultForMenu(menu);
+    // 탐색에서 고른 메뉴도 "추천 완료"가 아니라 상세 정보를 보여준다.
+    menuDetailReturnPanel = document.body.dataset.panel || 'favorites';
+    switchPanel('menudetail');
+    renderMenuDetail();
     trackEvent('menu_explorer_opened', { menuId: menu.id || menu.name, menuType: menu.type });
   }
 
@@ -5051,34 +4721,7 @@
     `;
   }
 
-  function renderRecipe() {
-    const c = document.getElementById('recipeContent');
-    if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📖</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-    document.getElementById('recipeSubtitle').textContent = `${currentMenu.name} · 초보자도 따라 하는 상세 레시피`;
-    c.innerHTML = `
-      <div class="recipe-header">
-        <span class="recipe-emoji">${currentMenu.emoji}</span>
-        <div class="recipe-name">${escapeHtml(currentMenu.name)}</div>
-        <div class="recipe-meta">
-          <span>⏱ ${currentMenu.cook === 0 ? '외식/집밥 변형' : currentMenu.cook + '분 기준'}</span>
-          <span>👥 1인분 기준</span>
-          <span>🔥 약 ${currentMenu.kcal}kcal</span>
-        </div>
-      </div>
-      ${renderRecipeSources(currentMenu)}
-      ${renderRecipePremiumNote(currentMenu)}
-      ${renderBeginnerRecipe(currentMenu)}
-    `;
-  }
+  // (중복 선언 제거됨: renderRecipe — 아래쪽 최신 정의를 사용)
 
 
   // ─── Source-backed recipe system v2 ───
@@ -5591,75 +5234,13 @@
     `;
   }
 
-  function renderRecipe() {
-    const c = document.getElementById('recipeContent');
-    if (!currentMenu) {
-      c.innerHTML = `<div class="empty-state"><div class="empty-icon">📖</div><p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p><button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button></div>`;
-      return;
-    }
-    document.getElementById('recipeSubtitle').textContent = `${currentMenu.name} · recipes.json 기준 레시피`;
-    const recipeFromFile = renderRecipeFromFile(currentMenu);
-    c.innerHTML = `
-      <div class="recipe-header">
-        <span class="recipe-emoji">${currentMenu.emoji}</span>
-        <div class="recipe-name">${escapeHtml(currentMenu.name)}</div>
-        <div class="recipe-meta">
-          <span>🍽 ${escapeHtml(currentMenu.type || '')}</span>
-          <span>⏱ ${currentMenu.cook === 0 ? '외식/집밥 변형' : currentMenu.cook + '분 기준'}</span>
-          <span>🔥 약 ${currentMenu.kcal}kcal</span>
-        </div>
-      </div>
-      ${recipeFromFile || `${renderSourceAuthenticity(currentMenu)}${renderRecipePremiumNote(currentMenu)}${renderSourceBackedRecipe(currentMenu)}`}
-    `;
-  }
+  // (중복 선언 제거됨: renderRecipe — 아래쪽 최신 정의를 사용)
 
-  function strictMenuPlaceQueries(menu) {
-    const q = buildPlaceQueries(menu);
-    const core = coreDishName(menu);
-    const exact = [...new Set([menu.name, core, ...q.exact, ...q.specialty]
-      .filter(Boolean)
-      .map(x => String(x).trim())
-      .filter(x => x && !/맛집$/.test(x) && !/음식$/.test(x))
-    )];
-    return exact.slice(0, 8);
-  }
+  // (중복 선언 제거됨: strictMenuPlaceQueries — 아래쪽 최신 정의를 사용)
 
-  async function searchPlacesForExactMenuOnly(menu, location) {
-    const queries = strictMenuPlaceQueries(menu);
-    const results = new Map();
-    for (const query of queries) {
-      try {
-        const places = await searchPlacesKakao(query, location);
-        places.forEach(place => {
-          const placeText = `${place.place_name || ''} ${place.category_name || ''}`;
-          const core = coreDishName(menu);
-          const related = placeText.includes(core) || placeText.includes(menu.name) || query.includes(core);
-          if (!related) return;
-          const key = place.id || `${place.place_name}-${place.address_name}`;
-          const scored = { ...place, query, tier:'exact', score: placeRelevanceScore(place, menu, 'exact', query) };
-          const prev = results.get(key);
-          if (!prev || scored.score > prev.score) results.set(key, scored);
-        });
-      } catch (e) {
-        console.warn('strict place query failed', query, e);
-      }
-      if (results.size >= 10) break;
-    }
-    return Array.from(results.values()).sort((a, b) => b.score - a.score).slice(0, 8);
-  }
+  // (중복 선언 제거됨: searchPlacesForExactMenuOnly — 아래쪽 최신 정의를 사용)
 
-  function renderNearbyNoData(menu, reason) {
-    const q = strictMenuPlaceQueries(menu);
-    return `
-      <div class="nearby-empty-strict">
-        <div class="icon">🔍</div>
-        <p><strong>${escapeHtml(menu.name)}</strong>을(를) 파는 주변 식당을 찾지 못했습니다.</p>
-        <p>${escapeHtml(reason || '추천 메뉴와 직접 연결되는 식당 검색 결과가 없습니다.')}</p>
-        <p style="font-size:12px; margin-top:8px;">검색 기준: ${q.map(escapeHtml).join(' · ')}</p>
-        <button class="empty-cta" onclick="startQuiz()" style="margin-top:14px;">다른 메뉴 추천받기</button>
-      </div>
-    `;
-  }
+  // (중복 선언 제거됨: renderNearbyNoData — 아래쪽 최신 정의를 사용)
 
   function renderNearbyProviderNotice() {
     return `
@@ -5669,49 +5250,7 @@
     `;
   }
 
-  async function renderNearby() {
-    const c = document.getElementById('nearbyContent');
-    if (!currentMenu) {
-      c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📍</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
-        </div>
-      `;
-      return;
-    }
-
-    document.getElementById('nearbySubtitle').textContent = `'${currentMenu.name}' 실제 주변 식당 확인`;
-    const strategy = renderNearbySearchStrategy(currentMenu) + renderNearbyGuide(currentMenu) + renderExternalSearchLinks(currentMenu);
-
-    if (!isProviderConfigured()) {
-      c.innerHTML = strategy + renderNearbyProviderNotice() + renderNearbyNoData(currentMenu, '실제 주변 식당 API가 연결되지 않아 이 앱 안에서는 주변 식당을 확인할 수 없습니다.');
-      return;
-    }
-
-    c.innerHTML = strategy + `
-      <div class="empty-state">
-        <div class="empty-icon">📍</div>
-        <p class="empty-text">추천 메뉴명 기준으로 실제 주변 식당을 검색 중입니다.<br><span style="font-size:11px;">위치 권한을 허용해주세요.</span></p>
-      </div>
-    `;
-
-    try {
-      const location = await getUserLocation();
-      const places = await searchPlacesForExactMenuOnly(currentMenu, location);
-      if (!places.length) {
-        c.innerHTML = strategy + renderNearbyNoData(currentMenu, '현재 위치 주변에는 이 추천 메뉴를 직접적으로 파는 식당이 검색되지 않았습니다.');
-        return;
-      }
-      const formatted = places.map(p => formatPlace(p, currentMenu));
-      c.innerHTML = strategy + formatted.map(r => renderRestaurantCard(r)).join('');
-    } catch (err) {
-      console.error('Nearby search failed:', err);
-      const msg = err.code === 1 ? '위치 권한이 거부되어 주변 식당을 확인할 수 없습니다.' : '주변 식당 검색에 실패했습니다.';
-      c.innerHTML = strategy + renderNearbyNoData(currentMenu, msg);
-    }
-  }
+  // (중복 선언 제거됨: renderNearby — 아래쪽 최신 정의를 사용)
 
 
   // ─── Nearby Search Hotfix: map-like Kakao keyword search ───
@@ -5795,99 +5334,13 @@
 
 
 
-  function strictMenuPlaceQueries(menu) {
-    const q = buildPlaceQueries(menu);
-    const name = compactText(menu?.name);
-    const core = coreDishName(menu);
-    const aliases = DISH_TO_RESTAURANT_KEYWORDS[name] || DISH_TO_RESTAURANT_KEYWORDS[core] || [];
-    const candidates = uniq([
-      name,
-      core,
-      ...aliases,
-      ...(q.exact || []),
-      ...(q.specialty || []).filter(x => /전문점|전문|식당|집|카페|스시|라멘|쌀국수|마라|파스타|피자|버거|브런치|국밥|찌개|탕|국수|냉면|초밥|돈까스|돈카츠|타코|커리|케밥|반미/.test(x))
-    ]);
+  // (중복 선언 제거됨: strictMenuPlaceQueries — 아래쪽 최신 정의를 사용)
 
-    // 한식/양식 같은 너무 넓은 키워드는 제외합니다. 실제 메뉴 검색에 가까운 키워드만 남깁니다.
-    return candidates
-      .map(x => String(x).trim())
-      .filter(x => x.length >= 2)
-      .filter(x => !/^(한식|중식|일식|양식|세계음식|음식점|맛집|정식|전문점)$/.test(x))
-      .slice(0, 10);
-  }
+  // (중복 선언 제거됨: placeHardReject — 아래쪽 최신 정의를 사용)
 
-  function placeHardReject(place) {
-    const cat = `${place.category_name || ''} ${place.category_group_name || ''}`;
-    const name = `${place.place_name || ''}`;
-    // 메뉴 검색 결과라도 비식당 업종은 제외합니다.
-    if (/마트|슈퍼|편의점|식자재|정육점|수산시장|식품|반찬가게|배달대행|도매|소매|제조|학원/.test(cat + name)) return true;
-    return false;
-  }
+  // (중복 선언 제거됨: searchPlacesForExactMenuOnly — 아래쪽 최신 정의를 사용)
 
-  async function searchPlacesForExactMenuOnly(menu, location) {
-    const queries = strictMenuPlaceQueries(menu);
-    const radiusSteps = getNearbySearchRadiusSteps();
-    const sorts = ['accuracy', 'distance'];
-    const results = new Map();
-    const logs = [];
-
-    for (const radius of radiusSteps) {
-      for (const query of queries) {
-        for (const sort of sorts) {
-          let places = [];
-          try {
-            places = await searchPlacesKakao(query, location, { radius, sort, tier: 'exact', size: 15, pageLimit: 2 });
-          } catch (e) {
-            logs.push({ query, radius, sort, count: 0, error: e.message || String(e) });
-            continue;
-          }
-
-          const accepted = places.filter(p => !placeHardReject(p));
-          logs.push({ query, radius, sort, count: accepted.length });
-
-          accepted.forEach(place => {
-            const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
-            const boosted = {
-              ...place,
-              query,
-              radius,
-              sort,
-              tier: 'exact',
-              score: placeRelevanceScore(place, menu, 'exact', query) + (sort === 'accuracy' ? 6 : 0) - Math.min(8, Number(place.distance || 0) / 1200)
-            };
-            const prev = results.get(key);
-            if (!prev || boosted.score > prev.score) results.set(key, boosted);
-          });
-        }
-        if (results.size >= 8) break;
-      }
-      if (results.size >= 3) break;
-    }
-
-    lastNearbySearchLog = logs;
-    return Array.from(results.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-  }
-
-  function renderNearbySearchDebug() {
-    if (!lastNearbySearchLog.length) return '';
-    const rows = lastNearbySearchLog.slice(0, 18).map(item => `
-      <div class="nearby-debug-row">
-        <span>${escapeHtml(item.query)}</span>
-        <span>${Number(item.radius).toLocaleString()}m</span>
-        <span>${escapeHtml(item.sort)}</span>
-        <strong>${item.error ? 'ERR' : item.count + '개'}</strong>
-      </div>
-    `).join('');
-    return `
-      <details class="nearby-debug">
-        <summary>검색 진단 보기</summary>
-        <div class="nearby-debug-head"><span>검색어</span><span>반경</span><span>정렬</span><span>결과</span></div>
-        ${rows}
-      </details>
-    `;
-  }
+  // (중복 선언 제거됨: renderNearbySearchDebug — 아래쪽 최신 정의를 사용)
 
   function renderNearbyNoData(menu, reason) {
     const q = strictMenuPlaceQueries(menu);
@@ -6061,19 +5514,7 @@
     return term.length >= 3 && !/맛집|전문점|식당|카페|중국집|중화요리|반점|한식|중식|일식|양식/.test(term);
   }
 
-  function cuisineCandidateQueries(menu) {
-    const name = compactText(menu?.name);
-    if (menu?.type === '중식') {
-      if (/마라/.test(name)) return ['마라탕', '마라샹궈', '마라 전문점', '중화요리'];
-      if (/딤섬|만두|소롱포|샤오롱바오/.test(name)) return ['딤섬 전문점', '중화요리', '중국집'];
-      if (/양꼬치|마라롱샤/.test(name)) return ['양꼬치', '중화요리', '중국집'];
-      return ['중화요리', '중국집', '반점'];
-    }
-    if (menu?.type === '한식') return ['한식', '백반', '한식당'];
-    if (menu?.type === '일식') return ['일식', '일본식당', '이자카야'];
-    if (menu?.type === '양식') return ['양식', '이탈리안', '브런치'];
-    return ['세계음식', '아시아음식', '에스닉푸드'];
-  }
+  // (중복 선언 제거됨: cuisineCandidateQueries — 아래쪽 최신 정의를 사용)
 
   function buildPlaceQueries(menu) {
     const name = compactText(menu?.name);
@@ -6091,12 +5532,7 @@
     };
   }
 
-  function strictMenuPlaceQueries(menu) {
-    return buildPlaceQueries(menu).exact
-      .map(value => compactText(value))
-      .filter(value => value.length >= 2)
-      .slice(0, 6);
-  }
+  // (중복 선언 제거됨: strictMenuPlaceQueries — 아래쪽 최신 정의를 사용)
 
   function renderNearbySearchStrategy(menu) {
     const q = buildPlaceQueries(menu);
@@ -6115,95 +5551,13 @@
       </div>`;
   }
 
-  function placeTierRank(tier) {
-    return tier === 'exact' ? 0 : tier === 'cuisine_candidate' ? 1 : 2;
-  }
+  // (중복 선언 제거됨: placeTierRank — 아래쪽 최신 정의를 사용)
 
-  async function searchPlacesForExactMenuOnly(menu, location) {
-    const exactQueries = strictMenuPlaceQueries(menu);
-    const cuisineQueries = cuisineCandidateQueries(menu);
-    const radiusSteps = getNearbySearchRadiusSteps();
-    const results = new Map();
-    const logs = [];
+  // (중복 선언 제거됨: searchPlacesForExactMenuOnly — 아래쪽 최신 정의를 사용)
 
-    async function collect(queries, tier, maxResults, sorts) {
-      for (const radius of radiusSteps) {
-        for (const query of queries) {
-          for (const sort of sorts) {
-            let places = [];
-            try {
-              places = await searchPlacesKakao(query, location, { radius, sort, tier, size: 15, pageLimit: 2 });
-            } catch (error) {
-              logs.push({ query, radius, sort, tier, count: 0, error: error.message || String(error) });
-              continue;
-            }
-            const accepted = places.filter(place => !placeHardReject(place));
-            logs.push({ query, radius, sort, tier, count: accepted.length });
-            accepted.forEach(place => {
-              const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
-              const distance = Number(place.distance || 99999);
-              const rankBonus = tier === 'exact' ? 100 : 0;
-              const candidate = {
-                ...place,
-                query,
-                radius,
-                sort,
-                tier,
-                menuAvailability: tier === 'exact' ? 'keyword_match' : 'unknown',
-                score: rankBonus + placeRelevanceScore(place, menu, tier === 'exact' ? 'exact' : 'fallback', query) - Math.min(12, distance / 1200)
-              };
-              const previous = results.get(key);
-              if (!previous || candidate.score > previous.score) results.set(key, candidate);
-            });
-          }
-          if (results.size >= maxResults) break;
-        }
-        if (results.size >= maxResults) break;
-      }
-    }
+  // (중복 선언 제거됨: qualityBadgesForPlace — 아래쪽 최신 정의를 사용)
 
-    await collect(exactQueries, 'exact', 6, ['accuracy', 'distance']);
-    if (results.size < 8) await collect(cuisineQueries, 'cuisine_candidate', 10, ['distance']);
-
-    lastNearbySearchLog = logs;
-    return Array.from(results.values())
-      .sort((a, b) => placeTierRank(a.tier) - placeTierRank(b.tier) || Number(a.distance || 99999) - Number(b.distance || 99999) || b.score - a.score)
-      .slice(0, 10);
-  }
-
-  function qualityBadgesForPlace(place, menu) {
-    if ((place.tier || '') === 'cuisine_candidate') return [`가까운 ${menu.type} 식당`, '메뉴 판매 여부 확인'];
-    const badges = ['메뉴 키워드 검색'];
-    const name = compactText(place.name || place.place_name || '');
-    const core = coreDishName(menu);
-    if (name.includes(menu.name) || (core && name.includes(core))) badges.unshift('상호명 일치');
-    return badges.slice(0, 3);
-  }
-
-  function formatPlace(place, menu) {
-    const distance = parseInt(place.distance, 10);
-    const dist = Number.isFinite(distance) ? (distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${distance}m`) : '';
-    const categoryParts = (place.category_name || '').split('>').map(value => value.trim()).filter(Boolean);
-    const category = categoryParts[categoryParts.length - 1] || menu.type;
-    const isCandidate = place.tier === 'cuisine_candidate';
-    return {
-      id: place.id || '',
-      emoji: menu.emoji,
-      name: place.place_name,
-      dist,
-      score: place.score,
-      fitLabel: isCandidate ? `${menu.type} 식당 후보` : '메뉴 검색 일치',
-      price: '',
-      addr: place.road_address_name || place.address_name || '',
-      subcategory: category,
-      placeUrl: place.place_url,
-      phone: place.phone || '',
-      query: place.query || '',
-      tier: place.tier || 'exact',
-      availabilityNote: isCandidate ? `'${menu.name}' 판매 여부는 매장에 확인하세요.` : `지도 검색에서 '${menu.name}' 키워드로 확인된 결과입니다.`,
-      badges: qualityBadgesForPlace(place, menu)
-    };
-  }
+  // (중복 선언 제거됨: formatPlace — 아래쪽 최신 정의를 사용)
 
   function renderRestaurantCard(r) {
     const metaParts = [];
@@ -7152,5 +6506,151 @@
       showToast(`'${menuName}' 상세 정보를 찾지 못했어요.`);
       return;
     }
-    openMenuFromExplorer(menuName);
+    // 추천 결과 화면이 아니라 메뉴 상세 화면(Figma 147:470)으로 보낸다.
+    // 검색에서 고른 메뉴는 "추천 완료"가 아니라 "이 메뉴 정보"를 보려는 것이다.
+    currentMenu = menu;
+    rememberViewedMenu(menu.name);
+    menuDetailReturnPanel = document.body.dataset.panel || 'favorites';
+    switchPanel('menudetail');
+    renderMenuDetail();
+    trackEvent('menu_detail_opened', { menuId: menu.id || menu.name, source: 'search' });
   };
+
+  // ─── 메뉴 상세 화면 (Figma 147:470) ───
+  // 디자인의 더미 텍스트를 실제 메뉴 데이터로 채운다.
+
+  // 상세 화면에 들어오기 직전 패널. 뒤로 가기가 항상 결과 화면으로 가면
+  // 검색으로 들어온 사용자가 엉뚱한 곳에 떨어진다.
+  let menuDetailReturnPanel = 'home';
+
+  function goBackFromMenuDetail() {
+    switchPanel(menuDetailReturnPanel || 'home');
+  }
+
+  function renderMenuDetail() {
+    if (!currentMenu) return;
+    const menu = currentMenu;
+
+    const title = document.getElementById('mdTitle');
+    if (title) title.textContent = menu.name;
+
+    const meta = document.getElementById('mdMeta');
+    if (meta) {
+      const price = Number(menu.price || 0).toLocaleString();
+      meta.textContent = `${menu.type} · ${price}원`;
+    }
+
+    const sub = document.getElementById('mdSub');
+    if (sub) {
+      // 조리 시간이 있으면 집밥 기준, 없으면 외식 기준으로 안내한다
+      const minutes = Number(menu.cook || 0);
+      sub.textContent = minutes
+        ? `조리 약 ${minutes}분 · ${Number(menu.kcal || 0).toLocaleString()}kcal`
+        : `${Number(menu.kcal || 0).toLocaleString()}kcal · 매장 이용`;
+    }
+
+    // 특성 칩 — 맵기만 브랜드 색으로 강조한다
+    const traits = document.getElementById('mdTraits');
+    if (traits) {
+      const chips = [
+        { label: menu.type, brand: false },
+        { label: `맵기 ${menu.spicy || 0}/3`, brand: Number(menu.spicy || 0) >= 2 },
+        { label: menu.weight, brand: false }
+      ];
+      if (menu.soup) chips.push({ label: '국물', brand: false });
+      traits.innerHTML = chips
+        .filter(chip => chip.label)
+        .map(chip => `<span class="md-trait${chip.brand ? ' is-brand' : ''}">${escapeHtml(chip.label)}</span>`)
+        .join('');
+    }
+
+    // 추천 이유 — 추천 점수를 만든 근거를 사람이 읽을 문장으로 바꾼다
+    const reasons = document.getElementById('mdReasons');
+    if (reasons) {
+      const lines = buildMenuDetailReasons(menu);
+      reasons.innerHTML = lines.map(line => `
+        <div class="md-reason">
+          <span class="md-reason-check" aria-hidden="true">✓</span>
+          <p>${escapeHtml(line)}</p>
+        </div>`).join('');
+    }
+
+    const restaurant = document.getElementById('mdRestaurantName');
+    if (restaurant) {
+      restaurant.textContent = menu.method === '외식'
+        ? '주변 식당을 찾아볼까요?'
+        : `${menu.name} 파는 곳 찾기`;
+    }
+
+    updateMenuDetailSaveButton();
+  }
+
+  function buildMenuDetailReasons(menu) {
+    const lines = [];
+    const ans = answers || {};
+
+    if (ans.type && menu.type === ans.type) {
+      lines.push(`고르신 ${menu.type} 조건에 맞아요.`);
+    }
+    if (ans.need === 'spicy' && Number(menu.spicy || 0) >= 2) lines.push('원하신 매콤한 맛이에요.');
+    if (ans.need === 'mild' && Number(menu.spicy || 0) === 0) lines.push('맵지 않아 부담 없어요.');
+    if (ans.need === 'hangover' && menu.soup) lines.push('따뜻한 국물로 속을 풀기 좋아요.');
+    if (ans.need === 'light' && menu.weight === '가벼움') lines.push('가볍게 먹기 좋은 메뉴예요.');
+    if (ans.need === 'full' && menu.weight === '든든') lines.push('든든하게 배를 채울 수 있어요.');
+
+    const budget = Number(ans.budget);
+    if (Number.isFinite(budget) && budget > 0 && Number(menu.price || 0) <= budget) {
+      lines.push(`예산 ${budget.toLocaleString()}원 안에서 해결돼요.`);
+    }
+
+    // 조건 기반 이유가 없으면 메뉴 자체의 설명으로 대체한다.
+    // 빈 상자를 보여주는 것보다 낫다.
+    if (lines.length === 0 && menu.desc) lines.push(menu.desc);
+    if (lines.length === 0) lines.push('지금 상황에 무난하게 어울리는 메뉴예요.');
+
+    return lines.slice(0, 3);
+  }
+
+  function updateMenuDetailSaveButton() {
+    const saved = currentMenu ? isFavorited(currentMenu.name) : false;
+    ['mdSaveBtn', 'mdBookmarkTop'].forEach(id => {
+      const button = document.getElementById(id);
+      if (!button) return;
+      button.classList.toggle('selected', saved);
+      button.setAttribute('aria-pressed', String(saved));
+    });
+  }
+
+  function goMenuDetail() {
+    if (!currentMenu) {
+      showToast('먼저 메뉴를 골라 주세요.');
+      return;
+    }
+    menuDetailReturnPanel = document.body.dataset.panel || 'result';
+    switchPanel('menudetail');
+    renderMenuDetail();
+    trackEvent('menu_detail_opened', { menuId: currentMenu.id || currentMenu.name });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('mdSaveBtn')?.addEventListener('click', () => {
+      if (!currentMenu) return;
+      toggleFavoriteByName(currentMenu.name);
+      updateMenuDetailSaveButton();
+    });
+    document.getElementById('mdBookmarkTop')?.addEventListener('click', () => {
+      if (!currentMenu) return;
+      toggleFavoriteByName(currentMenu.name);
+      updateMenuDetailSaveButton();
+    });
+    document.getElementById('mdRestaurantBtn')?.addEventListener('click', () => goNearby());
+    document.getElementById('mdShareBtn')?.addEventListener('click', () => {
+      if (!currentMenu) return;
+      const text = `오늘의 식탁 추천: ${currentMenu.name}`;
+      if (navigator.share) navigator.share({ title: '오늘의 식탁', text }).catch(() => {});
+      else showToast(currentMenu.name + ' — 공유를 지원하지 않는 브라우저예요.');
+    });
+  });
+
+  window.goMenuDetail = goMenuDetail;
+  window.goBackFromMenuDetail = goBackFromMenuDetail;

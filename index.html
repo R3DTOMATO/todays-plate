@@ -137,6 +137,76 @@
   </div>
 
   <!-- ═══════════════════════════════ -->
+  <!-- MENU DETAIL (Figma 147:470)      -->
+  <!-- ═══════════════════════════════ -->
+  <div class="panel" id="panel-menudetail">
+    <div class="md-screen">
+      <!-- Hero / Meal -->
+      <div class="md-hero">
+        <img class="md-halo" src="./assets/figma/menu-detail/halo.svg" alt="" aria-hidden="true">
+
+        <div class="md-top-actions">
+          <button class="md-round-btn" type="button" onclick="goBackFromMenuDetail()" aria-label="뒤로">←</button>
+          <div class="md-right-actions">
+            <button class="md-round-btn" type="button" id="mdShareBtn" aria-label="공유">↗</button>
+            <button class="md-round-btn" type="button" id="mdBookmarkTop" aria-label="저장">
+              <img src="./assets/figma/menu-detail/icon-bookmark.svg" alt="" aria-hidden="true">
+            </button>
+          </div>
+        </div>
+
+        <!-- 입맛 아키타입 배지 (밥풀 요정) -->
+        <img class="md-badge" id="mdTasteBadge"
+             src="./assets/figma/menu-detail/taste-badge-spicy-korean.svg"
+             alt="매콤한 한식 타입 마스코트">
+
+        <!-- 접시 일러스트 -->
+        <div class="md-plate-wrap" aria-hidden="true">
+          <img class="md-plate" src="./assets/figma/menu-detail/decision-plate.svg" alt="">
+          <img class="md-bowl" src="./assets/figma/menu-detail/bowl.svg" alt="">
+          <img class="md-accent md-accent-1" src="./assets/figma/menu-detail/food-accent-1.svg" alt="">
+          <img class="md-accent md-accent-2" src="./assets/figma/menu-detail/food-accent-2.svg" alt="">
+          <img class="md-accent md-accent-3" src="./assets/figma/menu-detail/food-accent-3.svg" alt="">
+          <img class="md-accent md-accent-4" src="./assets/figma/menu-detail/food-accent-4.svg" alt="">
+        </div>
+      </div>
+
+      <!-- Menu Details Sheet -->
+      <div class="md-sheet">
+        <div class="md-handle" aria-hidden="true"></div>
+
+        <h2 class="md-title" id="mdTitle">고추장 삼겹 덮밥</h2>
+        <p class="md-meta" id="mdMeta">연남동 식당명 · 11,000원</p>
+        <p class="md-sub" id="mdSub">도보 15분 · 지금 영업 중</p>
+
+        <div class="md-traits" id="mdTraits"></div>
+
+        <div class="md-divider" role="separator"></div>
+
+        <h3 class="md-section-title">이 메뉴가 잘 맞는 이유</h3>
+        <div class="md-reasons" id="mdReasons"></div>
+
+        <button class="md-restaurant" type="button" id="mdRestaurantBtn">
+          <span class="md-restaurant-copy">
+            <small>가장 가까운 식당</small>
+            <strong id="mdRestaurantName">연남동 식당명 · 4.6</strong>
+          </span>
+          <span class="md-restaurant-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <div class="md-bottom-actions">
+          <button class="md-save-btn" type="button" id="mdSaveBtn" aria-label="저장하기">
+            <img src="./assets/figma/menu-detail/icon-bookmark.svg" alt="" aria-hidden="true">
+          </button>
+          <button class="md-primary-btn" type="button" onclick="goNearby()">주변 식당 보기</button>
+        </div>
+
+        <button class="md-recipe-link" type="button" onclick="goRecipe()">레시피 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
   <!-- GROUP VOTE PANEL                 -->
   <!-- ═══════════════════════════════ -->
   <div class="panel" id="panel-group">

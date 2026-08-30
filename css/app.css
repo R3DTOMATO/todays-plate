@@ -5932,3 +5932,318 @@ body::before { display: none; }
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ═══════════════════════════════════════════════
+   MENU DETAIL — Figma "Award Screen / Menu Detail" (147:470)
+   기준 프레임 393×851. 히어로 위에 시트가 45px 겹쳐 올라온다.
+   ═══════════════════════════════════════════════ */
+
+.md-screen {
+  position: relative;
+  background: var(--tt-bg-canvas, #fffaf7);
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+/* ── Hero / Meal ── */
+.md-hero {
+  position: relative;
+  height: 330px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  overflow: hidden;
+}
+
+/* Halo 270×270 @ (62,44) */
+.md-halo {
+  position: absolute;
+  left: 62px;
+  top: 44px;
+  width: 270px;
+  height: 270px;
+  pointer-events: none;
+}
+
+/* Top Actions 353×44 @ (20,52) */
+.md-top-actions {
+  position: absolute;
+  left: 20px;
+  top: 52px;
+  width: 353px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.md-right-actions { display: flex; gap: 8px; }
+
+.md-round-btn {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 22px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -.2px;
+  cursor: pointer;
+}
+.md-round-btn:active { transform: scale(.96); }
+/* 아이콘 leaf 24×24 고정 — 버튼 크기와 분리해 유지 */
+.md-round-btn img { width: 24px; height: 24px; display: block; }
+
+/* Taste Archetype Badge 82×82 @ (156,96) */
+.md-badge {
+  position: absolute;
+  left: 156px;
+  top: 96px;
+  width: 82px;
+  height: 82px;
+}
+
+.md-plate-wrap { position: absolute; inset: 0; pointer-events: none; }
+
+/* Decision Plate 278×142 @ (58,151) */
+.md-plate { position: absolute; left: 58px; top: 151px; width: 278px; height: 142px; }
+/* Bowl 180×98 @ (107,164) */
+.md-bowl  { position: absolute; left: 107px; top: 164px; width: 180px; height: 98px; }
+
+.md-accent { position: absolute; }
+.md-accent-1 { left: 138px; top: 183px; width: 38px; height: 23px; }
+.md-accent-2 { left: 195px; top: 175px; width: 42px; height: 25px; }
+.md-accent-3 { left: 157px; top: 220px; width: 39px; height: 23px; }
+.md-accent-4 { left: 216px; top: 214px; width: 34px; height: 21px; }
+
+/* ── Menu Details Sheet ── */
+/* 히어로(330) 위로 45px 겹침 → margin-top: -45px */
+.md-sheet {
+  position: relative;
+  margin-top: -45px;
+  padding: 12px 20px 28px;
+  background: var(--tt-bg-surface, #fff);
+  border-radius: 32px 32px 0 0;
+  min-height: 566px;
+}
+
+.md-handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--tt-border-default, #f2e7e1);
+}
+
+/* Heading/01 */
+.md-title {
+  margin: 22px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -.3px;
+  color: var(--tt-text-primary, #201a17);
+}
+/* Body/02 */
+.md-meta {
+  margin: 10px 0 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 21px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+/* Caption/01 */
+.md-sub {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Menu Traits */
+.md-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.md-trait {
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 19px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-primary, #201a17);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+/* 맵기 칩만 브랜드 강조 */
+.md-trait.is-brand {
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+}
+
+.md-divider {
+  height: 1px;
+  margin: 24px 0 0;
+  background: var(--tt-border-default, #f2e7e1);
+}
+
+/* Title/01 */
+.md-section-title {
+  margin: 24px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+}
+
+/* Recommendation Reasons */
+.md-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--tt-bg-leaf-soft, #e4f3ea);
+}
+.md-reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.md-reason-check {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #2f7d5c;
+  color: var(--tt-text-inverse, #fff);
+  font-size: 12px;
+  line-height: 18px;
+}
+.md-reason p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 21px;
+  color: var(--tt-text-primary, #201a17);
+}
+
+/* Restaurant Preview */
+.md-restaurant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  margin-top: 20px;
+  padding: 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.md-restaurant:active { transform: scale(.99); }
+.md-restaurant-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.md-restaurant-copy small {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.md-restaurant-copy strong {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-restaurant-arrow {
+  flex: none;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -.2px;
+  color: var(--tt-text-brand, #c93f31);
+}
+
+/* Bottom Actions */
+.md-bottom-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.md-save-btn {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 28px;
+  background: var(--tt-bg-surface, #fff);
+  cursor: pointer;
+}
+.md-save-btn img { width: 24px; height: 24px; display: block; }
+.md-save-btn.selected { background: var(--tt-bg-brand-soft, #fff1ed); border-color: var(--tt-bg-brand, #c93f31); }
+
+.md-primary-btn {
+  flex: 1;
+  height: 56px;
+  border: 0;
+  border-radius: 28px;
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+.md-primary-btn:active { transform: scale(.98); }
+
+/* 좁은 화면에서 히어로 요소가 잘리지 않게 비율 축소 */
+@media (max-width: 392px) {
+  .md-hero { height: calc(330px * 0.92); }
+  .md-halo, .md-badge, .md-plate, .md-bowl, .md-accent {
+    transform: scale(0.92);
+    transform-origin: top left;
+  }
+}
+
+.md-recipe-link {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 0;
+  background: none;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.md-recipe-link:hover { color: var(--tt-text-brand, #c93f31); }
