@@ -324,7 +324,7 @@
     const reason = menu?.desc || '선택한 조건에 잘 맞는 오늘의 한 끼예요.';
     return `
       <span class="pick-overline">오늘의 1순위</span>
-      <div class="figma-pick-visual"><img src="./assets/figma/hero-meal.svg" alt="${escapeHtml(menu?.name || '오늘의 추천')} 일러스트"></div>
+      <div class="figma-pick-visual">${renderMenuPhoto(menu, 'pick-photo', '오늘의 추천 ')}</div>
       <h3 class="pick-name">${escapeHtml(menu.name)}</h3>
       <p class="pick-desc">${escapeHtml(reason)}</p>
       <p class="figma-pick-meta">₩${price} · 추천 적합도 ${toMatchPercent(safeScore)}%</p>
@@ -5557,7 +5557,14 @@
   async function renderNearby(options = {}) {
     const c = document.getElementById('nearbyContent');
 
-    // 첫 진입 상태 (Figma 229:608) — 찾을 메뉴가 아직 없을 때
+    // 메뉴 없이도 주변 음식점을 볼 수 있다.
+    // 추천을 받아야만 주변을 볼 수 있으면 '지금 근처에 뭐 있지?'를 해결할 수 없다.
+    if (!currentMenu && (userLocation || isProviderConfigured())) {
+      searchNearbyGeneral();
+      return;
+    }
+
+    // 위치도 프록시도 없을 때만 첫 진입 안내를 보여준다 (Figma 229:608)
     if (!currentMenu) {
       // 입력창은 사용자 것이다. 렌더링이 값을 건드리면 타이핑·삭제가 되돌려진다.
 
@@ -6547,7 +6554,7 @@
   function qualityBadgesForPlace(place, menu) {
     if (place.tier === 'verified_name_match') return ['상호명 일치', '판매 여부 확인'];
     if (place.tier === 'menu_query_candidate') return ['메뉴명 검색 결과', '판매 여부 확인'];
-    return [`${menu.type} 전문점 후보`, '판매 여부 확인'];
+    return [`${menu?.type} 전문점 후보`, '판매 여부 확인'];
   }
 
   function restaurantFitLabel(value, tier) {
@@ -6561,12 +6568,12 @@
     const distance = parseInt(place.distance, 10);
     const dist = Number.isFinite(distance) ? (distance >= 1000 ? `${(distance / 1000).toFixed(1)}km` : `${distance}m`) : '';
     const categoryParts = (place.category_name || '').split('>').map(value => value.trim()).filter(Boolean);
-    const category = categoryParts[categoryParts.length - 1] || menu.type;
+    const category = categoryParts[categoryParts.length - 1] || menu?.type || '음식점';
     const verified = place.tier === 'verified_name_match';
     const queryCandidate = place.tier === 'menu_query_candidate';
     return {
       id: place.id || '',
-      emoji: menu.emoji,
+      emoji: menu?.emoji,
       name: place.place_name,
       dist,
       score: place.score,
@@ -6582,10 +6589,10 @@
       query: place.query || '',
       tier: place.tier || 'cuisine_candidate',
       availabilityNote: verified
-        ? `상호명에 '${menu.name}' 관련 표현이 있습니다. 실제 판매 여부와 영업 상태를 확인하세요.`
+        ? `상호명에 '${menu?.name}' 관련 표현이 있습니다. 실제 판매 여부와 영업 상태를 확인하세요.`
         : queryCandidate
-          ? `'${menu.name}' 검색으로 확인된 ${menu.type} 식당입니다. 메뉴판 또는 전화로 판매 여부를 확인하세요.`
-          : `가까운 ${menu.type} 전문점 후보입니다. '${menu.name}' 판매를 보장하지 않습니다.`,
+          ? `'${menu?.name}' 검색으로 확인된 ${menu?.type} 식당입니다. 메뉴판 또는 전화로 판매 여부를 확인하세요.`
+          : `가까운 ${menu?.type} 전문점 후보입니다. '${menu?.name}' 판매를 보장하지 않습니다.`,
       badges: qualityBadgesForPlace(place, menu),
     };
   }
@@ -6696,6 +6703,20 @@
   function renderMenuDetail() {
     if (!currentMenu) return;
     const menu = currentMenu;
+
+    // 사진이 있는 메뉴는 일러스트 대신 실제 사진을 보여준다
+    const plateWrap = document.querySelector('.md-plate-wrap');
+    const photoWrap = document.getElementById('mdPhoto');
+    const photoImg = document.getElementById('mdPhotoImg');
+    if (menu.image && photoWrap && photoImg) {
+      photoImg.src = menu.image;
+      photoImg.alt = `${menu.name} 사진`;
+      photoWrap.hidden = false;
+      if (plateWrap) plateWrap.hidden = true;
+    } else {
+      if (photoWrap) photoWrap.hidden = true;
+      if (plateWrap) plateWrap.hidden = false;
+    }
 
     const title = document.getElementById('mdTitle');
     if (title) title.textContent = menu.name;
@@ -7160,6 +7181,59 @@
   function goNearbyDirectSearch() {
     switchPanel('favorites');
     setTimeout(() => document.getElementById('feedSearchInput')?.focus(), 120);
+  }
+
+  // ─── 메뉴 없이 주변 보기 ───
+  // 추천 메뉴가 없으면 '음식점' 자체로 검색한다.
+
+  async function searchNearbyGeneral() {
+    const c = document.getElementById('nearbyContent');
+    if (!c) return;
+
+    const back = document.getElementById('nbBackBtn');
+    if (back) back.hidden = true;
+
+    if (!isProviderConfigured()) {
+      c.innerHTML = renderNearbyProviderNotice();
+      return;
+    }
+
+    c.innerHTML = '<div class="nb-loading" role="status">주변을 찾고 있어요…</div>';
+
+    const location = userLocation || (await getUserLocation().catch(() => null));
+    if (!location) {
+      c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+        <img class="nb-state-icon" src="./assets/figma/nearby/state-icon.svg" alt="" aria-hidden="true">
+        <h3 class="nb-state-title">위치를 확인할 수 없어요</h3>
+        <p class="nb-state-desc">위치 권한을 허용하거나<br>지역을 직접 입력해 주세요.</p>
+      </section>${renderManualLocationForm()}</div>`;
+      return;
+    }
+
+    try {
+      const radius = getNearbySearchRadiusSteps()[0] || 3000;
+      const raw = await searchPlacesKakao('음식점', location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
+      const formatted = (raw || []).map(place => formatPlace(place, null)).filter(Boolean);
+
+      renderNearbyMapMarkers(formatted, location);
+
+      if (formatted.length === 0) {
+        c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+          <h3 class="nb-state-title">근처에 검색된 곳이 없어요</h3>
+          <p class="nb-state-desc">검색 범위를 넓히거나 메뉴를 검색해 보세요.</p>
+        </section></div>`;
+        return;
+      }
+
+      c.innerHTML = renderNearbySheet(formatted, '현재 위치');
+      trackEvent('nearby_general_viewed', { resultCount: formatted.length });
+    } catch (error) {
+      console.error('[nearby] 주변 조회 실패:', error);
+      c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+        <h3 class="nb-state-title">주변을 불러오지 못했어요</h3>
+        <p class="nb-state-desc">잠시 후 다시 시도해 주세요.</p>
+      </section></div>`;
+    }
   }
 
   // ─── 주변 검색 ───

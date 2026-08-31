@@ -20,6 +20,8 @@ let mapInstance = null;
 let userMarker = null;
 let placeMarkers = [];
 let overlays = [];
+let currentPlaces = [];
+let currentOnSelect = null;
 
 export const KAKAO_MAP_READY = Boolean(JS_KEY);
 
@@ -130,7 +132,14 @@ export async function renderKakaoMap(center, places, onSelect) {
     mapInstance.setBounds(bounds, 40, 40, 40, 40);
   }
 
-  // CustomOverlay 내부 버튼은 지도 DOM에 붙으므로 위임으로 처리한다
+  // 클릭 핸들러와 현재 목록을 함께 갱신한다.
+  //
+  // 예전에는 dataset.bound로 리스너를 한 번만 등록했는데,
+  // 그 리스너가 첫 검색의 places/onSelect를 클로저로 붙잡고 있었다.
+  // 그래서 새로 검색해도 마커를 누르면 이전 결과의 식당이 열렸다.
+  currentPlaces = places || [];
+  currentOnSelect = onSelect;
+
   const container = document.getElementById('nbMapCanvas');
   if (container && !container.dataset.bound) {
     container.dataset.bound = '1';
@@ -138,7 +147,8 @@ export async function renderKakaoMap(center, places, onSelect) {
       const pin = event.target.closest('.nb-map-pin');
       if (!pin) return;
       const index = Number(pin.dataset.place);
-      if (typeof onSelect === 'function') onSelect(index);
+      // 클로저가 아니라 모듈 상태를 읽는다. 항상 최신 목록을 본다.
+      if (typeof currentOnSelect === 'function') currentOnSelect(index);
     });
   }
 

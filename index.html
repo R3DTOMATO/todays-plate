@@ -161,7 +161,12 @@
              src="./assets/figma/menu-detail/taste-badge-spicy-korean.svg"
              alt="매콤한 한식 타입 마스코트">
 
-        <!-- 접시 일러스트 -->
+        <!-- 실제 메뉴 사진 (있는 경우) -->
+        <div class="md-photo" id="mdPhoto" hidden>
+          <img id="mdPhotoImg" src="" alt="" loading="lazy" decoding="async">
+        </div>
+
+        <!-- 접시 일러스트 (사진이 없는 메뉴) -->
         <div class="md-plate-wrap" aria-hidden="true">
           <img class="md-plate" src="./assets/figma/menu-detail/decision-plate.svg" alt="">
           <img class="md-bowl" src="./assets/figma/menu-detail/bowl.svg" alt="">
