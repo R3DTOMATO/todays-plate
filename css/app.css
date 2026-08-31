@@ -6919,5 +6919,1092 @@ body::before { display: none; }
 }
 .nb-map-pin:active { transform: scale(.96); }
 
-/* 지도 컨트롤이 지도 위에 떠 있어야 한다 */
-.nb-controls { z-index: 3; }
+/* 지도 컨트롤이 지도 위에 떠 있어야 한다.
+   카카오 지도 SDK는 내부에 z-index를 가진 요소들을 만든다.
+   z-index 3으로는 그 위에 뜨지 못해 실기기에서 검색바가 눌리지 않았다. */
+.nb-map-canvas { z-index: 0; }
+.nb-map-art-wrap { z-index: 0; }
+.nb-controls { z-index: 50; }
+/* 지도가 터치를 가로채지 않도록 컨트롤 영역을 확실히 분리한다 */
+.nb-controls, .nb-controls * { pointer-events: auto; }
+
+/* ═══════════════════════════════════════════════
+   MY TABLE — Figma "Award Screen / My Table" (200:7)
+   ═══════════════════════════════════════════════ */
+
+.mt-panel { padding-top: 4px; }
+
+/* Header 353×52 */
+.mt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+.mt-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -.3px;
+  color: var(--tt-text-primary, #201a17);
+}
+.mt-header-actions { display: flex; gap: 8px; }
+
+.mt-record-btn {
+  width: 52px;
+  height: 44px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  cursor: pointer;
+}
+.mt-search-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 18px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  cursor: pointer;
+}
+.mt-record-btn:active, .mt-search-btn:active { transform: scale(.96); }
+
+/* Record Mode 184×48 */
+.mt-mode {
+  display: flex;
+  gap: 4px;
+  width: 184px;
+  height: 48px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: 20px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  box-sizing: border-box;
+}
+.mt-tab {
+  width: 86px;
+  height: 40px;
+  flex: none;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+  /* 전역 button { min-height:44px } 이 40px 규격을 덮어쓰므로 예외를 둔다.
+     이 탭은 48px 컨테이너 안에 들어가야 해서 44px면 넘친다. */
+  min-height: 40px;
+}
+.mt-tab.active {
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+}
+
+/* Post Card 353 */
+.mt-card {
+  margin-top: 14px;
+  border-radius: 28px;
+  background: var(--tt-bg-surface, #fff);
+  box-shadow: 0 8px 24px rgba(33, 23, 18, .08);
+  overflow: hidden;
+}
+
+/* Author Row 64px, padding-left 16 / right 12 */
+.mt-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 12px 0 16px;
+}
+/* 마스코트는 44px 슬롯. Figma 지침대로 슬롯보다 작은 인스턴스를 쓴다. */
+.mt-badge-slot {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  overflow: hidden;
+}
+.mt-badge-slot img { width: 38px; height: 38px; display: block; }
+
+.mt-author-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.mt-author-copy strong {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+}
+.mt-author-copy small {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.mt-more {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 4px 6px;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 16px;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+/* Meal Visual 270px */
+.mt-visual {
+  position: relative;
+  height: 270px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  overflow: hidden;
+}
+.mt-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mt-illust { position: absolute; inset: 0; display: block; }
+/* Figma 좌표 그대로 (카드 폭 353 기준) */
+.mt-plate { position: absolute; left: 63px;  top: 148px; width: 228px; height: 92px; }
+.mt-bowl  { position: absolute; left: 108px; top: 141px; width: 138px; height: 78px; }
+.mt-food  { position: absolute; }
+.mt-food-1 { left: 137px; top: 154px; width: 26px; height: 17px; }
+.mt-food-2 { left: 178px; top: 149px; width: 30px; height: 18px; }
+.mt-food-3 { left: 154px; top: 181px; width: 28px; height: 18px; }
+.mt-food-4 { left: 197px; top: 176px; width: 22px; height: 16px; }
+.mt-visual-badge { position: absolute; left: 138px; top: 43px; width: 78px; height: 78px; }
+
+/* Visibility 86×28 @ (14,14) */
+.mt-visibility {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 86px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--tt-bg-leaf-soft, #e4f3ea);
+  color: var(--tt-text-primary, #201a17);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* Post Copy — padding 16, gap 6 */
+.mt-copy { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+.mt-menu {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+}
+.mt-memo {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-secondary, #7d6f68);
+  word-break: break-word;
+}
+.mt-place { font-size: 12px; line-height: 18px; color: var(--tt-text-secondary, #7d6f68); }
+
+/* Post Actions — padding 14, gap 8 */
+.mt-actions { display: flex; align-items: center; gap: 8px; padding: 14px; }
+.mt-stat {
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 21px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-primary, #201a17);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.mt-stat.muted {
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+.mt-manage {
+  flex: 1;
+  height: 42px;
+  border: 0;
+  border-radius: 21px;
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+.mt-manage:active { transform: scale(.98); }
+
+/* 빈 상태 · 로딩 */
+.mt-empty {
+  margin-top: 18px;
+  padding: 34px 20px;
+  border-radius: 20px;
+  border: 1px dashed var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+  text-align: center;
+}
+.mt-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+  letter-spacing: -.02em;
+}
+.mt-empty-body {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.mt-loading {
+  margin-top: 18px;
+  padding: 28px;
+  text-align: center;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 13px;
+}
+
+/* ── 내 식탁: 공개 상태 · 관리 ── */
+.mt-visual.is-off .mt-illust,
+.mt-visual.is-off .mt-photo { opacity: .45; }
+.mt-visual.is-off { background: var(--tt-bg-subtle, #fff6f1); }
+
+.mt-visibility.off {
+  background: var(--tt-border-default, #f2e7e1);
+  color: var(--tt-text-secondary, #7d6f68);
+  width: auto;
+  padding: 0 12px;
+}
+
+.mt-edit-box {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--tt-bg-subtle, #fff6f1);
+}
+.mt-edit-label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.mt-edit-box textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 13px;
+  background: var(--tt-bg-surface, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.mt-edit-box textarea:focus {
+  outline: none;
+  border-color: var(--tt-bg-brand, #c93f31);
+}
+.mt-edit-save { width: 100%; margin-top: 10px; }
+
+.mt-delete-btn {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 14px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 14px;
+  background: var(--tt-bg-surface, #fff);
+  color: #b3392c;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mt-delete-btn:hover { background: var(--tt-bg-brand-soft, #fff1ed); }
+
+/* ═══════════════════════════════════════════════
+   TASTE — Figma "Award Screen / Taste" (136:139)
+   ═══════════════════════════════════════════════ */
+
+.ts-panel { padding-top: 4px; }
+
+/* Header 353×52 */
+.ts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+.ts-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -.3px;
+  color: var(--tt-text-primary, #201a17);
+}
+.ts-edit {
+  width: 52px;
+  height: 44px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+.ts-edit:active { transform: scale(.96); }
+
+/* Taste Identity Hero 353×246 */
+.ts-hero {
+  position: relative;
+  height: 246px;
+  margin-top: 20px;
+  border-radius: 32px;
+  background: var(--tt-bg-brand, #c93f31);
+  overflow: hidden;
+}
+/* Hero Accent 168×168 @ (190,-10) */
+.ts-hero-accent {
+  position: absolute;
+  left: 190px;
+  top: -10px;
+  width: 168px;
+  height: 168px;
+}
+/* Identity Label 92×30 @ (18,18) */
+.ts-identity-label {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 92px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .16);
+  color: var(--tt-text-inverse, #fff);
+  font-size: 12px;
+  line-height: 18px;
+}
+/* Archetype @ (18,76), 최대 폭 205 */
+.ts-archetype {
+  position: absolute;
+  left: 18px;
+  top: 76px;
+  width: 205px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -.3px;
+  color: var(--tt-text-inverse, #fff);
+}
+/* Desc @ (18,166), 폭 210 */
+.ts-archetype-desc {
+  position: absolute;
+  left: 18px;
+  top: 166px;
+  width: 210px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-inverse, #fff);
+  opacity: .86;
+}
+/* Badge 108×108 @ (230,66) */
+.ts-badge {
+  position: absolute;
+  left: 230px;
+  top: 66px;
+  width: 108px;
+  height: 108px;
+}
+
+/* Taste Coordinates 353, padding 18, gap 16 */
+.ts-coords {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 28px;
+  background: var(--tt-bg-surface, #fff);
+}
+.ts-coords-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 26px;
+  margin-bottom: 16px;
+}
+.ts-coords-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+}
+.ts-coords-note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Metric 42px, gap 10 */
+.ts-metric {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+}
+.ts-metric-label {
+  flex: none;
+  width: 62px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-secondary, #7d6f68);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Rail 8px, radius 4 */
+.ts-rail {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  overflow: hidden;
+  display: block;
+}
+.ts-value {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tt-bg-brand, #c93f31);
+  transition: width .4s ease;
+}
+/* 든든함 지표만 leaf 색 (디자인 규칙) */
+.ts-value.leaf { background: var(--tt-bg-leaf-soft, #e4f3ea); }
+
+.ts-metric-percent {
+  flex: none;
+  width: 36px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+}
+
+.ts-empty {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 13px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Taste Chips — gap 8, 높이 40 */
+.ts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.ts-chip {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 20px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-primary, #201a17);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* Taste Insight 353×56, padding 14 */
+.ts-insight {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--tt-bg-leaf-soft, #e4f3ea);
+  color: var(--tt-text-primary, #201a17);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* ═══════════════════════════════════════════════
+   ALL RECORDS — Figma "Award Screen / All Records" (219:560)
+   ═══════════════════════════════════════════════ */
+
+.ar-content { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+
+/* Monthly Summary 353×96, padding 16, gap 8 */
+.ar-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  min-height: 96px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+}
+.ar-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ar-summary-head strong {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+}
+.ar-count-badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-brand, #c93f31);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.ar-summary-meta {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Records Block — gap 12 */
+.ar-block { display: flex; flex-direction: column; gap: 12px; }
+.ar-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+}
+.ar-month {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+}
+.ar-sort {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.ar-list { display: flex; flex-direction: column; gap: 12px; }
+
+/* Record Item 353×112, padding 16, gap 12 */
+.ar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 112px;
+  padding: 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--tt-bg-surface, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.ar-item:active { transform: scale(.99); }
+
+/* date 52×72 */
+.ar-date {
+  flex: none;
+  width: 52px;
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--tt-bg-subtle, #fff6f1);
+}
+.ar-date strong {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+}
+.ar-date small {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* content — gap 4 */
+.ar-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ar-meal {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--tt-text-primary, #201a17);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 기본은 '나만 보기'(subtle), 공개일 때만 브랜드 색 */
+.ar-visibility {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--tt-bg-subtle, #fff6f1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.ar-visibility.is-public {
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  color: var(--tt-text-brand, #c93f31);
+}
+.ar-meta {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.ar-note {
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-primary, #201a17);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 빈 상태 */
+.ar-empty {
+  margin-top: 24px;
+  padding: 40px 20px;
+  border-radius: 20px;
+  border: 1px dashed var(--tt-border-default, #f2e7e1);
+  background: var(--tt-bg-subtle, #fff6f1);
+  text-align: center;
+}
+.ar-empty-icon { font-size: 34px; }
+.ar-empty-text {
+  margin: 10px 0 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* 결과 화면: 조건 바꾸기 링크 */
+.result-restart {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 6px;
+  border: 0;
+  background: none;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.result-restart:hover { color: var(--tt-text-brand, #c93f31); }
+
+/* ── 주변 첫 진입 (Figma 229:608) ── */
+.nb-entry { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+/* State Card 353×252, padding 20, gap 12 */
+.nb-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 252px;
+  padding: 20px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 24px;
+  background: var(--tt-bg-surface, #fff);
+  text-align: center;
+}
+.nb-state-icon { width: 52px; height: 52px; display: block; }
+.nb-state-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--tt-text-primary, #201a17);
+}
+.nb-state-desc {
+  margin: 0;
+  width: 300px;
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Primary 240×56, Secondary 353×56 — 둘 다 radius full */
+.nb-state-primary,
+.nb-state-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nb-state-primary {
+  width: 240px;
+  max-width: 100%;
+  border: 0;
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+}
+.nb-state-secondary {
+  width: 100%;
+  border: 1px solid var(--tt-bg-brand, #c93f31);
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-brand, #c93f31);
+}
+.nb-state-primary:active,
+.nb-state-secondary:active { transform: scale(.98); }
+.nb-state-arrow { font-size: 18px; line-height: 1; }
+
+/* 첫 진입에는 뒤로 버튼이 없다 (Figma 229:608).
+   flex 컨테이너 안에서는 hidden 속성만으로 감춰지지 않아 명시한다. */
+.nb-round-btn[hidden] { display: none; }
+
+/* ── 주변 검색 입력 ── */
+.nb-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-primary, #201a17);
+}
+.nb-search input::placeholder { color: var(--tt-text-secondary, #7d6f68); }
+.nb-search input::-webkit-search-cancel-button { display: none; }
+#nbSearchClear {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tt-border-default, #f2e7e1);
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+#nbSearchClear[hidden] { display: none; }
+
+.nb-loading {
+  margin-top: 24px;
+  padding: 30px;
+  text-align: center;
+  color: var(--tt-text-secondary, #7d6f68);
+  font-size: 13px;
+}
+
+/* 현재 선택된 검색 범위 */
+.feed-reason-btn.picked {
+  background: var(--tt-bg-brand-soft, #fff1ed);
+  border-color: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-brand, #c93f31);
+  font-weight: 700;
+}
+
+#nbSearchGo {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#nbSearchGo:active { transform: scale(.96); }
+
+/* ═══════════════════════════════════════════════
+   RECORD — Figma "Award Screen / Record" (136:133)
+   ═══════════════════════════════════════════════ */
+
+/* Publish Header 353×60 */
+.rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+.rec-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -.2px;
+  color: var(--tt-text-primary, #201a17);
+}
+.rec-close {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 20px;
+  background: var(--tt-bg-surface, #fff);
+  color: var(--tt-text-primary, #201a17);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: -.2px;
+  cursor: pointer;
+}
+.rec-close:hover { background: var(--tt-bg-subtle, #fff6f1); }
+
+/* Record Summary 353×152, padding 18, gap 18 */
+.rec-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 152px;
+  padding: 18px;
+  border-radius: 26px;
+  background: var(--tt-bg-brand-soft, #fff1ed);
+}
+/* 배지 86px — 슬롯 없이 직접 배치되는 크기 */
+.rec-summary-badge { flex: none; width: 86px; height: 86px; display: block; }
+.rec-summary-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+.rec-summary-copy strong {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: -.1px;
+  color: var(--tt-text-primary, #201a17);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rec-summary-copy small {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.rec-summary-copy p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-secondary, #7d6f68);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Memo / Publish 카드 — radius 20, padding 16 */
+.rec-card {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--tt-border-default, #f2e7e1);
+  border-radius: 20px;
+  background: var(--tt-bg-surface, #fff);
+}
+.rec-card-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+}
+.rec-card-label small {
+  margin-left: 5px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.rec-card textarea {
+  width: 100%;
+  border: 0;
+  background: none;
+  outline: none;
+  resize: vertical;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--tt-text-primary, #201a17);
+  box-sizing: border-box;
+}
+.rec-card textarea::placeholder { color: var(--tt-text-secondary, #7d6f68); }
+
+/* Publish Row 42px */
+.rec-publish-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+}
+.rec-publish-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rec-publish-copy strong {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--tt-text-primary, #201a17);
+}
+.rec-publish-copy small {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+.rec-publish-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tt-text-secondary, #7d6f68);
+}
+
+/* Publish Toggle 48×28 */
+.rec-switch { flex: none; position: relative; width: 48px; height: 28px; cursor: pointer; }
+.rec-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rec-switch-track {
+  display: block;
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--tt-border-default, #f2e7e1);
+  transition: background .18s ease;
+}
+.rec-switch-track::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tt-bg-surface, #fff);
+  box-shadow: 0 1px 3px rgba(33, 23, 18, .18);
+  transition: transform .18s ease;
+}
+.rec-switch input:checked + .rec-switch-track { background: var(--tt-bg-brand, #c93f31); }
+.rec-switch input:checked + .rec-switch-track::after { transform: translateX(20px); }
+.rec-switch input:focus-visible + .rec-switch-track {
+  outline: 2px solid var(--tt-bg-brand, #c93f31);
+  outline-offset: 2px;
+}
+
+/* Save 353×56, radius 28 */
+.rec-save {
+  width: 100%;
+  height: 56px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 28px;
+  background: var(--tt-bg-brand, #c93f31);
+  color: var(--tt-text-inverse, #fff);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+.rec-save:active { transform: scale(.98); }
+.rec-save:disabled { opacity: .5; cursor: default; }

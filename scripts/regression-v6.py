@@ -1,7 +1,7 @@
 from playwright.sync_api import sync_playwright
 import sys, json
 
-BASE='http://localhost:9090'
+BASE='http://localhost:9154'
 results=[]; page_errors=[]
 
 def check(name, ok, detail=''):
@@ -89,7 +89,10 @@ with sync_playwright() as p:
     print('\n─── 8. 주변 식당 ───')
     pg.evaluate("showResultForMenu(findMenuByName('김치찌개')); goNearby();"); pg.wait_for_timeout(900)
     check('주변 패널', pg.evaluate("document.body.dataset.panel")=='nearby')
-    check('검색바 메뉴명', pg.evaluate("document.getElementById('nbSearchLabel')?.textContent")=='김치찌개')
+    # 입력창은 사용자 것이므로 자동으로 채우지 않는다. 현재 기준은 placeholder로 안내한다.
+    ph = pg.evaluate("document.getElementById('nbSearchInput')?.placeholder") or ''
+    check('검색바 안내에 메뉴명', '김치찌개' in ph, ph)
+    check('검색 입력 비어 있음', pg.evaluate("document.getElementById('nbSearchInput')?.value")=='')
     body=pg.inner_text('body')
     check('검색전략 제거', '메뉴명을 바꾸지 않고 검색합니다' not in body)
     check('Restaurant Strategy 제거', '근처에서 먹는다면 이렇게 고르세요' not in body)

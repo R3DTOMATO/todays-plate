@@ -21,7 +21,8 @@
       "server/data/**",
       "server/backups/**",
       "*.patch",
-      "*.txt"
+      "*.txt",
+      "**/original_png/**"
     ],
     "headers": [
       {

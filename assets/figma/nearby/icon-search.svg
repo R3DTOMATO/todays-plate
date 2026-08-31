@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#c93f31" opacity=".4"/><text x="50%" y="60%" font-size="6" text-anchor="middle" fill="#201a17">PLACEHOLDER</text></svg>
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon / Search">
+<path id="Vector" d="M8.5 14C11.5376 14 14 11.5376 14 8.5C14 5.46243 11.5376 3 8.5 3C5.46243 3 3 5.46243 3 8.5C3 11.5376 5.46243 14 8.5 14Z" stroke="#27211E" stroke-width="1.8"/>
+<path id="Vector_2" d="M12.5 12.5L17 17" stroke="#27211E" stroke-width="1.8" stroke-linecap="round"/>
+</g>
+</svg>

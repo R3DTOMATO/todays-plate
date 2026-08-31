@@ -99,3 +99,16 @@ firebase deploy --only hosting
 - 검색 결과가 모두 보이도록 화면이 자동으로 맞춰집니다
 - **키가 없거나 로드에 실패하면 일러스트로 조용히 되돌아갑니다.**
   지도가 안 된다고 주변 식당 기능 전체가 멈추지 않습니다
+
+---
+
+## 첫 진입 상태 (Figma 229:608)
+
+추가 에셋: `state-icon.svg` (52×52) — 현재 자리표시
+
+```bash
+cd assets/figma/nearby
+curl -L -o state-icon.svg "https://www.figma.com/api/mcp/asset/b8dcb9a4-50ab-4e50-afc9-9ab4adc03851.svg"
+```
+
+만료 시 노드 `229:608`의 State Card 안 **state-icon** 레이어를 52×52 SVG로 Export.

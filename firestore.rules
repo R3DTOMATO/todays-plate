@@ -111,7 +111,11 @@ service cloud.firestore {
     // ─── 소셜 피드 게시물 ───
 
     match /posts/{postId} {
-      allow read: if isSignedIn() && resource.data.status == 'visible';
+      // 피드에는 공개 글만 보이지만, 작성자는 자기 글을 상태와 무관하게 읽어야
+      // '내 식탁'에서 공개 중지된 글도 관리할 수 있다.
+      allow read: if isSignedIn()
+                  && (resource.data.status == 'visible'
+                      || resource.data.authorUid == request.auth.uid);
 
       allow create: if isSignedIn()
                     && request.resource.data.authorUid == request.auth.uid
@@ -138,6 +142,16 @@ service cloud.firestore {
                && onlyChanged(['memo', 'photoUrl', 'photoPath']);
       }
 
+      // 작성자의 공개/비공개 전환.
+      // 'private'는 작성자만 볼 수 있는 상태이며 피드 쿼리에서 제외된다.
+      // 'hidden'은 운영자가 신고 처리로 내린 상태이므로 작성자가 되돌릴 수 없다.
+      function authorVisibility() {
+        return resource.data.authorUid == request.auth.uid
+               && onlyChanged(['status'])
+               && resource.data.status in ['visible', 'private']
+               && request.resource.data.status in ['visible', 'private'];
+      }
+
       // 좋아요 카운터 조정.
       // 규칙은 트랜잭션 이전 상태로 평가되므로, 좋아요 문서의 유무로
       // 같은 사람이 반복해서 +1 하는 것을 막을 수 있다.
@@ -154,7 +168,7 @@ service cloud.firestore {
 
       // reportCount는 어느 쪽으로도 클라이언트가 바꿀 수 없다.
       // 신고 집계는 서버(Cloud Functions)가 담당한다.
-      allow update: if isSignedIn() && (authorEdit() || likeToggle());
+      allow update: if isSignedIn() && (authorEdit() || authorVisibility() || likeToggle());
 
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
 

@@ -303,7 +303,11 @@
   };
 
   function getMenuImage(menu, width = 900) {
-    const base = menu?.image || MENU_IMAGE_BY_TYPE[menu?.type] || MENU_IMAGE_BY_TYPE['기타'];
+    // 메뉴 전용 이미지가 있으면 그것을 쓴다. 자체 호스팅이라 크기 파라미터가 없다.
+    // 113개는 전용 이미지가 있고, 나머지는 종류별 대표 이미지로 대체된다.
+    if (menu?.image) return menu.image;
+
+    const base = MENU_IMAGE_BY_TYPE[menu?.type] || MENU_IMAGE_BY_TYPE['기타'];
     if (!base) return '';
     return base.replace(/w=\d+/, `w=${width}`);
   }
@@ -2160,6 +2164,7 @@
   }
 
   function renderProfile() {
+    renderTasteScreen();
     const c = document.getElementById('profileContent');
     if (!c) return;
     if (!personalProfile) personalProfile = loadProfile();
@@ -2192,28 +2197,9 @@
       ? `${spicyPercent >= 50 ? '매콤한 ' : ''}${topType[0]} 탐험가`
       : '입맛을 알아가는 탐험가';
 
+    // 아키타입 카드와 입맛 지문은 새 '내 입맛' 화면(renderTasteScreen)이 담당한다.
+    // 여기서 다시 그리면 같은 내용이 두 번 나온다.
     c.innerHTML = `
-      <section class="taste-archetype-card">
-        <img src="./assets/figma/taste-badge.svg" alt="" width="56" height="56">
-        <div><strong>${escapeHtml(archetype)}</strong><p>${totalChosen ? `최근 ${totalChosen}번의 선택으로 계산했어요.` : '식사를 기록하면 나만의 입맛 유형이 만들어져요.'}</p></div>
-        <div class="taste-archetype-tags">
-          <span>${topType ? `${escapeHtml(topType[0])} ${topTypePercent}%` : '음식 취향 학습 전'}</span>
-          <span>${spicyPercent ? `매콤 ${spicyPercent}%` : '맵기 학습 전'}</span>
-          <span>${personalProfile.budgetMax ? budgetLabel(personalProfile.budgetMax) : '예산 미설정'}</span>
-        </div>
-      </section>
-
-      <section class="taste-fingerprint">
-        <div class="taste-fingerprint-head"><strong>입맛 지문</strong><span>실제 선택 데이터 기준</span></div>
-        ${[
-          [topType?.[0] || '선호 음식', topTypePercent],
-          ['매콤한 맛', spicyPercent],
-          ['든든함', fullPercent],
-          ['국물', soupPercent],
-          ['새로운 메뉴', explorePercent],
-        ].map(([label, value]) => `<div class="taste-fingerprint-row"><span>${escapeHtml(label)}</span><i><b style="width:${Math.max(3, Number(value || 0))}%"></b></i><small>${Number(value || 0)}%</small></div>`).join('')}
-      </section>
-
       <div class="mini-stat-grid">
         <div class="mini-stat"><strong>${personalProfile.acceptedCount || 0}</strong><span>선호</span></div>
         <div class="mini-stat"><strong>${personalProfile.rejectedCount || 0}</strong><span>비선호</span></div>
@@ -3016,9 +3002,71 @@
     const topEl = document.getElementById('topPick');
     topEl.innerHTML = renderTopPickCard(top, top.score);
     window._runners = runners;
+
+    // '다시 추천'이 후보를 순환할 수 있도록 세트 전체를 보관한다.
+    // 예전에는 startQuiz()를 불러 질문을 처음부터 다시 시켰다.
+    recommendationSetCache = recommendationSet;
+    recommendationIndex = 0;
+    updateResultNote();
+
     switchPanel('result', false);
     updateFavButton();
   }
+
+  // ─── 다시 추천 (후보 순환) ───
+
+  let recommendationSetCache = [];
+  let recommendationIndex = 0;
+
+  function showNextCandidate() {
+    // 질문에 답한 적이 없으면 순환할 후보가 없다. 이때만 처음부터 시작한다.
+    if (recommendationSetCache.length <= 1) {
+      startQuiz();
+      return;
+    }
+
+    recommendationIndex = (recommendationIndex + 1) % recommendationSetCache.length;
+    const next = recommendationSetCache[recommendationIndex];
+    if (!next) return;
+
+    clearDecidedActions();
+    currentMenu = next;
+    saveRecommendationDraft('result', { menuName: next.name });
+    trackEvent('alternative_menu_selected', {
+      menuId: next.id || next.name,
+      recommendationRank: recommendationIndex + 1,
+      conditions: { ...answers }
+    });
+
+    const el = document.getElementById('topPick');
+    if (el) el.innerHTML = renderTopPickCard(next, next.score);
+
+    const sub = document.getElementById('resultSub');
+    if (sub) {
+      sub.textContent = recommendationIndex === 0
+        ? '오늘은 이 메뉴가 가장 잘 맞아요.'
+        : `${recommendationIndex + 1}순위 후보예요.`;
+    }
+
+    updateResultNote();
+    updateFavButton();
+  }
+
+  // 남은 후보 수를 정확히 알려 준다. 예전에는 항상 '다른 후보 2개'라고 적혀 있었다.
+  function updateResultNote() {
+    const note = document.querySelector('.result-note');
+    if (!note) return;
+
+    const total = recommendationSetCache.length;
+    if (total <= 1) {
+      note.textContent = '조건을 바꾸려면 ‘다시 추천’을 눌러 처음부터 골라 보세요.';
+      return;
+    }
+    const remaining = total - 1;
+    note.textContent = `‘다시 추천’을 누르면 다른 후보 ${remaining}개를 차례로 볼 수 있어요.`;
+  }
+
+  window.showNextCandidate = showNextCandidate;
 
   function pickRunner(idx) {
     const r = window._runners[idx];
@@ -3155,6 +3203,8 @@
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     clearDecidedActions();
+    recommendationSetCache = [];
+    recommendationIndex = 0;
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'figma_three_step', mealTime: answers.contextTime });
     switchPanel('quiz', false);
@@ -3172,6 +3222,8 @@
     temporaryExcludedFamilies = new Set();
     decidedMenuName = '';
     clearDecidedActions();
+    recommendationSetCache = [];
+    recommendationIndex = 0;
     saveRecommendationDraft('quiz');
     trackEvent('recommendation_started', { flow: 'instant', mealTime });
     showResult();
@@ -3586,38 +3638,96 @@
   function renderDiary() {
     const c = document.getElementById('diaryContent');
     if (!c) return;
-    const recordStarter = `
-      <section class="diary-record-starter">
-        <div><strong>오늘 먹은 음식이 있나요?</strong><p>추천받지 않은 음식도 검색하거나 직접 입력해 기록할 수 있어요.</p></div>
-        <button class="empty-cta" type="button" onclick="openDirectRecordModal()">+ 음식 기록하기</button>
-      </section>`;
+
     if (diary.length === 0) {
-      c.innerHTML = recordStarter + `
-        <div class="empty-state compact-empty">
-          <div class="empty-icon">📓</div>
-          <p class="empty-text">아직 기록된 식사가 없어요.<br>방금 먹은 메뉴부터 직접 남겨보세요.</p>
+      c.innerHTML = `
+        <div class="ar-empty">
+          <div class="ar-empty-icon">📓</div>
+          <p class="ar-empty-text">아직 기록된 식사가 없어요.<br>방금 먹은 메뉴부터 남겨보세요.</p>
+          <button class="empty-cta" type="button" onclick="openDirectRecordModal()">+ 음식 기록하기</button>
         </div>`;
       return;
     }
-    const byDate = {};
-    diary.forEach(record => {
-      if (!byDate[record.date]) byDate[record.date] = [];
-      byDate[record.date].push(record);
+
+    // 공개 여부는 서버 데이터라 my-table.js가 채워 준다.
+    // 아직 안 왔거나 비로그인이면 비어 있고, 그 경우 '나만 보기'로 표시된다.
+    const published = window.publishedRecordIds instanceof Set ? window.publishedRecordIds : new Set();
+
+    const sorted = diary.slice().sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+
+    // 이번 달 요약
+    const now = new Date();
+    const thisMonth = sorted.filter(r => {
+      const d = new Date(r.dateTime);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
     });
-    const dates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
-    c.innerHTML = recordStarter + renderDiaryInsights() + dates.map(dateStr => {
-      const date = new Date(dateStr);
-      const todayKey = new Date().toDateString();
-      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-      const label = dateStr === todayKey ? '오늘' : dateStr === yesterday.toDateString() ? '어제' : `${months[date.getMonth()]} ${date.getDate()}일`;
-      const items = byDate[dateStr].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+    const homeCount = thisMonth.filter(r => ['집밥', '요리', '간단'].includes(r.method)).length;
+    const outCount = thisMonth.length - homeCount;
+    const publicCount = thisMonth.filter(r => published.has(r.id)).length;
+
+    const summary = `
+      <section class="ar-summary">
+        <div class="ar-summary-head">
+          <strong>${now.getMonth() + 1}월의 기록</strong>
+          <span class="ar-count-badge">${thisMonth.length}끼</span>
+        </div>
+        <p class="ar-summary-meta">집밥 ${homeCount} · 외식 ${outCount} · 공개 ${publicCount}</p>
+      </section>`;
+
+    // 월별로 묶는다
+    const byMonth = {};
+    sorted.forEach(record => {
+      const d = new Date(record.dateTime);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      (byMonth[key] = byMonth[key] || []).push(record);
+    });
+
+    const blocks = Object.entries(byMonth).map(([key, records], index) => {
+      const [, month] = key.split('-');
       return `
-        <section class="diary-day factual-diary-day">
-          <div class="diary-date"><span>${label}</span><span class="kcal">${items.length}개 기록</span></div>
-          <div class="diary-record-list">${items.map(renderDiaryRecord).join('')}</div>
+        <section class="ar-block">
+          <div class="ar-block-head">
+            <span class="ar-month">${Number(month) + 1}월</span>
+            ${index === 0 ? '<span class="ar-sort">최근순 ▾</span>' : ''}
+          </div>
+          <div class="ar-list">
+            ${records.map(record => recordItemHtml(record, published)).join('')}
+          </div>
         </section>`;
     }).join('');
+
+    c.innerHTML = `<div class="ar-content">${summary}${blocks}</div>` + renderDiaryInsights();
   }
+
+  // 공개 상태가 늦게 도착하거나 바뀌면 목록을 다시 그린다
+  document.addEventListener('publishedRecordsChanged', () => {
+    if (document.body.dataset.panel === 'diary') renderDiary();
+  });
+
+  const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+  function recordItemHtml(record, published) {
+    const date = new Date(record.dateTime);
+    const isPublic = published.has(record.id);
+    const meta = [record.time, record.method].filter(Boolean).join(' · ');
+
+    return `
+      <button class="ar-item" type="button" onclick="openRecordModal('${escapeJsString(record.id)}')">
+        <span class="ar-date">
+          <strong>${date.getDate()}</strong>
+          <small>${WEEKDAYS[date.getDay()]}</small>
+        </span>
+        <span class="ar-body">
+          <span class="ar-title-row">
+            <span class="ar-meal">${escapeHtml(record.menu?.name || '기록')}</span>
+            <span class="ar-visibility${isPublic ? ' is-public' : ''}">${isPublic ? '공개' : '나만 보기'}</span>
+          </span>
+          <span class="ar-meta">${escapeHtml(meta)}</span>
+          ${record.memo ? `<span class="ar-note">${escapeHtml(record.memo)}</span>` : ''}
+        </span>
+      </button>`;
+  }
+
 
   // ─── Record Modal ───
   let selectedMealTime = null;
@@ -3745,7 +3855,7 @@
     renderPendingPhotoPreview();
     const submitButton = document.getElementById('recordSubmitBtn');
     submitButton.disabled = false;
-    submitButton.textContent = existing ? '수정 저장' : '기록하기';
+    submitButton.textContent = existing ? '수정 저장' : '기록 저장';
     renderRecordMenuSuggestions(menuInput.value);
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
@@ -5266,7 +5376,13 @@
   };
   let lastNearbySearchLog = [];
 
+  let nearbyRadiusOverride = null;
+
   function getNearbySearchRadiusSteps() {
+    // 사용자가 검색 범위를 직접 고른 경우 그 값을 우선한다
+    if (Array.isArray(nearbyRadiusOverride) && nearbyRadiusOverride.length) {
+      return nearbyRadiusOverride;
+    }
     const cfg = window.APP_CONFIG || {};
     const raw = Array.isArray(cfg.NEARBY_RADIUS_STEPS) ? cfg.NEARBY_RADIUS_STEPS : NEARBY_SEARCH_DEFAULTS.radiusSteps;
     return raw
@@ -5440,19 +5556,46 @@
 
   async function renderNearby(options = {}) {
     const c = document.getElementById('nearbyContent');
+
+    // 첫 진입 상태 (Figma 229:608) — 찾을 메뉴가 아직 없을 때
     if (!currentMenu) {
+      // 입력창은 사용자 것이다. 렌더링이 값을 건드리면 타이핑·삭제가 되돌려진다.
+
+      // 탭으로 들어온 첫 화면에는 돌아갈 곳이 없다.
+      // 디자인 229:608에도 뒤로 버튼이 없다.
+      const back = document.getElementById('nbBackBtn');
+      if (back) back.hidden = true;
+
+      // 지도는 내 위치만 보여준다. 식당 마커를 찍을 기준 메뉴가 없다.
+      renderNearbyMapMarkers([], userLocation);
+
       c.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📍</div>
-          <p class="empty-text">아직 선택된 메뉴가 없어요<br>메뉴 찾기를 먼저 해주세요</p>
-          <button class="empty-cta" onclick="startQuiz()">메뉴 찾으러 가기</button>
+        <div class="nb-entry">
+          <section class="nb-state-card">
+            <img class="nb-state-icon" src="./assets/figma/nearby/state-icon.svg" alt="" aria-hidden="true">
+            <h3 class="nb-state-title">찾을 메뉴가 아직 없어요</h3>
+            <p class="nb-state-desc">메뉴를 추천받거나 직접 검색하면<br>가까운 식당을 찾아드려요.</p>
+            <button class="nb-state-primary" type="button" onclick="startQuiz()">
+              메뉴 추천받기<span class="nb-state-arrow" aria-hidden="true">›</span>
+            </button>
+          </section>
+
+          <button class="nb-state-secondary" type="button" onclick="goNearbyDirectSearch()">
+            직접 검색하기<span class="nb-state-arrow" aria-hidden="true">›</span>
+          </button>
         </div>`;
       return;
     }
 
-    // 디자인의 검색바가 부제 역할을 대신한다 (지금 무엇을 찾는 중인지 표시)
-    const searchLabel = document.getElementById('nbSearchLabel');
-    if (searchLabel) searchLabel.textContent = currentMenu.name;
+    // 검색창에 메뉴명을 자동으로 넣지 않는다.
+    // 넣으면 사용자가 지울 때마다 renderNearby가 다시 채워 지워지지 않는다.
+    // 대신 placeholder로 현재 기준을 알려준다.
+    const searchInput = document.getElementById('nbSearchInput');
+    if (searchInput) searchInput.placeholder = `${currentMenu.name} · 다른 메뉴 검색`;
+
+    // 메뉴를 고른 흐름에서 들어왔으므로 돌아갈 곳이 있다 (디자인 172:472)
+    const backBtn = document.getElementById('nbBackBtn');
+    if (backBtn) backBtn.hidden = false;
     // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
     const strategy = renderExternalSearchLinks(currentMenu);
 
@@ -6381,8 +6524,23 @@
     if (results.size < 8) await collect(venueQueries, 'cuisine_candidate', 10, ['distance']);
 
     lastNearbySearchLog = logs;
+    // 정렬 기준: 거리를 우선한다.
+    //
+    // 예전에는 tier(상호에 메뉴명이 들어갔는지 등 근거 등급)를 먼저 봤다.
+    // 그 결과 2km 떨어진 '김치찌개' 간판 가게가 200m 한식당보다 위에 나왔고,
+    // 사용자가 지도 앱에서 보는 순서와 달라 "주변"이라는 말과 어긋났다.
+    //
+    // 대신 근거 등급은 같은 거리대(400m 단위) 안에서만 순위를 가른다.
+    // 가까우면서 근거도 확실한 가게가 자연스럽게 위로 온다.
+    const DISTANCE_BUCKET = 400;
+    const bucketOf = place => Math.floor(Number(place.distance || 99999) / DISTANCE_BUCKET);
+
     return Array.from(results.values())
-      .sort((a, b) => placeTierRank(a.tier) - placeTierRank(b.tier) || Number(a.distance || 99999) - Number(b.distance || 99999) || b.score - a.score)
+      .sort((a, b) =>
+        bucketOf(a) - bucketOf(b)
+        || placeTierRank(a.tier) - placeTierRank(b.tier)
+        || Number(a.distance || 99999) - Number(b.distance || 99999)
+        || b.score - a.score)
       .slice(0, 10);
   }
 
@@ -6997,5 +7155,380 @@
     window.open(`https://map.kakao.com/?q=${query}`, '_blank', 'noopener');
   }
 
+  // '직접 검색하기' — 메뉴를 먼저 골라야 주변 식당을 찾을 수 있으므로
+  // 검색 화면으로 보낸다. 거기서 메뉴를 고르면 상세를 거쳐 주변 식당으로 이어진다.
+  function goNearbyDirectSearch() {
+    switchPanel('favorites');
+    setTimeout(() => document.getElementById('feedSearchInput')?.focus(), 120);
+  }
+
+  // ─── 주변 검색 ───
+  // 추천 메뉴가 아니라 사용자가 입력한 말로 찾을 수 있어야 한다.
+  // "지금 이 근처에 뭐가 있지?"는 추천 흐름과 다른 요구다.
+
+  let nearbySearchTerm = '';
+
+  async function runNearbySearch(term) {
+    const keyword = String(term || '').trim();
+    nearbySearchTerm = keyword;
+
+    if (!keyword) {
+      // 빈 검색어로 엔터를 치면 추천 메뉴 기준 결과로 돌아간다
+      renderNearby();
+      return;
+    }
+
+    const c = document.getElementById('nearbyContent');
+    if (!c) return;
+
+    if (!isProviderConfigured()) {
+      c.innerHTML = renderNearbyProviderNotice();
+      return;
+    }
+
+    // getUserLocation()이 실제 위치 획득 함수다.
+    // 예전에는 존재하지 않는 ensureUserLocation()을 불러 항상 실패했다.
+    const location = userLocation || (await getUserLocation().catch(() => null));
+    if (!location) {
+      c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+        <h3 class="nb-state-title">위치를 확인할 수 없어요</h3>
+        <p class="nb-state-desc">위치 권한을 허용하거나 지역을 직접 입력해 주세요.</p>
+      </section>${renderManualLocationForm()}</div>`;
+      return;
+    }
+
+    c.innerHTML = '<div class="nb-loading" role="status">주변을 찾고 있어요…</div>';
+
+    try {
+      // 입력어를 그대로 카카오에 넘긴다. 메뉴명이든 상호든 모두 처리된다.
+      const radius = getNearbySearchRadiusSteps()[0] || 3000;
+      const raw = await searchPlacesKakao(keyword, location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
+
+      const formatted = (raw || [])
+        .filter(place => !placeHardReject(place, currentMenu))
+        .map(place => formatPlace(place, currentMenu))
+        .filter(Boolean)
+        .sort((a, b) => Number(a.dist?.replace(/[^\d.]/g, '') || 0) - Number(b.dist?.replace(/[^\d.]/g, '') || 0));
+
+      renderNearbyMapMarkers(formatted, location);
+
+      if (formatted.length === 0) {
+        c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+          <h3 class="nb-state-title">'${escapeHtml(keyword)}' 결과가 없어요</h3>
+          <p class="nb-state-desc">다른 말로 검색하거나 검색 범위를 넓혀 보세요.</p>
+        </section></div>`;
+        return;
+      }
+
+      c.innerHTML = renderNearbySheet(formatted, `'${keyword}' 검색`);
+      trackEvent('nearby_search', { keyword: keyword.slice(0, 20), resultCount: formatted.length });
+    } catch (error) {
+      console.error('[nearby] 검색 실패:', error);
+      c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
+        <h3 class="nb-state-title">검색에 실패했어요</h3>
+        <p class="nb-state-desc">잠시 후 다시 시도해 주세요.</p>
+      </section></div>`;
+    }
+  }
+
+  // ─── 검색 범위 ───
+
+  const NEARBY_RADIUS_OPTIONS = [
+    { meters: 1000, label: '1km 이내 · 걸어서 갈 만한 곳' },
+    { meters: 3000, label: '3km 이내 · 기본' },
+    { meters: 7000, label: '7km 이내 · 차로 이동' },
+    { meters: 15000, label: '15km 이내 · 넓게 보기' }
+  ];
+
+  function openNearbyRadiusSheet() {
+    const sheet = document.getElementById('nbRadiusSheet');
+    const list = document.getElementById('nbRadiusList');
+    if (!sheet || !list) return;
+
+    const current = getNearbySearchRadiusSteps()[0] || 3000;
+    list.innerHTML = NEARBY_RADIUS_OPTIONS.map(option =>
+      `<button type="button" class="feed-reason-btn${option.meters === current ? ' picked' : ''}"
+         data-radius="${option.meters}">${escapeHtml(option.label)}</button>`
+    ).join('');
+
+    list.querySelectorAll('[data-radius]').forEach(button =>
+      button.addEventListener('click', () => applyNearbyRadius(Number(button.dataset.radius))));
+
+    sheet.classList.add('show');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeNearbyRadiusSheet() {
+    const sheet = document.getElementById('nbRadiusSheet');
+    if (!sheet) return;
+    sheet.classList.remove('show');
+    sheet.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
+  function applyNearbyRadius(meters) {
+    closeNearbyRadiusSheet();
+    // 선택한 반경부터 시작해 필요하면 넓혀 가도록 단계를 구성한다
+    nearbyRadiusOverride = [meters, meters * 2, meters * 4].filter(v => v <= 20000);
+    showToast(`검색 범위를 ${meters >= 1000 ? meters / 1000 + 'km' : meters + 'm'}로 바꿨어요.`);
+    if (nearbySearchTerm) runNearbySearch(nearbySearchTerm);
+    else renderNearby({ force: true });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('nbSearchInput');
+    const clear = document.getElementById('nbSearchClear');
+    let timer = null;
+
+    // 타이핑 중에는 검색하지 않는다.
+    // 자동 검색은 결과를 계속 새로 그려서 입력을 방해했다.
+    input?.addEventListener('input', () => {
+      if (clear) clear.hidden = !input.value;
+    });
+
+    input?.addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      input.blur();                 // 모바일 키보드를 내린다
+      runNearbySearch(input.value);
+    });
+
+    // 지우기는 입력만 비운다. 결과는 그대로 두어 화면이 튀지 않게 한다.
+    clear?.addEventListener('click', () => {
+      input.value = '';
+      clear.hidden = true;
+      input.focus();
+    });
+
+    // 돋보기를 눌러도 검색되게 한다 (엔터를 모르는 경우 대비)
+    document.getElementById('nbSearchGo')?.addEventListener('click', () => {
+      runNearbySearch(document.getElementById('nbSearchInput')?.value || '');
+    });
+
+    document.getElementById('nbFilterBtn')?.addEventListener('click', openNearbyRadiusSheet);
+    document.getElementById('nbRadiusClose')?.addEventListener('click', closeNearbyRadiusSheet);
+    document.getElementById('nbRadiusSheet')?.addEventListener('click', event => {
+      if (event.target === document.getElementById('nbRadiusSheet')) closeNearbyRadiusSheet();
+    });
+  });
+
+  window.runNearbySearch = runNearbySearch;
+  window.goNearbyDirectSearch = goNearbyDirectSearch;
   window.goBackFromNearby = goBackFromNearby;
   window.openNearbyExternalSearch = openNearbyExternalSearch;
+
+  // ─── 내 입맛 화면 (Figma 136:139) ───
+  //
+  // 디자인의 '매콤한 한식 탐험가 / 86% / 78% / 66%'는 더미 값이다.
+  // 실제 식사 기록에서 계산해 채운다. 기록이 적으면 단정하지 않는다.
+
+  const TASTE_SAMPLE = 30;          // 최근 몇 번을 기준으로 볼지
+  const TASTE_MIN_RECORDS = 5;      // 이보다 적으면 아키타입을 확정하지 않는다
+
+  function computeTasteProfile() {
+    const recent = diary.filter(r => r && r.menu && r.menu.type).slice(0, TASTE_SAMPLE);
+    if (recent.length === 0) return { count: 0 };
+
+    const typeCounts = {};
+    let spicySum = 0, heartySum = 0, soupCount = 0, priceSum = 0, priceCount = 0;
+    let exploreCount = 0;
+
+    recent.forEach(record => {
+      const menu = record.menu;
+      typeCounts[menu.type] = (typeCounts[menu.type] || 0) + 1;
+      spicySum += Number(menu.spicy || 0);
+      heartySum += menu.weight === '든든' ? 1 : (menu.weight === '중간' ? 0.5 : 0);
+      if (menu.soup) soupCount += 1;
+      if (menu.familiarity === 'explore') exploreCount += 1;
+      const amount = Number(record.amount);
+      if (Number.isFinite(amount) && amount > 0) { priceSum += amount; priceCount += 1; }
+    });
+
+    const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
+    const n = recent.length;
+
+    return {
+      count: n,
+      topType: topType ? topType[0] : null,
+      typeRatio: topType ? topType[1] / n : 0,
+      spicyRatio: spicySum / (n * 3),          // spicy는 0~3 척도
+      heartyRatio: heartySum / n,
+      soupRatio: soupCount / n,
+      exploreRatio: exploreCount / n,
+      avgPrice: priceCount ? priceSum / priceCount : null
+    };
+  }
+
+  // 아키타입 이름은 데이터가 충분할 때만 붙인다.
+  function tasteArchetype(taste) {
+    if (!taste.count || taste.count < TASTE_MIN_RECORDS) {
+      return {
+        name: '입맛을 알아가는 중',
+        desc: `기록 ${TASTE_MIN_RECORDS - (taste.count || 0)}번만 더 쌓이면 취향을 알려드려요.`
+      };
+    }
+
+    const type = taste.topType || '';
+    const spicy = taste.spicyRatio >= 0.45;
+    const explorer = taste.exploreRatio >= 0.25;
+    const hearty = taste.heartyRatio >= 0.6;
+
+    const prefix = spicy ? '매콤한 ' : (hearty ? '든든한 ' : '');
+    const suffix = explorer ? '탐험가' : '애호가';
+
+    const descs = [];
+    if (spicy) descs.push('짜릿한 한 스푼');
+    if (taste.soupRatio >= 0.4) descs.push('따뜻한 국물');
+    if (hearty) descs.push('든든한 한 끼');
+    if (explorer) descs.push('새로운 시도');
+
+    return {
+      name: `${prefix}${type}\n${suffix}`,
+      desc: descs.length ? `${descs.join(' · ')}를 좋아해요.` : `${type}을(를) 자주 즐겨요.`
+    };
+  }
+
+  function renderTasteScreen() {
+    const taste = computeTasteProfile();
+    const archetype = tasteArchetype(taste);
+
+    const nameEl = document.getElementById('tsArchetype');
+    if (nameEl) nameEl.innerHTML = escapeHtml(archetype.name).replace(/\n/g, '<br>');
+
+    const descEl = document.getElementById('tsArchetypeDesc');
+    if (descEl) descEl.textContent = archetype.desc;
+
+    const note = document.getElementById('tsCoordsNote');
+    if (note) {
+      note.textContent = taste.count
+        ? `최근 ${taste.count}번 기준`
+        : '기록이 아직 없어요';
+    }
+
+    // 취향 좌표 — 디자인은 한식/매운맛/든든함 3개 지표
+    const metrics = document.getElementById('tsMetrics');
+    if (metrics) {
+      if (!taste.count) {
+        metrics.innerHTML = '<p class="ts-empty">식사를 기록하면 취향 좌표가 나타나요.</p>';
+      } else {
+        const rows = [
+          { label: taste.topType || '한식', value: taste.typeRatio, leaf: false },
+          { label: '매운맛', value: taste.spicyRatio, leaf: false },
+          // 든든함만 leaf 색 (디자인 규칙)
+          { label: '든든함', value: taste.heartyRatio, leaf: true }
+        ];
+        metrics.innerHTML = rows.map(row => {
+          const percent = Math.round(Math.min(1, Math.max(0, row.value)) * 100);
+          return `
+            <div class="ts-metric">
+              <span class="ts-metric-label">${escapeHtml(row.label)}</span>
+              <span class="ts-rail"><span class="ts-value${row.leaf ? ' leaf' : ''}" style="width:${percent}%"></span></span>
+              <span class="ts-metric-percent">${percent}%</span>
+            </div>`;
+        }).join('');
+      }
+    }
+
+    // 특성 칩
+    const chips = document.getElementById('tsChips');
+    if (chips) {
+      const list = [];
+      if (taste.soupRatio >= 0.35) list.push('국물도 좋아요');
+      else if (taste.count) list.push('국물은 가끔');
+
+      if (taste.exploreRatio >= 0.25) list.push('새 메뉴 자주');
+      else if (taste.count) list.push('새 메뉴는 가끔');
+
+      if (taste.avgPrice) {
+        const band = taste.avgPrice < 8000 ? '1만원 미만'
+          : taste.avgPrice < 20000 ? '1만원대' : '2만원 이상';
+        list.push(band);
+      }
+
+      const excluded = (personalProfile?.avoidIngredients || []).length;
+      if (excluded) list.push(`제외 재료 ${excluded}개`);
+
+      chips.innerHTML = list.map(text => `<span class="ts-chip">${escapeHtml(text)}</span>`).join('');
+    }
+
+    // 인사이트 — 다음 추천에 무엇이 반영되는지 알려준다
+    const insight = document.getElementById('tsInsight');
+    if (insight) {
+      let message;
+      if (!taste.count) {
+        message = '첫 추천을 받고 기록해 보세요. 다음부터 취향이 반영돼요.';
+      } else if (taste.count < TASTE_MIN_RECORDS) {
+        message = '기록이 더 쌓이면 추천이 더 정확해져요.';
+      } else {
+        const parts = [];
+        if (taste.spicyRatio >= 0.45) parts.push('매운');
+        if (taste.soupRatio >= 0.4) parts.push('국물');
+        parts.push(taste.topType || '한식');
+        message = `다음 추천은 ${parts.join(' ')}을(를) 먼저 볼게요.`;
+      }
+      insight.textContent = message;
+    }
+  }
+
+  // ─── 기록 요약 카드 (Figma 136:133) ───
+  // 입력값을 그대로 되비춰 준다. 저장 전에 무엇이 남는지 미리 보여주기 위함이다.
+
+  function updateRecordSummary() {
+    const nameEl = document.getElementById('recSummaryName');
+    const metaEl = document.getElementById('recSummaryMeta');
+    const noteEl = document.getElementById('recSummaryNote');
+    if (!nameEl || !metaEl || !noteEl) return;
+
+    const typed = (document.getElementById('recordMenuName')?.value || '').trim();
+    const name = recordMenuSelection?.name || typed;
+    nameEl.textContent = name || '먹은 음식을 골라 주세요';
+
+    const parts = [];
+    if (selectedSatisfaction) parts.push(`만족 ${satisfactionScore(selectedSatisfaction)}/5`);
+    const method = document.getElementById('recordMethod')?.value;
+    if (method) parts.push(method);
+    const amount = Number(document.getElementById('recordAmount')?.value);
+    if (Number.isFinite(amount) && amount > 0) parts.push(`${amount.toLocaleString()}원`);
+    metaEl.textContent = parts.length ? parts.join(' · ') : '만족도 · 방식 · 금액';
+
+    const memo = (document.getElementById('recordMemo')?.value || '').trim();
+    noteEl.textContent = memo || '한 줄 메모를 남기면 여기에 보여요.';
+
+    // 배지는 메뉴 종류에 맞춰 두되, 현재는 타입별 에셋이 하나뿐이라 공통 배지를 쓴다.
+    const badge = document.querySelector('.rec-summary-badge');
+    if (badge && recordMenuSelection?.emoji) badge.setAttribute('alt', `${name} 기록`);
+  }
+
+  // 디자인의 '만족 5/5' 표기를 위해 라벨을 점수로 바꾼다
+  function satisfactionScore(value) {
+    if (value === '좋음') return 5;
+    if (value === '보통') return 3;
+    if (value === '아쉬움') return 1;
+    return 0;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    ['recordMenuName', 'recordMemo', 'recordAmount', 'recordMethod'].forEach(id => {
+      const el = document.getElementById(id);
+      el?.addEventListener('input', updateRecordSummary);
+      el?.addEventListener('change', updateRecordSummary);
+    });
+
+    // 만족도·다시먹기 같은 세그먼트 버튼은 클릭 후 상태가 바뀌므로 위임으로 받는다
+    document.getElementById('recordModal')?.addEventListener('click', event => {
+      if (event.target.closest('.segmented-input button, .meal-time-btn, .record-menu-suggestion')) {
+        setTimeout(updateRecordSummary, 0);
+      }
+    });
+
+    // 모달이 열릴 때 초기 상태를 반영
+    const modal = document.getElementById('recordModal');
+    if (modal) {
+      new MutationObserver(() => {
+        if (modal.classList.contains('show')) updateRecordSummary();
+      }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+  });
+
+  window.updateRecordSummary = updateRecordSummary;

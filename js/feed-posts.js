@@ -13,7 +13,7 @@
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
-  getFirestore, doc, setDoc, deleteDoc, getDoc, addDoc,
+  getFirestore, doc, setDoc, deleteDoc, getDoc, addDoc, updateDoc,
   collection, query, where, orderBy, limit, getDocs, serverTimestamp,
   getCountFromServer, startAt, endAt
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -118,7 +118,20 @@ export async function publishRecord(record) {
 
   const postId = postIdFor(user, record);
   try {
-    await setDoc(doc(db, 'posts', postId), buildPostData(record, user, photo));
+    const ref = doc(db, 'posts', postId);
+    const existing = await getDoc(ref);
+
+    if (existing.exists()) {
+      // 예전에 올렸다가 공개를 중지한 글이다.
+      // 통째로 덮어쓰면 좋아요·댓글 수가 0으로 초기화되고,
+      // 보안 규칙도 여러 필드를 한 번에 바꾸는 쓰기를 거부한다.
+      // 공개 상태만 되돌린다.
+      await updateDoc(ref, { status: 'visible' });
+      if (photo?.path) await deleteFeedPhoto(photo.path);   // 새로 올린 사진은 쓰지 않는다
+      return { ok: true, postId, restored: true };
+    }
+
+    await setDoc(ref, buildPostData(record, user, photo));
     return { ok: true, postId, photoPath: photo?.path || null };
   } catch (error) {
     console.error('[feed] 게시물 저장 실패:', error);
@@ -129,27 +142,70 @@ export async function publishRecord(record) {
 }
 
 /**
- * 공개를 취소한다. 게시물과 사진을 함께 지운다.
+ * 공개를 중지한다. 게시물을 지우지 않고 status를 'private'으로 바꾼다.
+ *
+ * 삭제하지 않는 이유: 사용자가 잠깐 내렸다가 다시 올릴 수 있어야 하고,
+ * 지워버리면 좋아요·댓글이 함께 사라져 되돌릴 수 없다.
+ * 완전히 없애려면 deletePost()를 쓴다.
  */
 export async function unpublishRecord(record) {
   if (!FIREBASE_READY || !db) return { ok: false, error: '피드 기능이 설정되지 않았어요.' };
-
   const user = getCurrentUser();
   if (!user) return { ok: false, error: '로그인이 필요해요.' };
 
-  const postId = postIdFor(user, record);
   try {
-    // 사진 경로를 먼저 읽어둔다 — 문서를 지우면 알 수 없게 된다
+    await updateDoc(doc(db, 'posts', postIdFor(user, record)), { status: 'private' });
+    return { ok: true };
+  } catch (error) {
+    console.error('[feed] 공개 중지 실패:', error);
+    return { ok: false, error: '공개를 중지하지 못했어요.' };
+  }
+}
+
+/** 공개 중지한 게시물을 다시 공개한다. */
+export async function setPostVisibility(postId, isPublic) {
+  if (!FIREBASE_READY || !db) return { ok: false, error: '피드 기능이 설정되지 않았어요.' };
+  if (!getCurrentUser()) return { ok: false, error: '로그인이 필요해요.' };
+
+  try {
+    await updateDoc(doc(db, 'posts', postId), { status: isPublic ? 'visible' : 'private' });
+    return { ok: true, status: isPublic ? 'visible' : 'private' };
+  } catch (error) {
+    console.error('[feed] 공개 상태 변경 실패:', error);
+    return { ok: false, error: '공개 상태를 바꾸지 못했어요.' };
+  }
+}
+
+/** 게시물 본문을 수정한다. */
+export async function updatePostMemo(postId, memo) {
+  if (!FIREBASE_READY || !db) return { ok: false, error: '피드 기능이 설정되지 않았어요.' };
+  if (!getCurrentUser()) return { ok: false, error: '로그인이 필요해요.' };
+
+  try {
+    await updateDoc(doc(db, 'posts', postId), { memo: String(memo || '').slice(0, MEMO_MAX) });
+    return { ok: true };
+  } catch (error) {
+    console.error('[feed] 본문 수정 실패:', error);
+    return { ok: false, error: '내용을 수정하지 못했어요.' };
+  }
+}
+
+/** 게시물을 완전히 삭제한다. 사진도 함께 지운다. 되돌릴 수 없다. */
+export async function deletePost(postId) {
+  if (!FIREBASE_READY || !db) return { ok: false, error: '피드 기능이 설정되지 않았어요.' };
+  if (!getCurrentUser()) return { ok: false, error: '로그인이 필요해요.' };
+
+  try {
+    // 사진 경로를 먼저 읽어 둔다. 문서를 지우면 알 수 없게 된다.
     const snapshot = await getDoc(doc(db, 'posts', postId));
     const photoPath = snapshot.exists() ? snapshot.data().photoPath : null;
 
     await deleteDoc(doc(db, 'posts', postId));
     if (photoPath) await deleteFeedPhoto(photoPath);
-
     return { ok: true };
   } catch (error) {
-    console.error('[feed] 공개 취소 실패:', error);
-    return { ok: false, error: '공개를 취소하지 못했어요.' };
+    console.error('[feed] 삭제 실패:', error);
+    return { ok: false, error: '게시물을 삭제하지 못했어요.' };
   }
 }
 
@@ -163,7 +219,8 @@ export async function isRecordPublished(record) {
   if (!user) return false;
   try {
     const snapshot = await getDoc(doc(db, 'posts', postIdFor(user, record)));
-    return snapshot.exists();
+    // 문서가 있어도 공개 중지 상태면 '공개 중'이 아니다
+    return snapshot.exists() && snapshot.data().status === 'visible';
   } catch (error) {
     return false;
   }
@@ -382,5 +439,8 @@ window.feedPosts = {
   search: searchPostsByMenu,
   comments: { list: fetchComments, add: addComment, remove: deleteComment, count: countComments },
   toggleSave: toggleSavePost,
-  savedIds: fetchSavedPostIds
+  savedIds: fetchSavedPostIds,
+  setVisibility: setPostVisibility,
+  updateMemo: updatePostMemo,
+  remove: deletePost
 };
