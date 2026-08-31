@@ -2980,7 +2980,7 @@
       document.getElementById('resultSub').textContent = '선택한 조건을 모두 만족하는 메뉴가 없어요.';
       document.getElementById('topPick').innerHTML = `
         <span class="pick-overline">다시 선택하기</span>
-        <div class="figma-pick-visual"><img src="./assets/figma/hero-meal.svg" alt="메뉴 추천 일러스트"></div>
+        <div class="figma-pick-visual empty"><span aria-hidden="true">🍽️</span></div>
         <div class="pick-name">조건을 조금만 넓혀볼까요?</div>
         <p class="pick-desc">선택한 조건을 임의로 바꾸지 않고 정확히 맞는 메뉴만 찾고 있어요. 한두 가지 질문을 ‘아무거나 괜찮아요’로 선택하면 더 다양한 메뉴를 추천받을 수 있습니다.</p>
         <p class="figma-pick-meta">${kept.length ? escapeHtml(kept.join(' · ')) : '조건을 다시 골라 주세요.'}</p>
@@ -6704,15 +6704,23 @@
     if (!currentMenu) return;
     const menu = currentMenu;
 
-    // 사진이 있는 메뉴는 일러스트 대신 실제 사진을 보여준다
+    // 모든 메뉴를 사진으로 보여준다.
+    // 전용 사진이 없는 메뉴는 getMenuImage()가 종류별 사진으로 대체한다.
+    // 사진 로드가 실패할 때만 접시 일러스트로 되돌린다.
     const plateWrap = document.querySelector('.md-plate-wrap');
     const photoWrap = document.getElementById('mdPhoto');
     const photoImg = document.getElementById('mdPhotoImg');
-    if (menu.image && photoWrap && photoImg) {
-      photoImg.src = menu.image;
+    const src = getMenuImage(menu, 900);
+
+    if (src && photoWrap && photoImg) {
+      photoImg.src = src;
       photoImg.alt = `${menu.name} 사진`;
       photoWrap.hidden = false;
       if (plateWrap) plateWrap.hidden = true;
+      photoImg.onerror = () => {
+        photoWrap.hidden = true;
+        if (plateWrap) plateWrap.hidden = false;
+      };
     } else {
       if (photoWrap) photoWrap.hidden = true;
       if (plateWrap) plateWrap.hidden = false;
@@ -7606,3 +7614,9 @@
   });
 
   window.updateRecordSummary = updateRecordSummary;
+
+  // 모듈(js/my-table.js 등)에서 메뉴 이름만으로 사진을 얻을 수 있게 한다.
+  window.getMenuImageByName = function (menuName) {
+    const menu = findMenuByName(menuName);
+    return menu ? getMenuImage(menu, 600) : '';
+  };

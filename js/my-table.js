@@ -131,17 +131,20 @@ function cardHtml(post) {
   // 운영자가 신고 처리로 내린 글은 작성자가 되돌릴 수 없다
   const isBlocked = post.status === 'hidden';
 
-  // 사진이 있으면 사진, 없으면 디자인의 일러스트 구성을 그대로 쓴다
-  const visual = post.photoUrl
-    ? `<img class="mt-photo" src="${escapeHtml(post.photoUrl)}"
-         alt="${escapeHtml(post.menuName)} 사진" loading="lazy">`
+  // 게시물 사진이 없으면 메뉴 사진으로 채운다.
+  // app.js의 getMenuImage()를 쓰면 전용 사진과 종류별 사진이 모두 처리된다.
+  const menuPhoto = typeof window.getMenuImageByName === 'function'
+    ? window.getMenuImageByName(post.menuName)
+    : '';
+  const photoSrc = post.photoUrl || menuPhoto;
+
+  const visual = photoSrc
+    ? `<img class="mt-photo" src="${escapeHtml(photoSrc)}"
+         alt="${escapeHtml(post.menuName)} 사진" loading="lazy"
+         onerror="this.closest('.mt-visual')?.classList.add('no-photo')">`
     : `<span class="mt-illust" aria-hidden="true">
          <img class="mt-plate" src="./assets/figma/menu-detail/decision-plate.svg" alt="">
          <img class="mt-bowl" src="./assets/figma/menu-detail/bowl.svg" alt="">
-         <img class="mt-food mt-food-1" src="./assets/figma/menu-detail/food-accent-1.svg" alt="">
-         <img class="mt-food mt-food-2" src="./assets/figma/menu-detail/food-accent-2.svg" alt="">
-         <img class="mt-food mt-food-3" src="./assets/figma/menu-detail/food-accent-3.svg" alt="">
-         <img class="mt-food mt-food-4" src="./assets/figma/menu-detail/food-accent-4.svg" alt="">
          <img class="mt-visual-badge" src="./assets/figma/menu-detail/taste-badge-spicy-korean.svg" alt="">
        </span>`;
 
