@@ -18,7 +18,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/001_아보카도_토스트_45deg.png"
+    "image": "assets/menu/001_아보카도_토스트_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -39,7 +39,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/002_오트밀_볼_topview.png"
+    "image": "assets/menu/002_오트밀_볼_topview.webp"
   },
   {
     "emoji": "🍳",
@@ -60,7 +60,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "no",
-    "image": "assets/menu/003_스크램블_에그_45deg.png"
+    "image": "assets/menu/003_스크램블_에그_45deg.webp"
   },
   {
     "emoji": "🥞",
@@ -81,7 +81,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/004_바나나_팬케이크_topview.png"
+    "image": "assets/menu/004_바나나_팬케이크_topview.webp"
   },
   {
     "emoji": "🍙",
@@ -102,7 +102,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/005_주먹밥_topview.png"
+    "image": "assets/menu/005_주먹밥_topview.webp"
   },
   {
     "emoji": "🥛",
@@ -123,7 +123,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/006_그래놀라_요거트_45deg.png"
+    "image": "assets/menu/006_그래놀라_요거트_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -144,7 +144,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/007_잔치국수_45deg.png"
+    "image": "assets/menu/007_잔치국수_45deg.webp"
   },
   {
     "emoji": "🍱",
@@ -165,7 +165,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/008_제육덮밥_topview.png"
+    "image": "assets/menu/008_제육덮밥_topview.webp"
   },
   {
     "emoji": "🥗",
@@ -186,7 +186,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/009_시저_샐러드_topview.png"
+    "image": "assets/menu/009_시저_샐러드_topview.webp"
   },
   {
     "emoji": "🍝",
@@ -207,7 +207,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/010_알리오_올리오_45deg.png"
+    "image": "assets/menu/010_알리오_올리오_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -228,7 +228,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/011_카레라이스_topview.png"
+    "image": "assets/menu/011_카레라이스_topview.webp"
   },
   {
     "emoji": "🌮",
@@ -249,7 +249,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/012_타코_topview.png"
+    "image": "assets/menu/012_타코_topview.webp"
   },
   {
     "emoji": "🍣",
@@ -270,7 +270,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/013_초밥_topview.png"
+    "image": "assets/menu/013_초밥_topview.webp"
   },
   {
     "emoji": "🥟",
@@ -291,7 +291,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/014_만두_topview.png"
+    "image": "assets/menu/014_만두_topview.webp"
   },
   {
     "emoji": "🥪",
@@ -312,7 +312,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/015_클럽_샌드위치_45deg.png"
+    "image": "assets/menu/015_클럽_샌드위치_45deg.webp"
   },
   {
     "emoji": "🍔",
@@ -333,7 +333,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/016_수제버거_45deg.png"
+    "image": "assets/menu/016_수제버거_45deg.webp"
   },
   {
     "emoji": "🥘",
@@ -354,7 +354,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/017_김치찌개_45deg.png"
+    "image": "assets/menu/017_김치찌개_45deg.webp"
   },
   {
     "emoji": "🍣",
@@ -375,7 +375,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/018_연어_포케볼_topview.png"
+    "image": "assets/menu/018_연어_포케볼_topview.webp"
   },
   {
     "emoji": "🍕",
@@ -396,7 +396,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/019_마르게리타_피자_topview.png"
+    "image": "assets/menu/019_마르게리타_피자_topview.webp"
   },
   {
     "emoji": "🍲",
@@ -417,7 +417,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/020_된장찌개_45deg.png"
+    "image": "assets/menu/020_된장찌개_45deg.webp"
   },
   {
     "emoji": "🍖",
@@ -438,7 +438,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/021_삼겹살_45deg.png"
+    "image": "assets/menu/021_삼겹살_45deg.webp"
   },
   {
     "emoji": "🍤",
@@ -459,7 +459,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/022_새우튀김_45deg.png"
+    "image": "assets/menu/022_새우튀김_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -480,7 +480,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/023_토마토_파스타_45deg.png"
+    "image": "assets/menu/023_토마토_파스타_45deg.webp"
   },
   {
     "emoji": "🥩",
@@ -501,7 +501,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/024_스테이크_45deg.png"
+    "image": "assets/menu/024_스테이크_45deg.webp"
   },
   {
     "emoji": "🌶️",
@@ -522,7 +522,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/025_마라탕_45deg.png"
+    "image": "assets/menu/025_마라탕_45deg.webp"
   },
   {
     "emoji": "🍱",
@@ -543,7 +543,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/026_규동_topview.png"
+    "image": "assets/menu/026_규동_topview.webp"
   },
   {
     "emoji": "🍗",
@@ -564,7 +564,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/027_치킨_45deg.png"
+    "image": "assets/menu/027_치킨_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -585,7 +585,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/028_부대찌개_45deg.png"
+    "image": "assets/menu/028_부대찌개_45deg.webp"
   },
   {
     "emoji": "🥟",
@@ -606,7 +606,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/029_딤섬_topview.png"
+    "image": "assets/menu/029_딤섬_topview.webp"
   },
   {
     "emoji": "🥗",
@@ -627,7 +627,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/030_그릭_샐러드_topview.png"
+    "image": "assets/menu/030_그릭_샐러드_topview.webp"
   },
   {
     "emoji": "🍛",
@@ -648,7 +648,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/031_비빔밥_topview.png"
+    "image": "assets/menu/031_비빔밥_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -669,7 +669,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/032_라멘_45deg.png"
+    "image": "assets/menu/032_라멘_45deg.webp"
   },
   {
     "emoji": "🌯",
@@ -690,7 +690,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/033_부리또_45deg.png"
+    "image": "assets/menu/033_부리또_45deg.webp"
   },
   {
     "emoji": "🦐",
@@ -711,7 +711,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/034_감바스_45deg.png"
+    "image": "assets/menu/034_감바스_45deg.webp"
   },
   {
     "emoji": "🥘",
@@ -732,7 +732,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/035_순두부찌개_45deg.png"
+    "image": "assets/menu/035_순두부찌개_45deg.webp"
   },
   {
     "emoji": "🍞",
@@ -753,7 +753,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "no",
-    "image": "assets/menu/036_프렌치_토스트_topview.png"
+    "image": "assets/menu/036_프렌치_토스트_topview.webp"
   },
   {
     "emoji": "🥯",
@@ -774,7 +774,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/037_베이글_샌드위치_45deg.png"
+    "image": "assets/menu/037_베이글_샌드위치_45deg.webp"
   },
   {
     "emoji": "🥐",
@@ -795,7 +795,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/038_크루아상_45deg.png"
+    "image": "assets/menu/038_크루아상_45deg.webp"
   },
   {
     "emoji": "🍵",
@@ -816,7 +816,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "no",
-    "image": "assets/menu/039_미음_45deg.png"
+    "image": "assets/menu/039_미음_45deg.webp"
   },
   {
     "emoji": "🥒",
@@ -837,7 +837,7 @@
     "homeSuitability": "possible",
     "familiarity": "explore",
     "delivery": "no",
-    "image": "assets/menu/040_야채_스무디_보울_topview.png"
+    "image": "assets/menu/040_야채_스무디_보울_topview.webp"
   },
   {
     "emoji": "🍳",
@@ -858,7 +858,7 @@
     "homeSuitability": "possible",
     "familiarity": "explore",
     "delivery": "no",
-    "image": "assets/menu/041_에그_베네딕트_45deg.png"
+    "image": "assets/menu/041_에그_베네딕트_45deg.webp"
   },
   {
     "emoji": "🌯",
@@ -879,7 +879,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/042_아침_부리또_45deg.png"
+    "image": "assets/menu/042_아침_부리또_45deg.webp"
   },
   {
     "emoji": "🍠",
@@ -900,7 +900,7 @@
     "homeSuitability": "possible",
     "familiarity": "explore",
     "delivery": "no",
-    "image": "assets/menu/043_고구마_라떼_45deg.png"
+    "image": "assets/menu/043_고구마_라떼_45deg.webp"
   },
   {
     "emoji": "🥧",
@@ -921,7 +921,7 @@
     "homeSuitability": "special",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/044_키쉬_45deg.png"
+    "image": "assets/menu/044_키쉬_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -942,7 +942,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/045_냉면_45deg.png"
+    "image": "assets/menu/045_냉면_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -963,7 +963,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/046_우동_45deg.png"
+    "image": "assets/menu/046_우동_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -984,7 +984,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/047_돈까스_45deg.png"
+    "image": "assets/menu/047_돈까스_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -1005,7 +1005,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/048_국밥_45deg.png"
+    "image": "assets/menu/048_국밥_45deg.webp"
   },
   {
     "emoji": "🥟",
@@ -1026,7 +1026,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/049_칼국수_45deg.png"
+    "image": "assets/menu/049_칼국수_45deg.webp"
   },
   {
     "emoji": "🌭",
@@ -1047,7 +1047,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/050_핫도그_45deg.png"
+    "image": "assets/menu/050_핫도그_45deg.webp"
   },
   {
     "emoji": "🍕",
@@ -1068,7 +1068,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/051_마라샹궈_45deg.png"
+    "image": "assets/menu/051_마라샹궈_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -1089,7 +1089,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/052_까르보나라_45deg.png"
+    "image": "assets/menu/052_까르보나라_45deg.webp"
   },
   {
     "emoji": "🍱",
@@ -1110,7 +1110,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/053_규카츠_45deg.png"
+    "image": "assets/menu/053_규카츠_45deg.webp"
   },
   {
     "emoji": "🍣",
@@ -1131,7 +1131,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/054_마키롤_45deg.png"
+    "image": "assets/menu/054_마키롤_45deg.webp"
   },
   {
     "emoji": "🥗",
@@ -1152,7 +1152,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/055_포케볼_topview.png"
+    "image": "assets/menu/055_포케볼_topview.webp"
   },
   {
     "emoji": "🥬",
@@ -1173,7 +1173,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/056_쌈밥_정식_45deg.png"
+    "image": "assets/menu/056_쌈밥_정식_45deg.webp"
   },
   {
     "emoji": "🍔",
@@ -1194,7 +1194,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/057_치즈버거_45deg.png"
+    "image": "assets/menu/057_치즈버거_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -1215,7 +1215,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/058_페스토_파스타_45deg.png"
+    "image": "assets/menu/058_페스토_파스타_45deg.webp"
   },
   {
     "emoji": "🥖",
@@ -1236,7 +1236,7 @@
     "homeSuitability": "outside",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/059_반미_45deg.png"
+    "image": "assets/menu/059_반미_45deg.webp"
   },
   {
     "emoji": "🌶️",
@@ -1257,7 +1257,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/060_닭갈비_45deg.png"
+    "image": "assets/menu/060_닭갈비_45deg.webp"
   },
   {
     "emoji": "🍢",
@@ -1278,7 +1278,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/061_어묵탕_45deg.png"
+    "image": "assets/menu/061_어묵탕_45deg.webp"
   },
   {
     "emoji": "🍤",
@@ -1299,7 +1299,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/062_팟타이_45deg.png"
+    "image": "assets/menu/062_팟타이_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -1320,7 +1320,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/063_양꼬치_45deg.png"
+    "image": "assets/menu/063_양꼬치_45deg.webp"
   },
   {
     "emoji": "🥘",
@@ -1341,7 +1341,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/064_곱창전골_45deg.png"
+    "image": "assets/menu/064_곱창전골_45deg.webp"
   },
   {
     "emoji": "🍣",
@@ -1362,7 +1362,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/065_사시미_topview.png"
+    "image": "assets/menu/065_사시미_topview.webp"
   },
   {
     "emoji": "🍝",
@@ -1383,7 +1383,7 @@
     "homeSuitability": "special",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/066_라자냐_45deg.png"
+    "image": "assets/menu/066_라자냐_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -1404,7 +1404,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/067_설렁탕_45deg.png"
+    "image": "assets/menu/067_설렁탕_45deg.webp"
   },
   {
     "emoji": "🌮",
@@ -1425,7 +1425,7 @@
     "homeSuitability": "outside",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/068_케밥_45deg.png"
+    "image": "assets/menu/068_케밥_45deg.webp"
   },
   {
     "emoji": "🐟",
@@ -1446,7 +1446,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/069_고등어구이_45deg.png"
+    "image": "assets/menu/069_고등어구이_45deg.webp"
   },
   {
     "emoji": "🦞",
@@ -1467,7 +1467,7 @@
     "homeSuitability": "outside",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/070_랍스터_45deg.png"
+    "image": "assets/menu/070_랍스터_45deg.webp"
   },
   {
     "emoji": "🍻",
@@ -1488,7 +1488,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/071_족발_45deg.png"
+    "image": "assets/menu/071_족발_45deg.webp"
   },
   {
     "emoji": "🥢",
@@ -1509,7 +1509,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/072_짜장면_45deg.png"
+    "image": "assets/menu/072_짜장면_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -1530,7 +1530,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/073_짬뽕_45deg.png"
+    "image": "assets/menu/073_짬뽕_45deg.webp"
   },
   {
     "emoji": "🦑",
@@ -1551,7 +1551,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/074_탕수육_45deg.png"
+    "image": "assets/menu/074_탕수육_45deg.webp"
   },
   {
     "emoji": "🍱",
@@ -1572,7 +1572,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/075_덴푸라_정식_45deg.png"
+    "image": "assets/menu/075_덴푸라_정식_45deg.webp"
   },
   {
     "emoji": "🥟",
@@ -1593,7 +1593,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/076_샤브샤브_45deg.png"
+    "image": "assets/menu/076_샤브샤브_45deg.webp"
   },
   {
     "emoji": "🍕",
@@ -1614,7 +1614,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/077_페퍼로니_피자_topview.png"
+    "image": "assets/menu/077_페퍼로니_피자_topview.webp"
   },
   {
     "emoji": "🍙",
@@ -1635,7 +1635,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/078_김밥_topview.png"
+    "image": "assets/menu/078_김밥_topview.webp"
   },
   {
     "emoji": "🍢",
@@ -1656,7 +1656,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/079_떡볶이_45deg.png"
+    "image": "assets/menu/079_떡볶이_45deg.webp"
   },
   {
     "emoji": "🍢",
@@ -1677,7 +1677,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/080_순대국_45deg.png"
+    "image": "assets/menu/080_순대국_45deg.webp"
   },
   {
     "emoji": "🥑",
@@ -1698,7 +1698,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/081_아사이볼_topview.png"
+    "image": "assets/menu/081_아사이볼_topview.webp"
   },
   {
     "emoji": "🍵",
@@ -1719,7 +1719,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/082_팥빙수_45deg.png"
+    "image": "assets/menu/082_팥빙수_45deg.webp"
   },
   {
     "emoji": "🍣",
@@ -1740,7 +1740,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/083_우니동_topview.png"
+    "image": "assets/menu/083_우니동_topview.webp"
   },
   {
     "emoji": "🥒",
@@ -1761,7 +1761,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/084_월남쌈_45deg.png"
+    "image": "assets/menu/084_월남쌈_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -1782,7 +1782,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/085_갈비탕_45deg.png"
+    "image": "assets/menu/085_갈비탕_45deg.webp"
   },
   {
     "emoji": "🥐",
@@ -1803,7 +1803,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/086_스콘_45deg.png"
+    "image": "assets/menu/086_스콘_45deg.webp"
   },
   {
     "emoji": "🍮",
@@ -1824,7 +1824,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/087_푸딩_45deg.png"
+    "image": "assets/menu/087_푸딩_45deg.webp"
   },
   {
     "emoji": "🥗",
@@ -1845,7 +1845,7 @@
     "homeSuitability": "possible",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/088_콥_샐러드_topview.png"
+    "image": "assets/menu/088_콥_샐러드_topview.webp"
   },
   {
     "emoji": "🍲",
@@ -1866,7 +1866,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/089_육개장_45deg.png"
+    "image": "assets/menu/089_육개장_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -1887,7 +1887,7 @@
     "homeSuitability": "special",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/090_볼로네제_topview.png"
+    "image": "assets/menu/090_볼로네제_topview.webp"
   },
   {
     "emoji": "🍡",
@@ -1908,7 +1908,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/091_경단_45deg.png"
+    "image": "assets/menu/091_경단_45deg.webp"
   },
   {
     "emoji": "🌭",
@@ -1929,7 +1929,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/092_소시지_볶음_45deg.png"
+    "image": "assets/menu/092_소시지_볶음_45deg.webp"
   },
   {
     "emoji": "🍳",
@@ -1950,7 +1950,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/093_계란말이_45deg.png"
+    "image": "assets/menu/093_계란말이_45deg.webp"
   },
   {
     "emoji": "🌮",
@@ -1971,7 +1971,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/094_케사디야_45deg.png"
+    "image": "assets/menu/094_케사디야_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -1992,7 +1992,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/095_오야코동_topview.png"
+    "image": "assets/menu/095_오야코동_topview.webp"
   },
   {
     "emoji": "🥚",
@@ -2013,7 +2013,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/096_에그_샌드위치_45deg.png"
+    "image": "assets/menu/096_에그_샌드위치_45deg.webp"
   },
   {
     "emoji": "🌶️",
@@ -2034,7 +2034,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/097_쭈꾸미_볶음_45deg.png"
+    "image": "assets/menu/097_쭈꾸미_볶음_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -2055,7 +2055,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/098_베트남_쌀국수_45deg.png"
+    "image": "assets/menu/098_베트남_쌀국수_45deg.webp"
   },
   {
     "emoji": "🥟",
@@ -2076,7 +2076,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/099_군만두_topview.png"
+    "image": "assets/menu/099_군만두_topview.webp"
   },
   {
     "emoji": "🥗",
@@ -2097,7 +2097,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/100_아보카도_샐러드_topview.png"
+    "image": "assets/menu/100_아보카도_샐러드_topview.webp"
   },
   {
     "emoji": "🍤",
@@ -2118,7 +2118,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/101_멘보샤_45deg.png"
+    "image": "assets/menu/101_멘보샤_45deg.webp"
   },
   {
     "emoji": "🍔",
@@ -2139,7 +2139,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/102_아침_머핀_45deg.png"
+    "image": "assets/menu/102_아침_머핀_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -2160,7 +2160,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/103_크림_파스타_45deg.png"
+    "image": "assets/menu/103_크림_파스타_45deg.webp"
   },
   {
     "emoji": "🥘",
@@ -2181,7 +2181,7 @@
     "homeSuitability": "possible",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/104_알리오_감바스_45deg.png"
+    "image": "assets/menu/104_알리오_감바스_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -2202,7 +2202,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/105_전주비빔밥_topview.png"
+    "image": "assets/menu/105_전주비빔밥_topview.webp"
   },
   {
     "emoji": "🍢",
@@ -2223,7 +2223,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "no",
-    "image": "assets/menu/106_전골_45deg.png"
+    "image": "assets/menu/106_전골_45deg.webp"
   },
   {
     "emoji": "🥧",
@@ -2244,7 +2244,7 @@
     "homeSuitability": "outside",
     "familiarity": "explore",
     "delivery": "yes",
-    "image": "assets/menu/107_미트파이_45deg.png"
+    "image": "assets/menu/107_미트파이_45deg.webp"
   },
   {
     "emoji": "🥩",
@@ -2266,7 +2266,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/108_불고기덮밥_topview.png"
+    "image": "assets/menu/108_불고기덮밥_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -2288,7 +2288,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/109_잡채밥_45deg.png"
+    "image": "assets/menu/109_잡채밥_45deg.webp"
   },
   {
     "emoji": "🐷",
@@ -2310,7 +2310,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/110_보쌈정식_45deg.png"
+    "image": "assets/menu/110_보쌈정식_45deg.webp"
   },
   {
     "emoji": "🥞",
@@ -2332,7 +2332,7 @@
     "homeSuitability": "possible",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/111_해물파전_45deg.png"
+    "image": "assets/menu/111_해물파전_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -2354,7 +2354,7 @@
     "homeSuitability": "common",
     "familiarity": "common",
     "delivery": "yes",
-    "image": "assets/menu/112_김치볶음밥_45deg.png"
+    "image": "assets/menu/112_김치볶음밥_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -2376,7 +2376,7 @@
     "homeSuitability": "outside",
     "familiarity": "familiar",
     "delivery": "yes",
-    "image": "assets/menu/113_콩나물국밥_45deg.png"
+    "image": "assets/menu/113_콩나물국밥_45deg.webp"
   },
   {
     "emoji": "🍖",
@@ -2397,7 +2397,8 @@
     "family": "감자탕",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/114_감자탕_45deg.webp"
   },
   {
     "emoji": "🍗",
@@ -2418,7 +2419,8 @@
     "family": "닭볶음탕",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/115_닭볶음탕_45deg.webp"
   },
   {
     "emoji": "🦑",
@@ -2439,7 +2441,8 @@
     "family": "오징어볶음",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/116_오징어볶음_45deg.webp"
   },
   {
     "emoji": "🍵",
@@ -2460,7 +2463,8 @@
     "family": "떡국",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/117_떡국_45deg.webp"
   },
   {
     "emoji": "🥬",
@@ -2481,7 +2485,8 @@
     "family": "bibimbap",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/118_보리비빔밥_topview.webp"
   },
   {
     "emoji": "🍚",
@@ -2502,7 +2507,8 @@
     "family": "돌솥비빔밥",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/119_돌솥비빔밥_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -2523,7 +2529,8 @@
     "family": "닭곰탕",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/120_닭곰탕_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -2544,7 +2551,8 @@
     "family": "청국장",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/121_청국장_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -2565,7 +2573,8 @@
     "family": "콩국수",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/122_콩국수_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -2586,7 +2595,8 @@
     "family": "막국수",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/123_막국수_45deg.webp"
   },
   {
     "emoji": "🐙",
@@ -2607,7 +2617,8 @@
     "family": "낙지볶음",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/124_낙지볶음_45deg.webp"
   },
   {
     "emoji": "🦪",
@@ -2628,7 +2639,8 @@
     "family": "bibimbap",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/125_꼬막비빔밥_topview.webp"
   },
   {
     "emoji": "🥣",
@@ -2649,7 +2661,8 @@
     "family": "호박죽",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/126_호박죽_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -2670,7 +2683,8 @@
     "family": "김치수제비",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/127_김치수제비_45deg.webp"
   },
   {
     "emoji": "🌶️",
@@ -2691,7 +2705,8 @@
     "family": "마파두부덮밥",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/128_마파두부덮밥_topview.webp"
   },
   {
     "emoji": "🍖",
@@ -2712,7 +2727,8 @@
     "family": "꿔바로우",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/129_꿔바로우_45deg.webp"
   },
   {
     "emoji": "🥘",
@@ -2733,7 +2749,8 @@
     "family": "훠궈",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/130_훠궈_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -2754,7 +2771,8 @@
     "family": "탄탄면",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/131_탄탄면_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -2775,7 +2793,8 @@
     "family": "fried-rice",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/132_중식_볶음밥_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -2796,7 +2815,8 @@
     "family": "울면",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/133_울면_45deg.webp"
   },
   {
     "emoji": "🫑",
@@ -2817,7 +2837,8 @@
     "family": "고추잡채",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/134_고추잡채_45deg.webp"
   },
   {
     "emoji": "🐔",
@@ -2838,7 +2859,8 @@
     "family": "유린기",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/135_유린기_45deg.webp"
   },
   {
     "emoji": "🐔",
@@ -2859,7 +2881,8 @@
     "family": "라조기",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/136_라조기_45deg.webp"
   },
   {
     "emoji": "🥟",
@@ -2880,7 +2903,8 @@
     "family": "샤오롱바오",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/137_샤오롱바오_topview.webp"
   },
   {
     "emoji": "🦆",
@@ -2901,7 +2925,8 @@
     "family": "북경오리",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/138_북경오리_45deg.webp"
   },
   {
     "emoji": "🦞",
@@ -2922,7 +2947,8 @@
     "family": "마라롱샤",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/139_마라롱샤_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -2943,7 +2969,8 @@
     "family": "fried-rice",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/140_양저우볶음밥_topview.webp"
   },
   {
     "emoji": "🥣",
@@ -2964,7 +2991,8 @@
     "family": "산라탕",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/141_산라탕_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -2985,7 +3013,8 @@
     "family": "우육면",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/142_우육면_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -3006,7 +3035,8 @@
     "family": "cutlet-rice",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/143_가츠동_topview.webp"
   },
   {
     "emoji": "🍤",
@@ -3027,7 +3057,8 @@
     "family": "텐동",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/144_텐동_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -3048,7 +3079,8 @@
     "family": "소바",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/145_소바_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -3069,7 +3101,8 @@
     "family": "야키소바",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/146_야키소바_45deg.webp"
   },
   {
     "emoji": "🥞",
@@ -3090,7 +3123,8 @@
     "family": "오코노미야키",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/147_오코노미야키_topview.webp"
   },
   {
     "emoji": "🐙",
@@ -3111,7 +3145,8 @@
     "family": "타코야키",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/148_타코야키_45deg.webp"
   },
   {
     "emoji": "🍗",
@@ -3132,7 +3167,8 @@
     "family": "야키토리덮밥",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/149_야키토리덮밥_topview.webp"
   },
   {
     "emoji": "🥘",
@@ -3153,7 +3189,8 @@
     "family": "스키야키",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/150_스키야키_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -3174,7 +3211,8 @@
     "family": "cutlet-rice",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/151_카츠카레_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -3195,7 +3233,8 @@
     "family": "츠케멘",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/152_츠케멘_45deg.webp"
   },
   {
     "emoji": "🍣",
@@ -3216,7 +3255,8 @@
     "family": "사케동",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/153_사케동_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -3237,7 +3277,8 @@
     "family": "udon",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/154_규니쿠_우동_45deg.webp"
   },
   {
     "emoji": "🍲",
@@ -3258,7 +3299,8 @@
     "family": "나베",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/155_나베_45deg.webp"
   },
   {
     "emoji": "🍙",
@@ -3279,7 +3321,8 @@
     "family": "이나리즈시",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/156_이나리즈시_topview.webp"
   },
   {
     "emoji": "🍣",
@@ -3300,7 +3343,8 @@
     "family": "치라시스시",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/157_치라시스시_topview.webp"
   },
   {
     "emoji": "🍝",
@@ -3321,7 +3365,8 @@
     "family": "ragu-pasta",
     "homeSuitability": "special",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/158_라구_파스타_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -3342,7 +3387,8 @@
     "family": "pasta-oil",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/159_봉골레_파스타_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -3363,7 +3409,8 @@
     "family": "버섯-리조또",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/160_버섯_리조또_45deg.webp"
   },
   {
     "emoji": "🥔",
@@ -3384,7 +3431,8 @@
     "family": "뇨키",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/161_뇨키_45deg.webp"
   },
   {
     "emoji": "🥗",
@@ -3405,7 +3453,8 @@
     "family": "salad",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/162_치킨_샐러드_topview.webp"
   },
   {
     "emoji": "🍝",
@@ -3426,7 +3475,8 @@
     "family": "pasta-cream",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/163_바질_크림_파스타_45deg.webp"
   },
   {
     "emoji": "🧅",
@@ -3447,7 +3497,8 @@
     "family": "프렌치-어니언-수프",
     "homeSuitability": "special",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/164_프렌치_어니언_수프_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -3468,7 +3519,8 @@
     "family": "클램차우더",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/165_클램차우더_45deg.webp"
   },
   {
     "emoji": "🍗",
@@ -3489,7 +3541,8 @@
     "family": "로스트-치킨",
     "homeSuitability": "special",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/166_로스트_치킨_45deg.webp"
   },
   {
     "emoji": "🍖",
@@ -3510,7 +3563,8 @@
     "family": "바베큐-립",
     "homeSuitability": "outside",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/167_바베큐_립_45deg.webp"
   },
   {
     "emoji": "🧀",
@@ -3531,7 +3585,8 @@
     "family": "그릴드-치즈",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/168_그릴드_치즈_45deg.webp"
   },
   {
     "emoji": "🍳",
@@ -3552,7 +3607,8 @@
     "family": "오믈렛",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "no"
+    "delivery": "no",
+    "image": "assets/menu/169_오믈렛_45deg.webp"
   },
   {
     "emoji": "🧀",
@@ -3573,7 +3629,8 @@
     "family": "맥앤치즈",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/170_맥앤치즈_45deg.webp"
   },
   {
     "emoji": "🍝",
@@ -3594,7 +3651,8 @@
     "family": "lasagna",
     "homeSuitability": "special",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/171_시금치_라자냐_45deg.webp"
   },
   {
     "emoji": "🌯",
@@ -3615,7 +3673,8 @@
     "family": "시저랩",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/172_시저랩_45deg.webp"
   },
   {
     "emoji": "🍚",
@@ -3636,7 +3695,8 @@
     "family": "fried-rice",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/173_나시고렝_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -3657,7 +3717,8 @@
     "family": "미고렝",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/174_미고렝_45deg.webp"
   },
   {
     "emoji": "🍜",
@@ -3678,7 +3739,8 @@
     "family": "분짜",
     "homeSuitability": "outside",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/175_분짜_topview.webp"
   },
   {
     "emoji": "🥗",
@@ -3699,7 +3761,8 @@
     "family": "분보남보",
     "homeSuitability": "outside",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/176_분보남보_topview.webp"
   },
   {
     "emoji": "🍛",
@@ -3720,7 +3783,8 @@
     "family": "curry-rice",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/177_버터치킨_커리_45deg.webp"
   },
   {
     "emoji": "🫓",
@@ -3741,7 +3805,8 @@
     "family": "난-세트",
     "homeSuitability": "outside",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/178_난_세트_topview.webp"
   },
   {
     "emoji": "🧆",
@@ -3762,7 +3827,8 @@
     "family": "팔라펠-랩",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/179_팔라펠_랩_45deg.webp"
   },
   {
     "emoji": "🍳",
@@ -3783,7 +3849,8 @@
     "family": "샥슈카",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/180_샥슈카_45deg.webp"
   },
   {
     "emoji": "🧆",
@@ -3804,7 +3871,8 @@
     "family": "후무스-플레이트",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/181_후무스_플레이트_topview.webp"
   },
   {
     "emoji": "🌯",
@@ -3825,7 +3893,8 @@
     "family": "엔칠라다",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/182_엔칠라다_45deg.webp"
   },
   {
     "emoji": "🌮",
@@ -3846,7 +3915,8 @@
     "family": "burrito-taco",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/183_과카몰리_타코_topview.webp"
   },
   {
     "emoji": "🍛",
@@ -3867,7 +3937,8 @@
     "family": "curry-rice",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/184_치킨_티카_마살라_45deg.webp"
   },
   {
     "emoji": "🍛",
@@ -3888,7 +3959,8 @@
     "family": "curry-rice",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/185_그린커리_45deg.webp"
   },
   {
     "emoji": "🦐",
@@ -3909,7 +3981,8 @@
     "family": "똠얌꿍",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/186_똠얌꿍_45deg.webp"
   },
   {
     "emoji": "🥙",
@@ -3930,7 +4003,8 @@
     "family": "도너-케밥",
     "homeSuitability": "outside",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/187_도너_케밥_45deg.webp"
   },
   {
     "emoji": "🥗",
@@ -3951,7 +4025,8 @@
     "family": "salad",
     "homeSuitability": "possible",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/188_파투쉬_샐러드_topview.webp"
   },
   {
     "emoji": "🍜",
@@ -3972,7 +4047,8 @@
     "family": "락사",
     "homeSuitability": "outside",
     "familiarity": "explore",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/189_락사_45deg.webp"
   },
   {
     "emoji": "🥪",
@@ -3993,7 +4069,8 @@
     "family": "sandwich",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/190_쿠바_샌드위치_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4020,7 +4097,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/191_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4047,7 +4125,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "common",
     "familiarity": "common",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/192_소고기_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4074,7 +4153,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/193_홍합_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4101,7 +4181,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/194_바지락_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4128,7 +4209,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/195_들깨_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4155,7 +4237,8 @@
     "family": "seaweed-soup",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/196_전복_미역국_45deg.webp"
   },
   {
     "emoji": "🥣",
@@ -4182,6 +4265,7 @@
     "family": "seaweed-soup",
     "homeSuitability": "possible",
     "familiarity": "familiar",
-    "delivery": "yes"
+    "delivery": "yes",
+    "image": "assets/menu/197_성게_미역국_45deg.webp"
   }
 ]

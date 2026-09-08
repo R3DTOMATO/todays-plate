@@ -29,7 +29,7 @@ const WEIGHTS = {
 
 // 인접 카테고리 — 완전 불일치보다는 낫다고 보는 관계
 const TYPE_NEIGHBORS = {
-  한식: ['중식'],
+  한식: ['중식','일식'],
   중식: ['한식', '일식'],
   일식: ['중식', '한식'],
   양식: ['세계음식'],
@@ -264,3 +264,7 @@ export function explainRecommendation(menu) {
 }
 
 export const __internal = { scoreMenu, passesHardFilters, WEIGHTS };
+
+
+//사람들이 음식을 결정할 때는 날씨도 중요하다!
+// 날씨 api를 가져와서 날씨에 따라 점수도 하지만 이거는 나중에 추가 할일

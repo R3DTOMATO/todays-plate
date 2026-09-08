@@ -291,25 +291,12 @@
   }
 
 
-  // 실제 음식 사진을 활용한 모던 미니멀 UI용 이미지 매핑.
-  // 메뉴별 사진이 없을 때 음식 분류별 대표 이미지를 사용합니다.
-  const MENU_IMAGE_BY_TYPE = {
-    '한식': 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=900&q=82',
-    '중식': 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=82',
-    '일식': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=900&q=82',
-    '양식': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=82',
-    '세계음식': 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=82',
-    '기타': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=82'
-  };
-
-  function getMenuImage(menu, width = 900) {
-    // 메뉴 전용 이미지가 있으면 그것을 쓴다. 자체 호스팅이라 크기 파라미터가 없다.
-    // 113개는 전용 이미지가 있고, 나머지는 종류별 대표 이미지로 대체된다.
-    if (menu?.image) return menu.image;
-
-    const base = MENU_IMAGE_BY_TYPE[menu?.type] || MENU_IMAGE_BY_TYPE['기타'];
-    if (!base) return '';
-    return base.replace(/w=\d+/, `w=${width}`);
+  // 197개 메뉴 모두 전용 사진(assets/menu/*.webp)을 갖고 있다.
+  // 외부 CDN(images.unsplash.com) 의존을 제거했다.
+  // 사용자가 직접 입력한 메뉴처럼 사진이 없는 경우에만 빈 값을 반환하고,
+  // 그때는 renderMenuPhoto가 이모지로 대체한다.
+  function getMenuImage(menu) {
+    return menu?.image || '';
   }
 
   function renderMenuPhoto(menu, className = 'menu-photo', altPrefix = '') {
@@ -6712,18 +6699,24 @@
     const photoImg = document.getElementById('mdPhotoImg');
     const src = getMenuImage(menu, 900);
 
+    // 마스코트 배지는 사진 위에 겹쳐 음식을 가리므로 사진이 있을 때 숨긴다.
+    const badge = document.getElementById('mdTasteBadge');
+
     if (src && photoWrap && photoImg) {
       photoImg.src = src;
       photoImg.alt = `${menu.name} 사진`;
       photoWrap.hidden = false;
       if (plateWrap) plateWrap.hidden = true;
+      if (badge) badge.hidden = true;
       photoImg.onerror = () => {
         photoWrap.hidden = true;
         if (plateWrap) plateWrap.hidden = false;
+        if (badge) badge.hidden = false;
       };
     } else {
       if (photoWrap) photoWrap.hidden = true;
       if (plateWrap) plateWrap.hidden = false;
+      if (badge) badge.hidden = false;
     }
 
     const title = document.getElementById('mdTitle');
