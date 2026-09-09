@@ -17,7 +17,8 @@ service firebase.storage {
   match /b/{bucket}/o {
 
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && !firestore.exists(/databases/(default)/documents/accountDeletions/$(request.auth.uid));
     }
 
     // 피드 사진

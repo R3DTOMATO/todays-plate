@@ -19,6 +19,9 @@ function toast(message) {
 // 기록 모달이 열릴 때 어떤 기록을 편집 중인지 추적한다
 let editingRecordSnapshot = null;
 let wasPublished = false;
+let modalGeneration = 0;
+let publicationKnown = true;
+window.feedShareLoading = false;
 
 // ─── 안내 문구 ───
 // 기존 문구는 "현재 기기에만 저장됩니다"인데, 공개를 켜면 사실이 아니게 된다.
@@ -59,7 +62,7 @@ function refreshVisibility() {
   if (hint) {
     hint.textContent = signedIn
       ? '다른 사용자가 이 기록을 볼 수 있어요. 언제든 다시 비공개로 바꿀 수 있어요.'
-      : '체크하면 로그인 후 공개됩니다. 메뉴 추천은 로그인 없이도 계속 쓸 수 있어요.';
+      : '로그인 후 이 기록을 피드에 공개할 수 있어요.';
   }
 }
 
@@ -89,9 +92,26 @@ async function onModalOpen() {
   wasPublished = false;
   toggle.checked = false;
 
-  if (record && getCurrentUser()) {
-    wasPublished = await isRecordPublished(record);
-    toggle.checked = wasPublished;
+  const generation = ++modalGeneration;
+  const uid = getCurrentUser()?.uid;
+  publicationKnown = !record;
+  window.feedShareLoading = Boolean(record && uid);
+  toggle.disabled = window.feedShareLoading;
+  try {
+    if (record && uid) {
+      const published = await isRecordPublished(record);
+      if (generation !== modalGeneration || getCurrentUser()?.uid !== uid) return;
+      wasPublished = published;
+      toggle.checked = published;
+      publicationKnown = true;
+    }
+  } catch (error) {
+    if (generation === modalGeneration) toast('공개 상태를 확인하지 못했어요. 기록은 저장할 수 있지만 피드는 변경되지 않아요.');
+  } finally {
+    if (generation === modalGeneration) {
+      window.feedShareLoading = false;
+      toggle.disabled = !publicationKnown;
+    }
   }
   updateNotice();
 }
@@ -114,15 +134,17 @@ async function onRecordSaved(event) {
   const toggle = el('recordFeedPublic');
   if (!record || !toggle) return;
 
+  if (!publicationKnown) { toast('기록은 저장했어요. 피드 변경은 공개 상태를 확인한 후 다시 시도해 주세요.'); return; }
   const shouldPublish = toggle.checked;
+  const previouslyPublished = wasPublished;
 
-  // 상태가 그대로면 아무것도 하지 않는다
-  if (shouldPublish === wasPublished) return;
+  // 비공개 기록은 로컬에만 저장하고, 공개 기록은 토글 변경 없이도 갱신한다
+  if (!shouldPublish && !wasPublished) return;
 
   if (shouldPublish) {
     const result = await publishRecord(record);
     if (result.ok) {
-      toast('피드에 공개했어요.');
+      toast(previouslyPublished ? '공개한 기록도 수정했어요.' : '피드에 공개했어요.');
     } else if (result.error) {
       // 기록 자체는 이미 저장됐다. 공개만 실패했음을 분명히 알린다.
       toast(`기록은 저장했지만 공개하지 못했어요: ${result.error}`);
@@ -143,7 +165,10 @@ function init() {
   watchRecordModal();
   document.addEventListener('mealRecordSaved', onRecordSaved);
 
-  if (FIREBASE_READY) onAuthChange(refreshVisibility);
+  if (FIREBASE_READY) onAuthChange(() => {
+    refreshVisibility();
+    if (el('recordModal')?.classList.contains('show')) onModalOpen();
+  });
   else refreshVisibility();
 }
 

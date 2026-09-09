@@ -21,6 +21,8 @@
     "backup": "node server/backup-data.mjs",
     "validate:v4.9": "node scripts/validate-release-v4.9.mjs",
     "validate:v5.0": "node scripts/validate-release-v5.0.mjs",
-    "test:entry": "python scripts/test-entry-flow.py"
+    "test:entry": "python scripts/test-entry-flow.py",
+    "test:cleanup": "node --test scripts/test-account-deletion.mjs scripts/test-feed-mutations.mjs",
+    "test:rules": "firebase emulators:exec --project demo-plate --config firebase.test.json --only firestore,storage \"node scripts/test-firestore-rules.mjs\""
   }
 }

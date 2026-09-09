@@ -14,7 +14,7 @@
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
-  getFirestore, doc, collection, getDocs, runTransaction, increment
+  getFirestore, doc, getDoc, runTransaction, increment
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { FIREBASE_READY, getCurrentUser, requireAuth, onAuthChange } from './auth.js';
 import {
@@ -117,12 +117,15 @@ async function loadMyLikes(posts) {
   const user = getCurrentUser();
   if (!user || posts.length === 0) return;
   const results = await Promise.all(posts.map(post =>
-    getDocs(collection(db, 'posts', post.id, 'likes'))
-      .then(snap => ({ id: post.id, uids: snap.docs.map(d => d.id) }))
+    getDoc(doc(db, 'posts', post.id, 'likes', user.uid))
+      .then(snap => ({ id: post.id, liked: snap.exists() }))
       .catch(() => null)
   ));
+  if (getCurrentUser()?.uid !== user.uid) return;
   results.forEach(item => {
-    if (item && item.uids.includes(user.uid)) myLikes.add(item.id);
+    if (!item) return;
+    if (item.liked) myLikes.add(item.id);
+    else myLikes.delete(item.id);
   });
 }
 
@@ -176,38 +179,43 @@ async function runSearch(term) {
 
 // ─── 좋아요 ───
 
+const pendingLikes = new Set();
 async function toggleLike(postId) {
-  let user;
+  if (pendingLikes.has(postId)) return;
+  pendingLikes.add(postId);
   try {
-    user = await requireAuth('좋아요를 누르려면 로그인이 필요해요');
-    if (!user) return;
-  } catch (error) { toast(error.message); return; }
+    let user;
+    try {
+      user = await requireAuth('좋아요를 누르려면 로그인이 필요해요');
+      if (!user) return;
+    } catch (error) { toast(error.message); return; }
 
-  const liked = myLikes.has(postId);
-  applyLikeLocally(postId, !liked);   // 낙관적 갱신
+    const liked = myLikes.has(postId);
+    applyLikeLocally(postId, !liked);   // 낙관적 갱신
 
-  try {
-    const postRef = doc(db, 'posts', postId);
-    const likeRef = doc(db, 'posts', postId, 'likes', user.uid);
-    // 좋아요 문서와 집계값을 한 트랜잭션으로 묶는다.
-    // 따로 쓰면 한쪽만 성공했을 때 숫자가 어긋난다.
-    await runTransaction(db, async tx => {
-      const snap = await tx.get(likeRef);
-      if (snap.exists()) {
-        tx.delete(likeRef);
-        tx.update(postRef, { likeCount: increment(-1) });
-      } else {
-        // uid를 필드로도 남긴다. 문서 ID만으로는 컬렉션 그룹 쿼리로
-        // "이 사용자의 좋아요 전부"를 찾을 수 없어 탈퇴 처리가 불가능해진다.
-        tx.set(likeRef, { uid: user.uid, createdAt: new Date() });
-        tx.update(postRef, { likeCount: increment(1) });
-      }
-    });
-  } catch (error) {
-    console.error('[feed] 좋아요 실패:', error);
-    applyLikeLocally(postId, liked);   // 되돌리기
-    toast('좋아요를 반영하지 못했어요.');
-  }
+    try {
+      const postRef = doc(db, 'posts', postId);
+      const likeRef = doc(db, 'posts', postId, 'likes', user.uid);
+      // 좋아요 문서와 집계값을 한 트랜잭션으로 묶는다.
+      // 따로 쓰면 한쪽만 성공했을 때 숫자가 어긋난다.
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(likeRef);
+        if (snap.exists()) {
+          tx.delete(likeRef);
+          tx.update(postRef, { likeCount: increment(-1) });
+        } else {
+          // uid를 필드로도 남긴다. 문서 ID만으로는 컬렉션 그룹 쿼리로
+          // "이 사용자의 좋아요 전부"를 찾을 수 없어 탈퇴 처리가 불가능해진다.
+          tx.set(likeRef, { uid: user.uid, createdAt: new Date() });
+          tx.update(postRef, { likeCount: increment(1) });
+        }
+      });
+    } catch (error) {
+      console.error('[feed] 좋아요 실패:', error);
+      applyLikeLocally(postId, liked);   // 되돌리기
+      toast('좋아요를 반영하지 못했어요.');
+    }
+  } finally { pendingLikes.delete(postId); }
 }
 
 function findPost(postId) {

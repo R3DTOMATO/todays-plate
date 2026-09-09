@@ -22,7 +22,9 @@
       "server/backups/**",
       "*.patch",
       "*.txt",
-      "**/original_png/**"
+      "**/original_png/**",
+      "firebase.test.json",
+      "*-debug.log"
     ],
     "headers": [
       {

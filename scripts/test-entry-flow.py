@@ -158,6 +158,24 @@ def run():
         page.evaluate('window.__setUser({uid:"account-a"})')
         page.wait_for_function('document.body.dataset.access === "ready"')
         check('재로그인 시 설문 생략·입맛 복원',page.evaluate('document.body.dataset.panel === "home" && personalProfile.allergens.includes("dairy")'))
+        page.evaluate("""() => {
+          currentMenu=findMenuByName('족발');
+          userLocation={lat:37.5,lng:127};
+          isProviderConfigured=()=>true;
+          searchPlacesKakao=async()=>[
+            {id:'far',place_name:'먼 카페',category_group_code:'CE7',category_name:'음식점 > 카페',distance:'1200',x:'127',y:'37.5'},
+            {id:'near',place_name:'가까운 카페',category_group_code:'CE7',category_name:'음식점 > 카페',distance:'300',x:'127',y:'37.5'},
+            {id:'zero',place_name:'바로 앞 카페',category_group_code:'CE7',category_name:'음식점 > 카페',distance:'0',x:'127',y:'37.5'}
+          ];
+          renderNearbyMapMarkers=()=>{};
+          window.open=url=>window.__externalSearch=url;
+        }""")
+        page.evaluate('runNearbySearch("카페")')
+        places=page.locator('#nearbyContent').inner_text()
+        check('직접 카페 검색에 이전 족발 필터 미적용',all(name in places for name in ['먼 카페','가까운 카페','바로 앞 카페']))
+        check('거리 단위·0m 정렬',places.index('바로 앞 카페') < places.index('가까운 카페') < places.index('먼 카페'))
+        page.evaluate('openNearbyExternalSearch()')
+        check('전체 보기에 현재 검색어 사용',page.evaluate('decodeURIComponent(window.__externalSearch).endsWith("q=카페")'))
         page.evaluate('window.__setUser({uid:"account-b"})')
         page.wait_for_function('document.body.dataset.access === "onboarding"')
         check('다른 계정에 이전 입맛 혼입 없음',page.evaluate('personalProfile.allergens.length === 0'))
@@ -171,6 +189,11 @@ def run():
         for width in [320,393,768]:
             page.set_viewport_size({'width':width,'height':852})
             check(f'{width}px 가로 넘침 없음',page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
+        page.evaluate('localStorage.setItem("fixture:accountDeletions/account-b",JSON.stringify({active:true}));window.__setUser({uid:"account-b"})')
+        page.wait_for_function('document.body.dataset.access === "error"')
+        check('중단된 탈퇴의 재로그인 복구 버튼',page.locator('#entryDeleteRetry').is_visible())
+        page.click('#entryDeleteRetry')
+        check('탈퇴 재시도 확인 화면 연결',page.locator('#deleteAccountModal').is_visible())
         check('페이지 JavaScript 오류 없음',not errors)
         browser.close()
     print(f'{checks} checks passed; Firebase boundary mocked.')

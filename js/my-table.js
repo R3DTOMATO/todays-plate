@@ -129,7 +129,7 @@ function cardHtml(post) {
   const meta = [dayLabel(post.createdAt), place].filter(Boolean).join(' · ');
   const isPublic = post.status === 'visible';
   // 운영자가 신고 처리로 내린 글은 작성자가 되돌릴 수 없다
-  const isBlocked = post.status === 'hidden';
+  const isBlocked = ['hidden', 'deleting'].includes(post.status);
 
   // 게시물 사진이 없으면 메뉴 사진으로 채운다.
   // app.js의 getMenuImage()를 쓰면 전용 사진과 종류별 사진이 모두 처리된다.
@@ -164,7 +164,7 @@ function cardHtml(post) {
       <div class="mt-visual${isPublic ? '' : ' is-off'}">
         ${visual}
         <span class="mt-visibility${isPublic ? '' : ' off'}">${
-          isBlocked ? '운영자 비공개' : (isPublic ? '공개 중' : '공개 중지')
+          post.status === 'deleting' ? '삭제 재시도 필요' : isBlocked ? '운영자 비공개' : (isPublic ? '공개 중' : '공개 중지')
         }</span>
       </div>
 
@@ -214,11 +214,11 @@ function openManageSheet(postId) {
   if (title) title.textContent = post.menuName;
 
   const isPublic = post.status === 'visible';
-  const isBlocked = post.status === 'hidden';
+  const isBlocked = ['hidden', 'deleting'].includes(post.status);
 
   const sub = el('mtManageSub');
   if (sub) {
-    sub.textContent = isBlocked
+    sub.textContent = post.status === 'deleting' ? '일부 데이터 정리가 남아 있어요. 삭제를 다시 시도해 주세요.' : isBlocked
       ? '신고 검토로 비공개 처리된 게시물이라 직접 다시 공개할 수 없어요.'
       : '공개를 중지해도 기기 안 식사 기록과 좋아요·댓글은 그대로 남아요.';
   }

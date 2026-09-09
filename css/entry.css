@@ -5,7 +5,7 @@ body[data-access="error"] .container { display: none; }
 body:not([data-access="ready"]) .bottom-nav,
 body:not([data-access="ready"]) .consent-banner { display: none !important; }
 body[data-panel="onboarding"] .topbar { display: none; }
-.entry-gate[hidden], #entryActions[hidden], #entryRetry[hidden], .cook-scope[hidden] { display: none !important; }
+.entry-gate[hidden], #entryActions[hidden], #entryRetry[hidden], #entryDeleteRetry[hidden], .cook-scope[hidden] { display: none !important; }
 .entry-gate {
   box-sizing: border-box;
   display: flex;

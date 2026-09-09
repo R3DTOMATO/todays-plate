@@ -15,6 +15,7 @@ function setState(next, message = '') {
   el('appShell').inert = gated;
   document.querySelector('.bottom-nav')?.toggleAttribute('inert', next !== 'ready');
   el('entryStatus').textContent = message;
+  el('entryDeleteRetry').hidden = true;
   el('entryActions').hidden = next !== 'signedout';
   el('entryRetry').hidden = next !== 'error';
   el('entryStatus').setAttribute('role', next === 'error' ? 'alert' : 'status');
@@ -30,6 +31,13 @@ async function enter(user) {
   }
   setState('loading', '저장한 입맛을 불러오고 있어요.');
   try {
+    const deletion = await getDoc(doc(db, 'accountDeletions', user.uid));
+    if (token !== generation || getCurrentUser()?.uid !== user.uid) return;
+    if (deletion.exists()) {
+      setState('error', '회원 탈퇴가 아직 완료되지 않았어요. 데이터 정리를 다시 시도해 주세요.');
+      el('entryDeleteRetry').hidden = false;
+      return;
+    }
     await window.appDataReady;
     if (!window.tasteProfileBridge) throw new Error('앱을 준비하지 못했어요. 다시 시도해 주세요.');
     const snapshot = await getDoc(doc(db, 'users', user.uid, 'private', 'taste'));
@@ -75,6 +83,7 @@ window.appEntry = {
   },
 };
 
+el('entryDeleteRetry').addEventListener('click', () => window.openDeleteAccountModal());
 el('entrySignIn').addEventListener('click', () => window.openAuthModal('저장한 입맛으로 빠르게 추천받으세요.', 'signin'));
 el('entrySignUp').addEventListener('click', () => window.openAuthModal('입맛은 한 번만 알려주세요.', 'signup'));
 el('entryRetry').addEventListener('click', () => location.reload());

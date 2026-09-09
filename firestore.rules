@@ -17,7 +17,8 @@ service cloud.firestore {
     // ─── 공통 함수 ───
 
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && !exists(/databases/$(database)/documents/accountDeletions/$(request.auth.uid));
     }
 
     function isSelf(uid) {
@@ -27,6 +28,12 @@ service cloud.firestore {
     // 문자열 필드가 존재하고 길이 제한을 지키는지 확인
     function validName(value) {
       return value is string && value.size() > 0 && value.size() <= 12;
+    }
+
+    // Server-owned deletion marker; only the affected account may check recovery state.
+    match /accountDeletions/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
     }
 
     // ─── 사용자 프로필 ───
@@ -136,6 +143,7 @@ service cloud.firestore {
     match /posts/{postId} {
       // 피드에는 공개 글만 보이지만, 작성자는 자기 글을 상태와 무관하게 읽어야
       // '내 식탁'에서 공개 중지된 글도 관리할 수 있다.
+      allow get: if isSignedIn() && !exists(/databases/$(database)/documents/posts/$(postId));
       allow read: if isSignedIn()
                   && (resource.data.status == 'visible'
                       || resource.data.authorUid == request.auth.uid);
@@ -162,7 +170,10 @@ service cloud.firestore {
       function authorEdit() {
         return resource.data.authorUid == request.auth.uid
                && request.resource.data.authorUid == resource.data.authorUid
-               && onlyChanged(['memo', 'photoUrl', 'photoPath']);
+               && resource.data.status != 'deleting'
+               && request.resource.data.memo is string && request.resource.data.memo.size() <= 300
+               && request.resource.data.menuName is string && request.resource.data.menuName.size() > 0
+               && onlyChanged(['memo', 'photoUrl', 'photoPath', 'menuId', 'menuName', 'menuType', 'menuSpicy', 'menuSoup', 'menuWeight', 'satisfaction', 'diningMode', 'placeName', 'amount']);
       }
 
       // 작성자의 공개/비공개 전환.
@@ -175,40 +186,54 @@ service cloud.firestore {
                && request.resource.data.status in ['visible', 'private'];
       }
 
+      function post() {
+        return get(/databases/$(database)/documents/posts/$(postId)).data;
+      }
+      function owner() { return isSignedIn() && post().authorUid == request.auth.uid; }
+      function readablePost() { return isSignedIn() && (post().status == 'visible' || owner()); }
+      function publicPost() { return isSignedIn() && post().status == 'visible'; }
+      function deletingPost() { return owner() && post().status == 'deleting'; }
+      function beginDeletion() {
+        return resource.data.authorUid == request.auth.uid && onlyChanged(['status'])
+          && request.resource.data.status == 'deleting';
+      }
+
+      // 좋아요 문서와 카운터가 같은 원자적 쓰기에서 바뀌어야 한다.
       // 좋아요 카운터 조정.
-      // 규칙은 트랜잭션 이전 상태로 평가되므로, 좋아요 문서의 유무로
-      // 같은 사람이 반복해서 +1 하는 것을 막을 수 있다.
       function likeToggle() {
-        return onlyChanged(['likeCount'])
+        return resource.data.status == 'visible' && request.resource.data.likeCount >= 0
+               && onlyChanged(['likeCount'])
                && (
                  (request.resource.data.likeCount == resource.data.likeCount + 1
-                  && !exists(likeRef()))
+                  && !exists(likeRef()) && existsAfter(likeRef()))
                  ||
                  (request.resource.data.likeCount == resource.data.likeCount - 1
-                  && exists(likeRef()))
+                  && exists(likeRef()) && !existsAfter(likeRef()))
                );
       }
 
       // reportCount는 어느 쪽으로도 클라이언트가 바꿀 수 없다.
       // 신고 집계는 서버(Cloud Functions)가 담당한다.
-      allow update: if isSignedIn() && (authorEdit() || authorVisibility() || likeToggle());
+      allow update: if isSignedIn() && (authorEdit() || authorVisibility() || beginDeletion() || likeToggle());
 
-      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid && resource.data.status == 'deleting';
 
       // 좋아요 — 문서 ID가 uid이므로 한 사람이 한 번만 누를 수 있다
       match /likes/{likeUid} {
-        allow read: if isSignedIn();
-        allow create: if isSelf(likeUid)
-                      && request.resource.data.uid == request.auth.uid;
-        allow delete: if isSelf(likeUid);
+        allow read: if readablePost();
+        allow create: if publicPost() && isSelf(likeUid)
+                      && request.resource.data.uid == request.auth.uid
+                      && getAfter(/databases/$(database)/documents/posts/$(postId)).data.likeCount == post().likeCount + 1;
+        allow delete: if deletingPost() || (publicPost() && isSelf(likeUid)
+                      && getAfter(/databases/$(database)/documents/posts/$(postId)).data.likeCount == post().likeCount - 1);
         allow update: if false;
       }
 
       // 댓글
       match /comments/{commentId} {
-        allow read: if isSignedIn() && resource.data.status == 'visible';
+        allow read: if readablePost() && (resource.data.status == 'visible' || owner());
 
-        allow create: if isSignedIn()
+        allow create: if publicPost()
                       && request.resource.data.authorUid == request.auth.uid
                       && request.resource.data.status == 'visible'
                       && request.resource.data.text is string
@@ -218,7 +243,7 @@ service cloud.firestore {
         // 댓글은 수정하지 않는다. 고치려면 지우고 다시 쓴다.
         allow update: if false;
 
-        allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+        allow delete: if deletingPost() || (readablePost() && resource.data.authorUid == request.auth.uid);
       }
     }
 
