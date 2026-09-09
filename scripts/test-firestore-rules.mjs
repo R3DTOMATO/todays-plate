@@ -1,0 +1,40 @@
+import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import assert from 'node:assert/strict';
+const require = createRequire(process.env.PLATE_TEST_DEPS ? `${process.env.PLATE_TEST_DEPS}/package.json` : import.meta.url);
+const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
+const { doc, collection, query, where, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, increment, serverTimestamp } = require('firebase/firestore');
+const { ref, uploadBytes } = require('firebase/storage');
+const env=await initializeTestEnvironment({projectId:'demo-plate',firestore:{host:'127.0.0.1',port:8085,rules:await readFile('firestore.rules','utf8')},storage:{host:'127.0.0.1',port:9195,rules:await readFile('storage.rules','utf8')}});
+let checks=0;
+async function check(name,fn){await fn();checks++;console.log('PASS',name)}
+const a=env.authenticatedContext('a').firestore(),b=env.authenticatedContext('b').firestore();
+const post=doc(a,'posts','a_record'), otherPost=doc(b,'posts','a_record'), like=doc(b,'posts','a_record','likes','b');
+try {
+ await env.clearFirestore();
+ await check('new post read succeeds before creation',()=>assertSucceeds(getDoc(post)));
+ await check('first publish',()=>assertSucceeds(setDoc(post,{authorUid:'a',status:'visible',memo:'hello',menuName:'김밥',likeCount:0,commentCount:0,reportCount:0})));
+ await check('counter-only update rejected',()=>assertFails(updateDoc(otherPost,{likeCount:increment(1)})));
+ await check('like-only create rejected',()=>assertFails(setDoc(like,{uid:'b'})));
+ await check('atomic like creation accepted',async()=>{const batch=writeBatch(b);batch.set(like,{uid:'b'});batch.update(otherPost,{likeCount:increment(1)});await assertSucceeds(batch.commit())});
+ await check('like-only delete rejected',()=>assertFails(deleteDoc(like)));
+ await check('atomic unlike accepted',async()=>{const batch=writeBatch(b);batch.delete(like);batch.update(otherPost,{likeCount:increment(-1)});await assertSucceeds(batch.commit())});
+ await check('visible comment accepted',()=>assertSucceeds(setDoc(doc(b,'posts','a_record','comments','c'),{authorUid:'b',status:'visible',text:'hi'})));
+ await check('private post hides descendants',async()=>{await updateDoc(post,{status:'private'});await assertFails(getDoc(otherPost));await assertFails(getDoc(like));await assertFails(getDocs(query(collection(b,'posts','a_record','comments'),where('status','==','visible'))));await assertFails(setDoc(doc(b,'posts','a_record','comments','new'),{authorUid:'b',status:'visible',text:'hi'}));});
+ await check('owner reads private comments',()=>assertSucceeds(getDocs(collection(a,'posts','a_record','comments'))));
+ await check('published record fields editable without resetting counts',()=>assertSucceeds(updateDoc(post,{memo:'updated',menuName:'국밥',satisfaction:5,amount:9000,photoPath:null,photoUrl:null})));
+ await check('memo length limit on edit',()=>assertFails(updateDoc(post,{memo:'x'.repeat(301)})));
+ await check('delete requires frozen state',()=>assertFails(deleteDoc(post)));
+ await check('deletion freezes new interactions and permits cleanup',async()=>{await updateDoc(post,{status:'deleting'});await assertFails(updateDoc(post,{status:'visible'}));await assertSucceeds(deleteDoc(doc(a,'posts','a_record','comments','c')));await assertSucceeds(deleteDoc(post));await assertFails(getDoc(doc(b,'posts','a_record','comments','c')));});
+ const taste=doc(a,'users','a','private','taste');
+ const data={version:1,completed:true,homeCountry:'KR',preferredTypes:['한식'],allergens:['dairy'],excludedIngredients:[],dietRestrictions:[],updatedAt:serverTimestamp()};
+ await check('private taste first read and save',async()=>{await assertSucceeds(getDoc(taste));await assertSucceeds(setDoc(taste,data))});
+ await check('taste access from another account denied',()=>assertFails(getDoc(doc(b,'users','a','private','taste'))));
+ await check('invalid taste field rejected',()=>assertFails(setDoc(taste,{...data,allergens:['invalid']})));
+ await check('photo upload before deletion allowed',()=>assertSucceeds(uploadBytes(ref(env.authenticatedContext('a').storage(),'feedPhotos/a/one.png'),new Uint8Array([1]),{contentType:'image/png'})));
+ await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),'accountDeletions','a'),{active:true}));
+ await check('deleting account cannot write data',()=>assertFails(setDoc(taste,data)));
+ await check('deleting account cannot upload new photos',()=>assertFails(uploadBytes(ref(env.authenticatedContext('a').storage(),'feedPhotos/a/two.png'),new Uint8Array([1]),{contentType:'image/png'})));
+ await check('only affected account reads deletion marker',async()=>{await assertSucceeds(getDoc(doc(a,'accountDeletions','a')));await assertFails(getDoc(doc(b,'accountDeletions','a')));await assertFails(deleteDoc(doc(a,'accountDeletions','a')))});
+ console.log(`${checks} emulator checks passed`);
+} finally { await env.cleanup(); }

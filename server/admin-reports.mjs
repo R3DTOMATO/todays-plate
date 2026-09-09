@@ -166,7 +166,9 @@ export async function firestoreRequest(path, options = {}) {
   });
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`firestore_${response.status}: ${detail.slice(0, 200)}`);
+    const error = new Error(`firestore_${response.status}: ${detail.slice(0, 200)}`);
+    error.status = response.status;
+    throw error;
   }
   return response.status === 204 ? null : response.json();
 }

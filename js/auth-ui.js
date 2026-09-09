@@ -317,3 +317,5 @@ if (document.readyState === 'loading') {
 // auth.js의 requireAuth()가 찾는 전역 진입점
 window.openAuthModal = openAuthModal;
 window.closeAuthModal = closeAuthModal;
+
+window.openDeleteAccountModal = openDeleteModal;

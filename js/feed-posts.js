@@ -105,39 +105,33 @@ export async function publishRecord(record) {
     return { ok: false, error: error.message };
   }
 
-  // 사진 업로드는 실패해도 글은 올린다
   let photo = null;
-  if (record.photoDataUrl) {
-    try {
-      photo = await uploadFeedPhoto(record.photoDataUrl);
-    } catch (error) {
-      console.error('[feed] 사진 업로드 실패:', error);
-      return { ok: false, error: describeUploadError(error) };
-    }
-  }
-
   const postId = postIdFor(user, record);
   try {
     const ref = doc(db, 'posts', postId);
     const existing = await getDoc(ref);
-
-    if (existing.exists()) {
-      // 예전에 올렸다가 공개를 중지한 글이다.
-      // 통째로 덮어쓰면 좋아요·댓글 수가 0으로 초기화되고,
-      // 보안 규칙도 여러 필드를 한 번에 바꾸는 쓰기를 거부한다.
-      // 공개 상태만 되돌린다.
-      await updateDoc(ref, { status: 'visible' });
-      if (photo?.path) await deleteFeedPhoto(photo.path);   // 새로 올린 사진은 쓰지 않는다
-      return { ok: true, postId, restored: true };
+    const previous = existing.exists() ? existing.data() : null;
+    if (previous && !['visible', 'private'].includes(previous.status)) {
+      return { ok: false, error: '운영자 비공개 또는 삭제 중인 글은 다시 공개할 수 없어요.' };
     }
-
-    await setDoc(ref, buildPostData(record, user, photo));
+    if (getCurrentUser()?.uid !== user.uid) return { ok: false, error: '계정이 변경됐어요.' };
+    if (record.photoDataUrl) photo = await uploadFeedPhoto(record.photoDataUrl);
+    const data = buildPostData(record, user, photo);
+    if (previous) {
+      const editable = ['memo','photoUrl','photoPath','menuId','menuName','menuType','menuSpicy','menuSoup','menuWeight','satisfaction','diningMode','placeName','amount'];
+      await updateDoc(ref, Object.fromEntries(editable.map(key => [key, data[key]])));
+      // Once committed, this photo must not be deleted by a later visibility failure.
+      photo = null;
+      if (previous.photoPath && previous.photoPath !== data.photoPath) await deleteFeedPhoto(previous.photoPath);
+      if (previous.status === 'private') await updateDoc(ref, { status: 'visible' });
+      return { ok: true, postId, updated: true };
+    }
+    await setDoc(ref, data);
     return { ok: true, postId, photoPath: photo?.path || null };
   } catch (error) {
     console.error('[feed] 게시물 저장 실패:', error);
-    // 문서 저장이 실패했으면 방금 올린 사진은 고아가 되므로 정리한다
     if (photo?.path) await deleteFeedPhoto(photo.path);
-    return { ok: false, error: '피드에 공개하지 못했어요. 잠시 후 다시 시도해 주세요.' };
+    return { ok: false, error: describeUploadError(error) || '피드에 공개하지 못했어요.' };
   }
 }
 
@@ -196,12 +190,21 @@ export async function deletePost(postId) {
   if (!getCurrentUser()) return { ok: false, error: '로그인이 필요해요.' };
 
   try {
-    // 사진 경로를 먼저 읽어 둔다. 문서를 지우면 알 수 없게 된다.
-    const snapshot = await getDoc(doc(db, 'posts', postId));
-    const photoPath = snapshot.exists() ? snapshot.data().photoPath : null;
-
-    await deleteDoc(doc(db, 'posts', postId));
-    if (photoPath) await deleteFeedPhoto(photoPath);
+    const ref = doc(db, 'posts', postId);
+    const snapshot = await getDoc(ref);
+    if (!snapshot.exists()) return { ok: true };
+    const photoPath = snapshot.data().photoPath;
+    // Freeze new interactions first. Keep this parent until every child/photo is gone.
+    await updateDoc(ref, { status: 'deleting' });
+    for (const child of ['likes', 'comments']) {
+      for (;;) {
+        const page = await getDocs(query(collection(db, 'posts', postId, child), limit(100)));
+        if (!page.docs.length) break;
+        for (const item of page.docs) await deleteDoc(doc(db, 'posts', postId, child, item.id));
+      }
+    }
+    if (photoPath && !await deleteFeedPhoto(photoPath)) throw new Error('photo_cleanup_failed');
+    await deleteDoc(ref);
     return { ok: true };
   } catch (error) {
     console.error('[feed] 삭제 실패:', error);
@@ -222,7 +225,8 @@ export async function isRecordPublished(record) {
     // 문서가 있어도 공개 중지 상태면 '공개 중'이 아니다
     return snapshot.exists() && snapshot.data().status === 'visible';
   } catch (error) {
-    return false;
+    console.error('[feed] 공개 상태 조회 실패:', error);
+    throw error;
   }
 }
 

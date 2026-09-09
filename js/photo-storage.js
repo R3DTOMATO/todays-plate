@@ -117,6 +117,7 @@ export async function deleteFeedPhoto(path) {
     await deleteObject(ref(storage, path));
     return true;
   } catch (error) {
+    if (error?.code === 'storage/object-not-found') return true;
     if (error?.code !== 'storage/object-not-found') {
       console.error('[photo] 사진 삭제 실패:', error);
     }

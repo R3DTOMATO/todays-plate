@@ -3971,6 +3971,7 @@
   });
 
   async function confirmRecord() {
+    if (window.feedShareLoading) { showToast('피드 공개 상태를 확인하고 있어요. 잠시 후 저장해 주세요.'); return; }
     if (recordSaving || !selectedMealTime) return;
     const inputMenuName = document.getElementById('recordMenuName').value.trim();
     if (!inputMenuName) {
@@ -6580,6 +6581,7 @@
       emoji: menu?.emoji,
       name: place.place_name,
       dist,
+      distanceMeters: Number.isFinite(distance) ? distance : Number.POSITIVE_INFINITY,
       score: place.score,
       fitLabel: restaurantFitLabel(place.score, place.tier),
       price: '',
@@ -7121,7 +7123,7 @@
       <div class="nb-header">
         <div class="nb-header-row">
           <h2 class="nb-title">가까운 식당 ${list.length}곳</h2>
-          <span class="nb-sort">추천순</span>
+          <span class="nb-sort">${list[0]?.tier === 'direct_search' ? '거리순' : '추천순'}</span>
         </div>
         <p class="nb-subtitle">${escapeHtml(label)} 기준${
           openCount ? ` · 상호 확인 ${openCount}곳` : ''
@@ -7137,14 +7139,14 @@
       }</div>` : ''}
       ${list.length > 5 ? `
         <button class="nb-view-all" type="button" onclick="openNearbyExternalSearch()">
-          전체 ${list.length}곳 보기
+          카카오맵에서 더 보기
         </button>` : ''}
     </div>`;
   }
 
   function renderNearbyFeatured(place) {
     const walk = walkMinutes(place.dist);
-    const photo = typeof getMenuImage === 'function' ? getMenuImage(currentMenu, 300) : '';
+    const photo = place.tier !== 'direct_search' && typeof getMenuImage === 'function' ? getMenuImage(currentMenu, 300) : '';
 
     // 디자인의 '취향 96%'는 적합도 라벨로, '영업 중'은 상호 검증 상태로 대체한다.
     // 평점·리뷰 수·영업 상태는 카카오 로컬 API가 제공하지 않는다.
@@ -7189,8 +7191,8 @@
   }
 
   function openNearbyExternalSearch() {
-    if (!currentMenu) return;
-    const query = encodeURIComponent(`${currentMenu.name} 맛집`);
+    const term = nearbySearchTerm || (currentMenu ? `${currentMenu.name} 맛집` : '음식점');
+    const query = encodeURIComponent(term);
     window.open(`https://map.kakao.com/?q=${query}`, '_blank', 'noopener');
   }
 
@@ -7259,8 +7261,10 @@
   // "지금 이 근처에 뭐가 있지?"는 추천 흐름과 다른 요구다.
 
   let nearbySearchTerm = '';
+  let nearbySearchRequest = 0;
 
   async function runNearbySearch(term) {
+    const requestId = ++nearbySearchRequest;
     const keyword = String(term || '').trim();
     nearbySearchTerm = keyword;
 
@@ -7281,6 +7285,7 @@
     // getUserLocation()이 실제 위치 획득 함수다.
     // 예전에는 존재하지 않는 ensureUserLocation()을 불러 항상 실패했다.
     const location = userLocation || (await getUserLocation().catch(() => null));
+    if (requestId !== nearbySearchRequest) return;
     if (!location) {
       c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
         <h3 class="nb-state-title">위치를 확인할 수 없어요</h3>
@@ -7296,11 +7301,11 @@
       const radius = getNearbySearchRadiusSteps()[0] || 3000;
       const raw = await searchPlacesKakao(keyword, location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
 
+      if (requestId !== nearbySearchRequest) return;
       const formatted = (raw || [])
-        .filter(place => !placeHardReject(place, currentMenu))
-        .map(place => formatPlace(place, currentMenu))
-        .filter(Boolean)
-        .sort((a, b) => Number(a.dist?.replace(/[^\d.]/g, '') || 0) - Number(b.dist?.replace(/[^\d.]/g, '') || 0));
+        .filter(place => ['FD6', 'CE7'].includes(place.category_group_code) || /음식점|카페/.test(place.category_group_name || place.category_name || ''))
+        .map(place => ({ ...formatPlace(place, null), fitLabel:'검색 결과', availabilityNote:'입력한 검색어로 찾은 장소예요.', badges:[], query:keyword, tier:'direct_search' }))
+        .sort((a, b) => a.distanceMeters - b.distanceMeters);
 
       renderNearbyMapMarkers(formatted, location);
 
@@ -7315,6 +7320,7 @@
       c.innerHTML = renderNearbySheet(formatted, `'${keyword}' 검색`);
       trackEvent('nearby_search', { keyword: keyword.slice(0, 20), resultCount: formatted.length });
     } catch (error) {
+      if (requestId !== nearbySearchRequest) return;
       console.error('[nearby] 검색 실패:', error);
       c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
         <h3 class="nb-state-title">검색에 실패했어요</h3>
