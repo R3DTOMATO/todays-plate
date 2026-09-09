@@ -27,7 +27,7 @@ function toast(message) {
  * @param {string} reason 왜 로그인이 필요한지 안내
  * @returns {Promise<Object|null>}
  */
-export function openAuthModal(reason) {
+export function openAuthModal(reason, initialMode = 'signin') {
   const overlay = el('authModal');
   if (!overlay) return Promise.resolve(null);
 
@@ -37,7 +37,8 @@ export function openAuthModal(reason) {
     hint.hidden = !reason;
   }
 
-  setMode('signin');
+  if (resolveModal) resolveModal(null);
+  setMode(initialMode === 'signup' ? 'signup' : 'signin');
   clearError();
   overlay.classList.add('show');
   overlay.setAttribute('aria-hidden', 'false');
@@ -126,6 +127,7 @@ function setBusy(busy) {
 // ─── 동작 ───
 
 async function handleSubmit() {
+  if (el('authModal')?.classList.contains('busy')) return;
   clearError();
   const email = el('authEmail')?.value || '';
   const password = el('authPassword')?.value || '';
@@ -154,6 +156,7 @@ async function handleSubmit() {
 }
 
 async function handleSocial(providerFn) {
+  if (el('authModal')?.classList.contains('busy')) return;
   clearError();
   setBusy(true);
   try {
@@ -195,7 +198,7 @@ function renderAuthState(user) {
         <div class="auth-status-name muted">로그인하지 않음</div>
         <button type="button" class="profile-utility-btn" id="authSignInBtn">로그인 / 회원가입</button>
       </div>
-      <p class="auth-status-hint">로그인하면 그룹 투표와 피드를 사용할 수 있어요. 메뉴 추천은 로그인 없이도 됩니다.</p>`;
+      <p class="auth-status-hint">로그인하면 저장한 입맛으로 메뉴를 추천받을 수 있어요.</p>`;
     el('authSignInBtn')?.addEventListener('click', () => openAuthModal(''));
   }
 }

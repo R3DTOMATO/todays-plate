@@ -49,6 +49,29 @@ service cloud.firestore {
       // 탈퇴 시 문서 삭제는 서버(Cloud Functions)에서 처리한다
       allow delete: if false;
 
+      // 입맛에는 알레르기·식단 정보가 포함되므로 공개 프로필과 분리한다.
+      match /private/{privateId} {
+        allow read, delete: if isSelf(userId) && privateId == 'taste';
+        allow create, update: if isSelf(userId) && privateId == 'taste'
+          && request.resource.data.keys().hasOnly(['version','completed','homeCountry','preferredTypes','allergens','excludedIngredients','dietRestrictions','updatedAt'])
+          && request.resource.data.version == 1
+          && request.resource.data.completed == true
+          && request.resource.data.homeCountry in ['KR','JP','CN','TW','HK','US','GB','FR','IT','VN','TH','IN','MX','OTHER']
+          && request.resource.data.preferredTypes is list
+          && request.resource.data.preferredTypes.size() <= 5
+          && request.resource.data.preferredTypes.hasOnly(['한식','중식','일식','양식','세계음식'])
+          && request.resource.data.allergens is list
+          && request.resource.data.allergens.size() <= 9
+          && request.resource.data.allergens.hasOnly(['shrimp','seafood','egg','dairy','wheat','soy','nuts','pork','beef'])
+          && request.resource.data.excludedIngredients is list
+          && request.resource.data.excludedIngredients.size() <= 11
+          && request.resource.data.excludedIngredients.hasOnly(['seafood','shrimp','pork','beef','chicken','egg','dairy','wheat','spicy','fried','highSodium'])
+          && request.resource.data.dietRestrictions is list
+          && request.resource.data.dietRestrictions.size() <= 5
+          && request.resource.data.dietRestrictions.hasOnly(['vegetarian','vegan','lowCarb','highProtein','diet'])
+          && request.resource.data.updatedAt == request.time;
+      }
+
       // 저장한 게시물 — 본인만 읽고 쓸 수 있다
       match /savedPosts/{postId} {
         allow read, create, delete: if isSelf(userId);

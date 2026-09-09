@@ -17,9 +17,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./css/app.css?v=5.1.0">
+<link rel="stylesheet" href="./css/entry.css?v=6.1.0">
 </head>
-<body>
-<div class="container">
+<body data-access="loading">
+<section class="entry-gate" id="entryGate" aria-labelledby="entryTitle">
+  <a class="entry-brand" href="./index.html"><img src="./assets/brand/logo-symbol.svg" width="36" height="36" alt="">오늘의 식탁</a>
+  <div class="entry-story">
+    <span class="entry-eyebrow">매일의 한 끼를, 나답게.</span>
+    <h1 id="entryTitle">내 입맛을 아는<br><em>오늘의 식탁.</em></h1>
+    <p>취향은 한 번만 알려주세요.<br>오늘의 선택은 세 가지 질문이면 충분해요.</p>
+    <div class="entry-plate" aria-hidden="true"><span>나의 취향</span><b>오늘의<br>한 끼</b><span>지금의 상황</span></div>
+  </div>
+  <div class="entry-bottom">
+    <p id="entryStatus" role="status" aria-live="polite">로그인 상태를 확인하고 있어요.</p>
+    <div id="entryActions" hidden>
+      <button id="entrySignUp" class="entry-primary" type="button">나만의 식탁 시작하기 <span aria-hidden="true">→</span></button>
+      <button id="entrySignIn" class="entry-secondary" type="button">이미 계정이 있어요 · 로그인</button>
+    </div>
+    <button id="entryRetry" class="entry-primary" type="button" hidden>다시 불러오기</button>
+    <p class="entry-legal"><a href="./terms.html">이용약관</a><a href="./privacy.html">개인정보처리방침</a></p>
+  </div>
+</section>
+<noscript>오늘의 식탁을 이용하려면 JavaScript를 켜 주세요.</noscript>
+<div class="container" id="appShell" inert>
 
   <!-- ─── TOP BAR ─── -->
   <header class="topbar">
@@ -39,13 +59,13 @@
     <div class="sub-panel">
       <div class="onboarding-intro">
         <div class="onboarding-kicker">내 입맛 설정</div>
-        <div class="onboarding-title">더 정확한 추천을 위해<br>취향을 알려주세요.</div>
-        <p class="onboarding-copy">좋아하는 음식과 피하고 싶은 재료, 한 끼 예산을 저장하면 다음 추천부터 자동으로 반영됩니다.</p>
+        <div class="onboarding-title">당신의 한 끼를<br>알아가는 시간.</div>
+        <p class="onboarding-copy">입맛은 계정에 저장돼요. 나중에 언제든 바꿀 수 있어요.</p>
       </div>
       <div id="onboardingContent"></div>
       <div class="onboarding-actions">
-        <button class="onboard-secondary" onclick="skipOnboarding()">나중에</button>
-        <button class="onboard-primary" onclick="completeOnboarding()">저장하고 시작</button>
+        <button class="onboard-secondary" id="tasteBack" type="button" onclick="previousTasteStep()">이전</button>
+        <button class="onboard-primary" id="tasteNext" type="button" onclick="nextTasteStep()">다음</button>
       </div>
     </div>
   </div>
@@ -62,7 +82,7 @@
       <section class="quick-decision" aria-labelledby="quickDecisionTitle">
         <span class="quick-decision-badge">30초 빠른 결정</span>
         <h2 class="quick-decision-title" id="quickDecisionTitle">3가지만 알려주세요</h2>
-        <p class="quick-decision-copy">누구와 · 무엇을 · 얼마에</p>
+        <p class="quick-decision-copy">어떻게 · 누구와 · 얼마에</p>
         <img class="quick-decision-art" src="./assets/figma/hero-meal.svg" alt="한식 한 상 일러스트" width="150" height="118">
         <button class="quick-decision-cta" type="button" onclick="startQuiz()">오늘 메뉴 결정하기 <span aria-hidden="true">→</span></button>
       </section>
@@ -132,6 +152,7 @@
         <button class="result-secondary-btn" id="favActionBtn" type="button" onclick="toggleFavorite()"><span id="favActionIcon">♡</span>&nbsp; <span id="favActionText">저장하기</span></button>
       </div>
       <p class="result-note"></p>
+      <div class="cook-scope" id="cookingScope" hidden></div>
       <button class="result-restart" type="button" onclick="startQuiz()">조건 바꿔서 처음부터 고르기</button>
     </div>
   </div>
@@ -823,7 +844,7 @@
     <div class="privacy-copy">
       <section>
         <h3>기기에만 저장되는 정보</h3>
-        <p>찜, 입맛 설정, 식사 기록, 음식 사진과 메모는 현재 브라우저에 저장됩니다. 사진은 최대 1280px로 압축되며 서버에 업로드하지 않습니다. 브라우저 데이터나 앱 저장 공간을 삭제하면 복구되지 않을 수 있으므로 필요한 경우 데이터 파일을 내려받아 보관하세요.</p>
+        <p>찜, 식사 기록, 음식 사진과 메모는 현재 브라우저에 저장됩니다. 사진은 최대 1280px로 압축되며 피드 공개를 선택한 경우 업로드됩니다. 입맛 설문은 계정별 비공개 문서에 저장되고 다음 로그인에서 불러옵니다. 브라우저 데이터나 앱 저장 공간을 삭제하면 복구되지 않을 수 있으므로 필요한 경우 데이터 파일을 내려받아 보관하세요.</p>
       </section>
       <section>
         <h3>위치 정보</h3>
@@ -856,18 +877,28 @@
 <div class="toast" id="toast" role="status" aria-live="polite">저장되었어요</div>
 
 <script src="./js/config.js"></script>
-<script src="./js/app.js?v=5.1.0" defer></script>
+<script>
+setTimeout(function () {
+  if (document.body.dataset.access !== 'loading') return;
+  document.getElementById('entryStatus').textContent = '연결이 지연되고 있어요. 네트워크를 확인하고 다시 불러와 주세요.';
+  var retry = document.getElementById('entryRetry');
+  retry.hidden = false;
+  retry.onclick = function () { location.reload(); };
+}, 20000);
+</script>
+<script src="./js/app.js?v=6.1.0" defer></script>
 <!-- 그룹 투표 (GROUP TABLE). FIREBASE_CONFIG가 비어 있으면 자동으로 비활성화됩니다. -->
-<script type="module" src="./js/kakao-map.js?v=6.0.0"></script>
-<script type="module" src="./js/monitoring.js?v=6.0.0"></script>
-<script type="module" src="./js/auth.js?v=6.0.0"></script>
-<script type="module" src="./js/auth-ui.js?v=6.0.0"></script>
-<script type="module" src="./js/photo-storage.js?v=6.0.0"></script>
-<script type="module" src="./js/feed-posts.js?v=6.0.0"></script>
-<script type="module" src="./js/feed-share-ui.js?v=6.0.0"></script>
-<script type="module" src="./js/feed-safety.js?v=6.0.0"></script>
-<script type="module" src="./js/feed-ui.js?v=6.0.0"></script>
-<script type="module" src="./js/my-table.js?v=6.0.0"></script>
-<script type="module" src="./js/group-vote.js?v=6.0.0"></script>
+<script type="module" src="./js/kakao-map.js"></script>
+<script type="module" src="./js/monitoring.js"></script>
+<script type="module" src="./js/auth.js"></script>
+<script type="module" src="./js/auth-ui.js"></script>
+<script type="module" src="./js/photo-storage.js"></script>
+<script type="module" src="./js/feed-posts.js"></script>
+<script type="module" src="./js/feed-share-ui.js"></script>
+<script type="module" src="./js/feed-safety.js"></script>
+<script type="module" src="./js/feed-ui.js"></script>
+<script type="module" src="./js/my-table.js"></script>
+<script type="module" src="./js/group-vote.js"></script>
+<script type="module" src="./js/entry-flow.js"></script>
 </body>
 </html>

@@ -251,6 +251,7 @@
   }
 
   function budgetLabel(value) {
+    if ([8000, 12000, 20000].includes(Number(value))) return `약 ${Number(value).toLocaleString()}원`;
     const tier = getBudgetTier(value);
     return tier ? tier.label : '가격 상관없음';
   }
@@ -306,15 +307,17 @@
   }
 
   function renderTopPickCard(menu, score) {
-    const safeScore = Number.isFinite(Number(score)) ? Number(score) : scoreMenu(menu, answers || {});
     const price = Number(menu?.price || 0).toLocaleString();
     const reason = menu?.desc || '선택한 조건에 잘 맞는 오늘의 한 끼예요.';
+    const overBudget = Number(answers.budget) > 0 && Number(menu.price) > Number(answers.budget);
+    const cook = getCookingInfo(menu);
     return `
       <span class="pick-overline">오늘의 1순위</span>
       <div class="figma-pick-visual">${renderMenuPhoto(menu, 'pick-photo', '오늘의 추천 ')}</div>
       <h3 class="pick-name">${escapeHtml(menu.name)}</h3>
       <p class="pick-desc">${escapeHtml(reason)}</p>
-      <p class="figma-pick-meta">₩${price} · 추천 적합도 ${toMatchPercent(safeScore)}%</p>
+      <p class="figma-pick-meta">예상 ₩${price}${overBudget ? ' · 선택 예산 초과' : ''}${answers.mode === '집밥' ? ` · ${cook.simple ? '간편 요리' : '시간 여유가 필요한 요리'} · ${escapeHtml(cook.label)}` : ''}</p>
+      <p class="pick-desc">${escapeHtml(getRecommendationReasons(menu, answers).slice(0, 2).join(' '))}</p>
       <button class="figma-pick-cta" type="button" onclick="acceptCurrentMenu()">이 메뉴로 결정 <span aria-hidden="true">→</span></button>
     `;
   }
@@ -813,6 +816,23 @@
     return 'possible';
   }
 
+  function getCookingInfo(menu) {
+    const recipe = menu?.recipe;
+    const available = Boolean(recipe?.ingredients?.length && recipe?.steps?.length);
+    const numbers = String(recipe?.time || '').match(/\d+(?:\.\d+)?/g) || [];
+    const recipeMinutes = numbers.length ? Math.max(...numbers.map(Number)) * (/시간/.test(recipe.time) ? 60 : 1) : 0;
+    const declared = Number(menu?.cooking?.maxMinutes || menu?.cook || 0);
+    const minutes = Math.max(declared, recipeMinutes);
+    const simple = available && minutes > 0 && minutes <= 30 && getHomeSuitability(menu) !== 'outside';
+    return { available, simple, minutes, label:recipe?.time || (minutes ? `약 ${minutes}분` : '조리 시간 확인 필요') };
+  }
+
+  function toggleCookingScope() {
+    if (!window.appEntry?.canRecommend() || answers.mode !== '집밥') return;
+    answers.includeComplexCooking = !answers.includeComplexCooking;
+    showResult();
+  }
+
   function getMenuFamiliarity(menu) {
     if (!menu) return 'explore';
     if (menu.familiarity) return menu.familiarity;
@@ -953,50 +973,28 @@
   // 각 단계는 '상관없음'을 항상 제공한다. 조건을 강제하면 결과가 좁아지고,
   // 어차피 점수제라 비워 두어도 추천이 나온다.
   const questions = [
-    { step:1, total:5, title:'누구와 먹나요?', sub:'상황에 맞는 분위기를 먼저 맞출게요.', key:'situation', grid:2,
-      options: [
-        { emoji:'🙂', text:'혼자', hint:'빠르고 편안하게', value:'혼밥' },
+    { step:1, total:3, title:'어떻게 먹을까요?', sub:'직접 요리는 간편한 메뉴부터 추천해요.', key:'mode', grid:2,
+      options:[
+        { emoji:'🏠', text:'직접 요리', hint:'간편한 집밥부터', value:'집밥' },
+        { emoji:'🍽️', text:'외식', hint:'식당에서 먹기', value:'외식' },
+        { emoji:'🛵', text:'배달', hint:'주문해서 먹기', value:'배달' },
+        { emoji:'↗', text:'아직 안 정했어요', hint:'입맛에 맞게 추천', value:null },
+      ] },
+    { step:2, total:3, title:'누구와 먹나요?', sub:'오늘의 상황만 알려주세요.', key:'situation', grid:2,
+      options:[
+        { emoji:'🙂', text:'혼자', hint:'빠르고 편하게', value:'혼밥' },
         { emoji:'👥', text:'친구', hint:'함께 나눠 먹기', value:'친구와' },
-        { emoji:'♥', text:'데이트', hint:'분위기도 중요하게', value:'데이트' },
+        { emoji:'♥', text:'데이트', hint:'분위기 있게', value:'데이트' },
         { emoji:'🏠', text:'가족', hint:'모두가 편한 메뉴', value:'가족' },
         { emoji:'🥂', text:'회식', hint:'여럿이 즐기기', value:'회식' },
-        { emoji:'💻', text:'팀프로젝트', hint:'간편하게 집중하기', value:'팀프로젝트' }
+        { emoji:'💻', text:'팀프로젝트', hint:'간편하게 집중하기', value:'팀프로젝트' },
       ] },
-
-    { step:2, total:5, title:'어떤 종류가 당기나요?', sub:'끌리는 쪽을 골라 주세요.', key:'type', grid:2,
-      options: [
-        { emoji:'🍚', text:'한식', hint:'익숙하고 편안한', value:'한식' },
-        { emoji:'🍝', text:'양식', hint:'파스타 · 스테이크', value:'양식' },
-        { emoji:'🥟', text:'중식', hint:'짜장 · 짬뽕 · 마라', value:'중식' },
-        { emoji:'🍣', text:'일식', hint:'초밥 · 라멘 · 돈카츠', value:'일식' },
-        { emoji:'🌮', text:'세계음식', hint:'새로운 맛 탐험', value:'세계음식' },
-        { emoji:'🤷', text:'상관없음', hint:'다 좋아요', value:null }
-      ] },
-
-    { step:3, total:5, title:'오늘 입맛은 어떤가요?', sub:'가장 끌리는 하나를 골라 주세요.', key:'need', grid:2,
-      options: [
-        { emoji:'🌶️', text:'매콤한', hint:'얼큰하게 풀고 싶을 때', value:'spicy' },
-        { emoji:'🍲', text:'국물 있는', hint:'따뜻하게 속 풀기', value:'hangover' },
-        { emoji:'🥗', text:'가벼운', hint:'부담 없이', value:'light' },
-        { emoji:'🍖', text:'든든한', hint:'배부르게 채우기', value:'full' },
-        { emoji:'😌', text:'순한', hint:'맵지 않게', value:'mild' },
-        { emoji:'🤷', text:'상관없음', hint:'뭐든 좋아요', value:null }
-      ] },
-
-    { step:4, total:5, title:'예산은 어느 정도인가요?', sub:'1인 기준이에요. 넘어도 괜찮으면 상관없음을 골라 주세요.', key:'budget', grid:2,
-      options: [
-        { emoji:'💸', text:'8천원 이하', hint:'가볍게', value:'8000' },
-        { emoji:'💵', text:'1만 2천원 이하', hint:'보통', value:'12000' },
-        { emoji:'💰', text:'2만원 이하', hint:'조금 여유 있게', value:'20000' },
-        { emoji:'🤷', text:'상관없음', hint:'가격은 신경 안 써요', value:null }
-      ] },
-
-    { step:5, total:5, title:'어떻게 먹을까요?', sub:'마지막이에요.', key:'mode', grid:2,
-      options: [
-        { emoji:'🏠', text:'집밥', hint:'직접 만들어 먹기', value:'집밥' },
-        { emoji:'🍽️', text:'외식', hint:'나가서 먹기', value:'외식' },
-        { emoji:'🛵', text:'배달', hint:'집에서 시켜 먹기', value:'배달' },
-        { emoji:'🤷', text:'상관없음', hint:'아직 안 정했어요', value:null }
+    { step:3, total:3, title:'한 끼 예산은요?', sub:'1인 기준의 예상 금액이에요. 초과 후보는 따로 알려드려요.', key:'budget', grid:2,
+      options:[
+        { emoji:'', text:'8천 원', hint:'가볍게', value:8000 },
+        { emoji:'', text:'1만 2천 원', hint:'부담 없이', value:12000 },
+        { emoji:'', text:'2만 원', hint:'조금 여유 있게', value:20000 },
+        { emoji:'', text:'상관없어요', hint:'가격보다 입맛', value:null },
       ] },
   ];
 
@@ -1202,8 +1200,8 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v5.1.0';
-  const APP_RELEASE_DATE = '2026-08-07';
+  const APP_VERSION = 'korea-beta-v6.1.0';
+  const APP_RELEASE_DATE = '2026-09-08';
   const APP_DATA_VERSION = 'menus-197-v4.9';
   let currentStep = 0;
   let answers = {};
@@ -1460,6 +1458,16 @@
   };
 
   let onboardingDraft = null;
+  let onboardingStep = 0;
+  let onboardingEditing = false;
+  let onboardingSaving = false;
+  let onboardingSession = 0;
+  let activeProfileUid = null;
+  let quizTransitionPending = false;
+
+  function profileStorageKey() {
+    return activeProfileUid ? `${STORAGE.profile}:${activeProfileUid}` : STORAGE.profile;
+  }
 
   // ─── Persistence ───
   function serializeDiaryRecords(records = diary) {
@@ -1628,13 +1636,13 @@
 
   function saveProfile() {
     try {
-      localStorage.setItem(STORAGE.profile, JSON.stringify(personalProfile || defaultPersonalProfile()));
+      localStorage.setItem(profileStorageKey(), JSON.stringify(personalProfile || defaultPersonalProfile()));
     } catch (e) { console.warn('profile save failed', e); }
   }
 
   function loadProfile() {
     try {
-      const raw = localStorage.getItem(STORAGE.profile);
+      const raw = localStorage.getItem(profileStorageKey());
       if (!raw) return defaultPersonalProfile();
       return normalizePersonalProfile(JSON.parse(raw));
     } catch (e) { return defaultPersonalProfile(); }
@@ -1661,114 +1669,157 @@
     }).join('')}</div>`;
   }
 
+  const TASTE_STEPS = [
+    { key:'homeCountry', title:'어떤 집밥이 익숙한가요?', help:'익숙한 음식 문화를 추천에 반영해요.', multiple:false },
+    { key:'preferredTypes', title:'자주 끌리는 음식은요?', help:'좋아하는 종류를 모두 골라주세요. 추천 순위에 반영해요.', multiple:true },
+    { key:'allergens', title:'꼭 피해야 할 재료가 있나요?', help:'알레르기가 있는 재료는 추천에서 제외해요. 실제 재료와 교차 오염은 식당·제품에 확인해 주세요.', multiple:true },
+    { key:'excludedIngredients', title:'먹지 않는 음식도 알려주세요.', help:'선택한 재료와 음식은 추천하지 않을게요.', multiple:true },
+    { key:'dietRestrictions', title:'지키고 있는 식단이 있나요?', help:'해당하는 것만 골라주세요. 없다면 선택 없이 시작해도 좋아요.', multiple:true },
+  ];
+
   function renderOnboarding() {
     if (!onboardingDraft) onboardingDraft = JSON.parse(JSON.stringify(personalProfile || defaultPersonalProfile()));
     const c = document.getElementById('onboardingContent');
     if (!c) return;
+    const step = TASTE_STEPS[onboardingStep];
+    const selected = onboardingDraft[step.key];
+    const count = Array.isArray(selected) ? selected.length : (selected ? 1 : 0);
     c.innerHTML = `
-      <div class="onboard-section">
-        <div class="onboard-label">Step 01 · Home Cuisine</div>
-        <div class="onboard-title">어느 나라의 집밥을 기준으로 할까요?</div>
-        <p class="onboard-help">집밥을 선택하면 이 국가의 일상적인 가정식을 대표 메뉴로 우선 추천합니다. 자동 감지 결과가 다르면 직접 바꿀 수 있습니다.</p>
-        ${renderChoiceButtons('homeCountry', ONBOARDING_OPTIONS.homeCountry, false, true)}
+      <div class="taste-progress" aria-label="입맛 설정 ${onboardingStep + 1}/${TASTE_STEPS.length}">
+        ${TASTE_STEPS.map((_, index) => `<span class="${index <= onboardingStep ? 'filled' : ''}"></span>`).join('')}
       </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 02</div>
-        <div class="onboard-title">자주 끌리는 음식 스타일</div>
-        <p class="onboard-help">선택한 카테고리만 기본 추천 범위에 포함합니다. 메뉴 추천에서 음식 종류를 직접 고르면 그 선택이 우선합니다.</p>
-        ${renderChoiceButtons('preferredTypes', ONBOARDING_OPTIONS.preferredTypes, true)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 03 · Safety Filter</div>
-        <div class="onboard-title">알레르기 가능 식재료</div>
-        <p class="onboard-help">선택한 항목이 포함될 가능성이 있는 메뉴는 추천 후보에서 제외합니다. 실제 원재료와 교차 오염 가능성은 식당·제품에 직접 확인해야 합니다.</p>
-        ${renderChoiceButtons('allergens', ONBOARDING_OPTIONS.allergens, true, true)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 04 · Hard Filter</div>
-        <div class="onboard-title">먹지 않는 재료와 음식</div>
-        <p class="onboard-help">알레르기와 별도로, 먹지 않거나 강하게 싫어하는 재료를 선택하세요. 추천 후보에서 제외합니다.</p>
-        ${renderChoiceButtons('excludedIngredients', ONBOARDING_OPTIONS.excludedIngredients, true, true)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 05 · Diet Rule</div>
-        <div class="onboard-title">식단 제한</div>
-        <p class="onboard-help">채식, 비건, 저탄수, 고단백, 다이어트 조건을 추천 전에 반영합니다.</p>
-        ${renderChoiceButtons('dietRestrictions', ONBOARDING_OPTIONS.dietRestrictions, true, true)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 06</div>
-        <div class="onboard-title">평소 선호하는 포만감</div>
-        <p class="onboard-help">바로 추천에서 기본값으로 사용합니다.</p>
-        ${renderChoiceButtons('defaultWeight', ONBOARDING_OPTIONS.defaultWeight, false)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 07</div>
-        <div class="onboard-title">1끼 예산</div>
-        <p class="onboard-help">선택 금액을 기준으로 하되 매장별 가격 차이를 고려해 조금 여유 있게 추천합니다.</p>
-        ${renderChoiceButtons('budgetMax', ONBOARDING_OPTIONS.budgetMax, false, true)}
-      </div>
-      <div class="onboard-section">
-        <div class="onboard-label">Step 08</div>
-        <div class="onboard-title">자주 생기는 식사 상황</div>
-        <p class="onboard-help">상황은 후보를 억지로 줄이기보다 점수와 추천 이유에 강하게 반영합니다.</p>
-        ${renderChoiceButtons('preferredSituations', ONBOARDING_OPTIONS.preferredSituations, true)}
-      </div>
-    `;
-  }
-
-  function decodeOnboardingValue(value) {
-    if (value === '__NULL__') return null;
-    if (/^-?\d+$/.test(value)) return Number(value);
-    return value;
+      <section class="taste-step" aria-labelledby="tasteStepTitle">
+        <div class="taste-step-meta"><span>나의 입맛 <b>${String(onboardingStep + 1).padStart(2, '0')}</b> / 05</span><span>${step.multiple ? '여러 개 선택 가능' : '하나만 선택'}</span></div>
+        <h1 id="tasteStepTitle" tabindex="-1">${step.title}</h1>
+        <p class="taste-step-help">${step.help}</p>
+        <div class="taste-options">
+          ${ONBOARDING_OPTIONS[step.key].map(([value, label]) => {
+            const picked = step.multiple ? (selected || []).includes(value) : selected === value;
+            return `<button type="button" class="taste-option${picked ? ' selected' : ''}" aria-pressed="${picked}" onclick="toggleOnboardingValue('${step.key}', '${value}', ${step.multiple})"><span>${label}</span><span class="taste-check" aria-hidden="true">${picked ? '✓' : '+'}</span></button>`;
+          }).join('')}
+        </div>
+        ${step.multiple ? `<button type="button" class="taste-none${count === 0 ? ' selected' : ''}" aria-pressed="${count === 0}" onclick="clearTasteSelection('${step.key}')">${step.key === 'preferredTypes' ? '가리는 것 없이 좋아요' : '해당하는 항목이 없어요'}<span aria-hidden="true">${count === 0 ? '✓' : ''}</span></button>` : ''}
+        <p class="taste-save-error" id="tasteSaveError" role="alert" hidden></p>
+        <p class="taste-private-note">${onboardingStep === 2 ? '선택한 알레르기 정보는 내 계정에 비공개로 저장돼요. 선택하지 않아도 다음으로 넘어갈 수 있어요.' : '선택한 입맛은 다른 사용자에게 공개되지 않아요.'}</p>
+      </section>`;
+    const back = document.getElementById('tasteBack');
+    back.disabled = onboardingSaving || (onboardingStep === 0 && !onboardingEditing);
+    back.textContent = onboardingStep === 0 && onboardingEditing ? '취소' : '이전';
+    const next = document.getElementById('tasteNext');
+    next.disabled = onboardingSaving;
+    next.textContent = onboardingSaving ? '저장 중…' : onboardingStep === TASTE_STEPS.length - 1 ? '저장하고 추천받기' : '다음';
   }
 
   function toggleOnboardingValue(key, rawValue, multi = true) {
-    if (!onboardingDraft) onboardingDraft = JSON.parse(JSON.stringify(personalProfile || defaultPersonalProfile()));
-    const value = decodeOnboardingValue(rawValue);
+    if (onboardingSaving || key !== TASTE_STEPS[onboardingStep].key) return;
     if (multi) {
-      if (!Array.isArray(onboardingDraft[key])) onboardingDraft[key] = [];
-      if (onboardingDraft[key].includes(value)) onboardingDraft[key] = onboardingDraft[key].filter(v => v !== value);
-      else onboardingDraft[key].push(value);
-    } else {
-      onboardingDraft[key] = onboardingDraft[key] === value ? null : value;
-    }
+      const values = onboardingDraft[key] || [];
+      onboardingDraft[key] = values.includes(rawValue) ? values.filter(v => v !== rawValue) : [...values, rawValue];
+    } else onboardingDraft[key] = rawValue;
     renderOnboarding();
+  }
+
+  function clearTasteSelection(key) {
+    if (onboardingSaving || key !== TASTE_STEPS[onboardingStep].key) return;
+    onboardingDraft[key] = [];
+    renderOnboarding();
+  }
+
+  function focusTasteStep() {
+    resetPanelScroll(document.getElementById('panel-onboarding'));
+    document.getElementById('tasteStepTitle')?.focus({ preventScroll:true });
+  }
+
+  function previousTasteStep() {
+    if (onboardingSaving) return;
+    if (onboardingStep > 0) { onboardingStep--; renderOnboarding(); focusTasteStep(); }
+    else if (onboardingEditing) switchPanel('profile');
+  }
+
+  function nextTasteStep() {
+    if (onboardingSaving) return;
+    if (onboardingStep === TASTE_STEPS.length - 1) return completeOnboarding();
+    onboardingStep++;
+    renderOnboarding();
+    focusTasteStep();
   }
 
   function openOnboarding(editMode = false) {
+    onboardingSession++;
     if (!personalProfile) personalProfile = loadProfile();
     onboardingDraft = JSON.parse(JSON.stringify(personalProfile));
+    onboardingStep = 0;
+    onboardingSaving = false;
+    onboardingEditing = Boolean(editMode && personalProfile.onboardingDone);
     renderOnboarding();
     switchPanel('onboarding', false);
+    focusTasteStep();
   }
 
-  function completeOnboarding() {
-    personalProfile = normalizePersonalProfile({ ...(personalProfile || defaultPersonalProfile()), ...(onboardingDraft || {}) });
-    personalProfile.onboardingDone = true;
-    saveProfile();
-    renderProfile();
-    renderToday();
-    trackEvent('taste_profile_saved', { homeCountry: personalProfile.homeCountry, preferredTypes: personalProfile.preferredTypes.length, allergens: personalProfile.allergens.length, exclusions: personalProfile.excludedIngredients.length });
-    showToast('입맛 설정을 저장했어요');
-    switchPanel('home');
+  async function completeOnboarding() {
+    if (onboardingSaving) return;
+    const next = normalizePersonalProfile({ ...personalProfile, ...onboardingDraft,
+      defaultWeight:null, budgetMax:null, preferredSituations:[], onboardingDone:true });
+    const uid = activeProfileUid;
+    const session = onboardingSession;
+    onboardingSaving = true;
+    renderOnboarding();
+    try {
+      if (!window.appEntry) throw new Error('로그인 상태를 확인한 뒤 다시 시도해 주세요.');
+      await window.appEntry.save(next);
+      if (activeProfileUid !== uid || onboardingSession !== session) return;
+      personalProfile = next;
+      saveProfile();
+      trackEvent('taste_profile_saved', { homeCountry:next.homeCountry, preferredTypes:next.preferredTypes.length, allergens:next.allergens.length, exclusions:next.excludedIngredients.length });
+      showToast('입맛을 저장했어요. 오늘의 한 끼를 골라볼까요?');
+      window.appEntry.finish();
+    } catch (error) {
+      if (activeProfileUid !== uid || onboardingSession !== session) return;
+      const box = document.getElementById('tasteSaveError');
+      box.textContent = '입맛을 저장하지 못했어요. 선택은 그대로 있으니 다시 시도해 주세요.';
+      box.hidden = false;
+    } finally {
+      if (activeProfileUid !== uid || onboardingSession !== session) return;
+      onboardingSaving = false;
+      document.getElementById('tasteNext').disabled = false;
+      document.getElementById('tasteNext').textContent = '저장하고 추천받기';
+      document.getElementById('tasteBack').disabled = false;
+    }
   }
 
-  function skipOnboarding() {
-    if (!personalProfile) personalProfile = loadProfile();
-    personalProfile.onboardingDone = true;
-    saveProfile();
-    showToast('나중에 입맛 탭에서 설정할 수 있어요');
-    switchPanel('home');
-  }
+  // Account changes never reuse another account's survey or recommendation draft.
+  window.tasteProfileBridge = {
+    bind(uid, preferences, completed) {
+      activeProfileUid = uid;
+      const local = loadProfile();
+      personalProfile = normalizePersonalProfile({ ...local, ...(preferences || {}),
+        defaultWeight:null, budgetMax:null, preferredSituations:[], onboardingDone:completed });
+      currentMenu = null;
+      answers = {};
+      recommendationSetCache = [];
+      clearRecommendationDraft();
+      saveProfile();
+    },
+    clear() {
+      onboardingSession++;
+      onboardingSaving = false;
+      activeProfileUid = null;
+      personalProfile = defaultPersonalProfile();
+      onboardingDraft = null;
+      currentMenu = null;
+      answers = {};
+      recommendationSetCache = [];
+      clearRecommendationDraft();
+    },
+  };
 
   function inferRestrictionTags(menu) {
-    const text = `${menu.name || ''} ${menu.en || ''} ${menu.desc || ''} ${(menu.ingredients || []).map(i => i[0]).join(' ')}`.toLowerCase();
+    const text = `${menu.name || ''} ${menu.en || ''} ${menu.desc || ''} ${(menu.ingredients || []).map(ingredientName).join(' ')}`.toLowerCase();
     const has = words => words.some(w => text.includes(w.toLowerCase()));
     const tags = new Set();
     if (has(['새우','shrimp','prawn'])) tags.add('shrimp');
     if (has(['연어','초밥','회','참치','새우','해물','오징어','조개','게','생선','명란','낙지','문어','굴','고등어','바지락','홍합','sushi','salmon','tuna','seafood'])) tags.add('seafood');
-    if (has(['돼지','삼겹','제육','돈까스','돈카츠','스팸','소시지','햄','베이컨','pork','sausage','bacon'])) tags.add('pork');
+    if (has(['돼지','삼겹','제육','족발','보쌈','돈까스','돈카츠','스팸','소시지','햄','베이컨','pork','sausage','bacon'])) tags.add('pork');
     if (has(['소고기','쇠고기','스테이크','불고기','규동','갈비','우육','beef','steak'])) tags.add('beef');
     if (has(['치킨','닭','닭가슴살','chicken'])) tags.add('chicken');
     if (has(['계란','달걀','에그','egg'])) tags.add('egg');
@@ -2073,7 +2124,9 @@
     else if (!ans.type && (personalProfile?.preferredTypes || []).includes(menu.type)) reasons.push(`내 입맛에 저장한 ${menu.type} 범위에서 골랐어요.`);
     else if (ans.mode === '집밥' && menu.type === getHomeCuisineType()) reasons.push(`${getHomeCountryInfo().label} 기준 집밥으로 익숙한 ${menu.type}이에요.`);
 
-    if (ans.budget !== null && ans.budget !== undefined) reasons.push(`예상 가격이 ${budgetLabel(ans.budget)} 범위에 들어와요.`);
+    if (Number(ans.budget) > 0) reasons.push(Number(menu.price) > Number(ans.budget)
+      ? `선택한 예산 ${Number(ans.budget).toLocaleString()}원을 초과하는 후보예요.`
+      : `예상 가격이 선택한 예산 ${Number(ans.budget).toLocaleString()}원 이내예요.`);
     else if (personalProfile?.budgetMax) reasons.push(`평소 예산 ${budgetLabel(personalProfile.budgetMax)} 안에서 골랐어요.`);
 
     if (ans.need) reasons.push(`지금 원하는 ‘${labelForOption(ans.need)}’ 느낌과 맞아요.`);
@@ -2282,7 +2335,8 @@
 
   function resetPreferenceOnly() {
     if (!confirm('식단 기록과 찜 목록은 유지하고, 선호/불호 학습 데이터만 초기화할까요?')) return;
-    personalProfile = defaultPersonalProfile();
+    const survey = Object.fromEntries(['homeCountry','preferredTypes','allergens','excludedIngredients','dietRestrictions','onboardingDone'].map(key => [key, personalProfile[key]]));
+    personalProfile = normalizePersonalProfile({ ...defaultPersonalProfile(), ...survey });
     saveProfile();
     renderProfile();
     showToast('개인화 취향 데이터가 초기화되었어요');
@@ -2302,8 +2356,9 @@
     switchPanel('result', false);
   }
   function resetAllData() {
-    if (!confirm('추천 기록, 식사 기록, 찜, 취향, 익명 분석 데이터와 보관 중인 피드백을 이 기기에서 모두 삭제할까요?')) return;
+    if (!confirm('식사 기록, 찜, 학습 기록과 보관 중인 피드백을 이 기기에서 삭제할까요? 계정에 저장한 입맛 설문은 다시 불러옵니다.')) return;
     Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
+    Object.keys(localStorage).filter(key => key.startsWith(`${STORAGE.profile}:`)).forEach(key => localStorage.removeItem(key));
     sessionStorage.removeItem(STORAGE.session);
     diary = [];
     favorites = [];
@@ -2322,6 +2377,7 @@
     closePrivacyModal();
     renderAnalyticsConsentPrompt();
     showToast('이 기기의 모든 사용자 데이터를 삭제했어요');
+    window.appEntry?.reload();
   }
 
   // ─── Date ───
@@ -2389,7 +2445,10 @@
       if (ans.time && m.time !== ans.time) return false;
 
       // 조리 방식은 물리적으로 불가능한 조합만 막습니다.
-      if (ans.mode === '집밥' && getHomeSuitability(m) === 'outside') return false;
+      if (ans.mode === '집밥') {
+        const cooking = getCookingInfo(m);
+        if (!cooking.available || (!ans.includeComplexCooking && !cooking.simple)) return false;
+      }
       if (ans.mode === '배달' && m.delivery === 'no') return false;
       if (ans.mode === '편의점' && !(m.method === '간단' && Number(m.price || 0) <= 7000)) return false;
 
@@ -2567,11 +2626,11 @@
     if (ans.method && m.method === ans.method) score += 5;
     if (ans.mode === '외식' && m.method === '외식') score += 8;
     if (ans.mode === '배달' && m.delivery !== 'no') score += 7;
-    if (ans.mode === '집밥' && ['간단','요리'].includes(m.method)) {
+    if (ans.mode === '집밥' && getCookingInfo(m).available) {
       score += 7;
       const homeSuitability = getHomeSuitability(m);
       const familiarity = getMenuFamiliarity(m);
-      const cookMinutes = Number(m.cook || 0);
+      const cookMinutes = getCookingInfo(m).minutes;
 
       // '집에서 만들 수 있음'보다 '한국 사용자가 집밥으로 기대하는 메뉴'를 우선합니다.
       if (homeSuitability === 'common') score += 11;
@@ -2595,9 +2654,9 @@
     if (ans.need === 'hangover' && m.soup && m.spicy <= 1) score += 9;
     if (ans.need === 'spicy' && m.spicy >= 1) score += 14;
     if (ans.budget !== null && ans.budget !== undefined) {
-      const targetBudget = normalizeBudgetTarget(ans.budget);
+      const targetBudget = Number(ans.budget);
       if (targetBudget && Number(m.price || 0) <= targetBudget) score += 5;
-      else if (targetBudget && isWithinBudget(m.price, targetBudget)) score += 1;
+      else if (targetBudget > 0 && Number(m.price || 0) <= targetBudget * 1.1) score += 1;
     }
     if (ans.preferEasy) {
       if (Number(m.cook || 0) <= 15) score += 7;
@@ -2623,7 +2682,7 @@
     score -= Math.min((stats.rejects || 0) * 1.2, 8);
     score += Math.min((stats.likes || 0) * 1.4, 8);
 
-    // 정렬에는 원점수를 유지합니다. 화면 표시는 toMatchPercent()에서 99%로 제한합니다.
+    // 정렬에는 원점수를 유지합니다. 화면에는 검증되지 않은 정확도 백분율 대신 추천 이유를 표시합니다.
     // 이전에는 99점 상한 때문에 다수 메뉴가 동점이 되어 가나다순으로 선택되는 문제가 있었습니다.
     return Math.max(0, score);
   }
@@ -2632,6 +2691,7 @@
   function saveRecommendationDraft(stage = 'quiz', extra = {}) {
     try {
       localStorage.setItem(STORAGE.recommendationDraft, JSON.stringify({
+        flowVersion: 2,
         stage,
         currentStep,
         answers: { ...answers },
@@ -2651,8 +2711,9 @@
       const raw = localStorage.getItem(STORAGE.recommendationDraft);
       if (!raw) return null;
       const draft = JSON.parse(raw);
+      if (draft.flowVersion !== 2) return null;
       if (draft.answers && Object.prototype.hasOwnProperty.call(draft.answers, 'budget')) {
-        draft.answers.budget = normalizeBudgetTarget(draft.answers.budget);
+        draft.answers.budget = Number(draft.answers.budget) > 0 ? Number(draft.answers.budget) : null;
       }
       const ageMs = Date.now() - new Date(draft.updatedAt || 0).getTime();
       if (!Number.isFinite(ageMs) || ageMs > 12 * 60 * 60 * 1000) {
@@ -2683,6 +2744,7 @@
   }
 
   function resumeRecommendationFlow() {
+    if (!window.appEntry?.canRecommend()) return;
     const draft = getRecommendationDraft();
     if (!draft) { startQuiz(); return; }
     answers = draft.answers && typeof draft.answers === 'object' ? draft.answers : { contextTime: getCurrentMealTime() };
@@ -2704,82 +2766,30 @@
   // ─── Render question ───
   function renderQuestion() {
     const q = questions[currentStep];
-    document.getElementById('stepNum').textContent = `빠른 결정 · ${q.step}/3`;
+    if (!q) return;
+    for (const id of ['stepNum','quizFlowLabel']) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = `빠른 결정 · ${q.step}/${questions.length}`;
+    }
     document.getElementById('questionText').textContent = q.title;
     document.getElementById('questionSub').textContent = q.sub;
     document.getElementById('stepCurrent').textContent = q.step;
-    document.getElementById('stepTotal').textContent = q.total;
-    const flowLabel = document.getElementById('quizFlowLabel');
-    if (flowLabel) flowLabel.textContent = `빠른 결정 · ${q.step}/3`;
-
-    const stepsEl = document.getElementById('progressSteps');
-    stepsEl.innerHTML = '';
-    for (let i = 0; i < q.total; i++) {
-      const div = document.createElement('div');
-      div.className = 'progress-step';
-      if (i < currentStep) div.classList.add('done');
-      else if (i === currentStep) div.classList.add('current');
-      stepsEl.appendChild(div);
-    }
-
-    const candidates = filterMenusSoft(answers);
-    document.getElementById('candidateNum').textContent = candidates.length;
-
+    document.getElementById('stepTotal').textContent = questions.length;
+    document.getElementById('progressSteps').innerHTML = questions.map((_, i) => `<div class="progress-step ${i < currentStep ? 'done' : i === currentStep ? 'current' : ''}"></div>`).join('');
+    document.getElementById('candidateNum').textContent = filterMenusSoft(answers).length;
     const opts = document.getElementById('optionsContainer');
-    opts.className = 'options' + (q.grid === 2 ? ' grid-2' : '');
+    opts.className = 'options grid-2';
     opts.innerHTML = '';
     const skipRow = document.getElementById('skipBtn')?.closest('.skip-row');
     if (skipRow) skipRow.hidden = true;
-    if (q.bundle) {
-      const chosen = Array.isArray(answers._cravings) ? answers._cravings : [];
-      opts.className = 'options preference-bundle';
-      opts.innerHTML = `
-        <div class="craving-options">
-          ${q.options.map(opt => `<button type="button" class="preference-chip ${chosen.includes(opt.value) ? 'selected' : ''}" data-value="${escapeHtml(opt.value)}" onclick="togglePreferenceBundle('${opt.value}', this)">${opt.text}</button>`).join('')}
-        </div>
-        <div class="budget-heading"><strong>1인 예산</strong><span>딱 맞는 가격보다 만족스러운 범위로 찾아요.</span></div>
-        <div class="budget-options">
-          ${q.budgets.map(opt => `<button type="button" class="preference-chip ${answers._budgetSelected && (opt.value === 'any' ? answers.budget === null : Number(opt.value) === Number(answers.budget)) ? 'selected' : ''}" onclick="selectPreferenceBudget('${opt.value}', this)">${opt.text}</button>`).join('')}
-        </div>
-        <div class="preference-summary" id="preferenceSummary">${buildPreferenceSummary()}</div>
-        <button class="preference-submit" type="button" onclick="completePreferenceBundle()">내 메뉴 추천받기 <span aria-hidden="true">→</span></button>`;
-      document.getElementById('backBtn').disabled = false;
-      renderFilterSummary();
-      return;
+    for (const opt of q.options) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'option';
+      button.innerHTML = `${opt.emoji ? `<span class="opt-emoji">${opt.emoji}</span>` : ''}<span><span class="opt-text">${opt.text}</span><span class="opt-hint">${opt.hint}</span></span>`;
+      button.addEventListener('click', () => selectOption(q.key, opt.value, button));
+      opts.appendChild(button);
     }
-    q.options.forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'option';
-      if (answers[q.key] === opt.value) btn.classList.add('selected');
-      btn.innerHTML = `
-        <span class="opt-emoji">${opt.emoji}</span>
-        <div style="flex:1;">
-          <div class="opt-text">${opt.text}</div>
-          ${opt.hint ? `<div class="opt-hint">${opt.hint}</div>` : ''}
-        </div>
-      `;
-      btn.addEventListener('click', () => selectOption(q.key, opt.value, btn));
-      opts.appendChild(btn);
-    });
-
-    if (q.key === 'situation') {
-      const note = document.createElement('aside');
-      note.className = 'occasion-note';
-      note.id = 'occasionNote';
-      note.innerHTML = '<strong>식사 상황을 골라 주세요</strong><span>상황에 맞는 메뉴 분위기를 먼저 맞출게요.</span>';
-      opts.appendChild(note);
-
-      const next = document.createElement('button');
-      next.className = 'occasion-next';
-      next.id = 'occasionNext';
-      next.type = 'button';
-      next.disabled = !answers.situation;
-      next.innerHTML = '다음 · 먹고 싶은 것 <span aria-hidden="true">→</span>';
-      next.addEventListener('click', continueOccasion);
-      opts.appendChild(next);
-      updateOccasionFlowState();
-    }
-
     document.getElementById('backBtn').disabled = currentStep === 0;
     renderFilterSummary();
   }
@@ -2875,25 +2885,22 @@
     });
   }
 
-  function selectOption(key, value, btnEl) {
-    if (key === 'situation') {
-      answers[key] = value;
-      document.querySelectorAll('#optionsContainer .option').forEach(btn => btn.classList.remove('selected'));
-      btnEl.classList.add('selected');
-      updateOccasionFlowState();
-      saveRecommendationDraft('quiz');
-      return;
-    }
-    btnEl.classList.add('selected');
+  function selectOption(key, value, button) {
+    if (quizTransitionPending || questions[currentStep]?.key !== key) return;
+    quizTransitionPending = true;
+    button.classList.add('selected');
+    const step = currentStep;
     setTimeout(() => {
+      quizTransitionPending = false;
+      if (!window.appEntry?.canRecommend() || currentStep !== step || document.body.dataset.panel !== 'quiz') return;
       answers[key] = value;
       history.push({ key, value });
-      trackEvent('recommendation_step_completed', { step: currentStep + 1, key, value: labelForOption(value), conditions: { ...answers } });
+      trackEvent('recommendation_step_completed', { step:step + 1, key, value:labelForOption(value), conditions:{ ...answers } });
       currentStep++;
       saveRecommendationDraft('quiz');
       if (currentStep >= questions.length) showResult();
       else renderQuestion();
-    }, 280);
+    }, 160);
   }
 
   function occasionDesignNote(situation) {
@@ -2954,6 +2961,13 @@
 
   // ─── Show Result ───
   function showResult() {
+    if (!window.appEntry?.canRecommend()) return;
+    const scope = document.getElementById('cookingScope');
+    if (scope) {
+      scope.hidden = answers.mode !== '집밥';
+      scope.innerHTML = answers.mode === '집밥'
+        ? `<span>${answers.includeComplexCooking ? '시간이 걸려도 직접 만들 수 있는 메뉴예요.' : '레시피 기준 30분 이내의 간편 요리를 골랐어요.'}</span><button type="button" onclick="toggleCookingScope()">${answers.includeComplexCooking ? '간편 요리만 보기' : '시간 여유 있어요 · 모든 레시피'}</button>` : '';
+    }
     // 이전 메뉴의 결정 상태가 남아 있으면 새 추천 결과에 엉뚱한 배너가 뜬다
     clearDecidedActions();
     const candidates = filterMenusSoft(answers);
@@ -2963,6 +2977,9 @@
     trackEvent('recommendation_completed', { candidateCount: scored.length, answers: { ...answers } });
 
     if (scored.length === 0) {
+      currentMenu = null;
+      recommendationSetCache = [];
+      window._runners = [];
       const kept = getStrictMissMessages(answers);
       document.getElementById('resultSub').textContent = '선택한 조건을 모두 만족하는 메뉴가 없어요.';
       document.getElementById('topPick').innerHTML = `
@@ -3084,7 +3101,7 @@
     const host = document.getElementById('resultDecidedActions');
     if (!host || !currentMenu) return;
 
-    const canCook = currentMenu.homeSuitability !== 'outside';
+    const canCook = getCookingInfo(currentMenu).available;
     host.innerHTML = `
       <div class="decided-banner">
         <strong>${escapeHtml(currentMenu.name)}(으)로 정했어요</strong>
@@ -3183,6 +3200,8 @@
 
   // ─── Start quiz ───
   function startQuiz() {
+    if (!window.appEntry?.canRecommend()) return;
+    quizTransitionPending = false;
     currentStep = 0;
     answers = { contextTime: getCurrentMealTime() };
     history = [];
@@ -3193,15 +3212,16 @@
     recommendationSetCache = [];
     recommendationIndex = 0;
     saveRecommendationDraft('quiz');
-    trackEvent('recommendation_started', { flow: 'figma_three_step', mealTime: answers.contextTime });
+    trackEvent('recommendation_started', { flow: 'account_three_step', mealTime: answers.contextTime });
     switchPanel('quiz', false);
     renderQuestion();
   }
 
   function quickRecommend() {
+    if (!window.appEntry?.canRecommend()) return;
     currentStep = questions.length;
     const mealTime = getCurrentMealTime();
-    answers = { time: mealTime };
+    answers = { contextTime: mealTime };
     if (personalProfile?.defaultWeight) answers.weight = personalProfile.defaultWeight;
     if ((personalProfile?.preferredSituations || []).length === 1) answers.situation = personalProfile.preferredSituations[0];
     history = Object.keys(answers).map(key => ({ key, value: answers[key] }));
@@ -4480,6 +4500,7 @@
   }
 
   function switchPanel(name, updateNav = true) {
+    if (window.appEntry && !window.appEntry.allowPanel(name)) return false;
     let nextPanel = document.getElementById('panel-' + name);
     if (!nextPanel) {
       console.error('존재하지 않는 패널:', name);
@@ -6288,6 +6309,8 @@
     sanitizeMenuDatabase();
     normalizeCuisineCategories();
     window.__curatedCoverageReport = getCuratedCoverageReport();
+    const supplemental = await loadSupplementalAppData();
+    if (!supplemental.loaded.recipes) throw new Error('재료 정보를 불러오지 못했어요. 다시 시도해 주세요.');
     enrichMenusForRecommendation();
     initDiary();
     compactProfileAgainstMenuDatabase();
@@ -6299,13 +6322,6 @@
     renderFavorites();
     renderAnalyticsConsentPrompt();
 
-    // 보조 데이터는 첫 화면을 막지 않고 뒤에서 불러옵니다.
-    // recipes.json 등이 느리거나 실패해도 메뉴 탐색과 추천은 계속 동작합니다.
-    loadSupplementalAppData().catch(error => {
-      APP_DATA_STATE.supplemental = 'partial';
-      APP_DATA_STATE.warnings.push(String(error?.message || error));
-      console.warn('보조 데이터 초기화 실패:', error);
-    });
 
     if (getAnalyticsConsent() === true) {
       trackEvent('app_open', { returning: visits > 1, mealRecordCount: diary.length, favoriteCount: favorites.length });
@@ -6316,7 +6332,8 @@
     checkApiHealth().catch(() => {});
   }
 
-  initApp().then(() => {
+  window.appDataReady = initApp();
+  window.appDataReady.then(() => {
     document.body.dataset.appReady = 'true';
     if (!document.body.dataset.panel) document.body.dataset.panel = 'home';
   }).catch(error => {

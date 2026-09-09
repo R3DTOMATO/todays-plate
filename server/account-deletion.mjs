@@ -145,6 +145,8 @@ async function anonymizeOwnComments(uid, log) {
 // ─── 4. 사용자 문서 ───
 
 async function deleteUserDocs(uid, log) {
+  // Private taste data must be removed successfully before deleting the account.
+  await firestoreRequest(`/users/${uid}/private/taste`, { method: 'DELETE' });
   await deleteSubcollection(`/users/${uid}/savedPosts`);
   await deleteSubcollection(`/users/${uid}/blockedUsers`);
   try {

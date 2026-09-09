@@ -98,7 +98,7 @@ async function ensureUserDoc(user) {
     if (snapshot.exists()) return;
 
     await setDoc(ref, {
-      displayName: user.displayName || defaultNickname(user),
+      displayName: (user.displayName || defaultNickname(user)).slice(0, 12),
       photoUrl: user.photoURL || null,
       // 이메일은 저장하지 않는다. Auth가 이미 보관하고 있고,
       // Firestore에 두면 다른 사용자에게 노출될 위험이 생긴다.
@@ -126,8 +126,6 @@ async function runProviderSignIn(provider) {
   } catch (error) {
     const fallback = [
       'auth/popup-blocked',
-      'auth/popup-closed-by-user',
-      'auth/cancelled-popup-request',
       'auth/operation-not-supported-in-this-environment'
     ];
     if (fallback.includes(error?.code)) {
