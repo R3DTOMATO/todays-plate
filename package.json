@@ -1,6 +1,6 @@
 {
   "name": "todays-plate-beta-api",
-  "version": "5.0.0",
+  "version": "6.1.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -20,6 +20,7 @@
     "validate:v4.8.4": "node scripts/validate-ui-input-v4.8.4.mjs",
     "backup": "node server/backup-data.mjs",
     "validate:v4.9": "node scripts/validate-release-v4.9.mjs",
-    "validate:v5.0": "node scripts/validate-release-v5.0.mjs"
+    "validate:v5.0": "node scripts/validate-release-v5.0.mjs",
+    "test:entry": "python scripts/test-entry-flow.py"
   }
 }

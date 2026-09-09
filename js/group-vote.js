@@ -480,6 +480,8 @@ export async function shareCurrentSession() {
 // 앱 로드 시 ?vote=<id> 가 있으면 자동으로 그룹 패널을 연다.
 
 export async function handleIncomingVoteLink() {
+  // Resume the link after account entry and the initial taste survey finish.
+  if (!window.appEntry?.canRecommend()) return false;
   const sessionId = new URLSearchParams(window.location.search).get('vote');
   if (!sessionId) return false;
   if (!FIREBASE_READY || !AUTH_READY) {
