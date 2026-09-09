@@ -63,6 +63,17 @@ async function ensureMap(center) {
       level: 4,
     });
     mapInstance.setZoomable(true);
+    // Split views and tablet rotation change the canvas without a new search.
+    // Ignore hidden panels and preserve the user's current map position.
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(entries => {
+        if (!entries.some(entry => entry.contentRect.width && entry.contentRect.height)) return;
+        const position = mapInstance.getCenter();
+        mapInstance.relayout();
+        mapInstance.setCenter(position);
+      });
+      observer.observe(container);
+    }
   } else {
     mapInstance.setCenter(new kakao.maps.LatLng(center.lat, center.lng));
   }
