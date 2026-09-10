@@ -7,6 +7,7 @@ import {
   listReports, fetchTarget, hidePost, restorePost, hideComment,
   resolveReport, countReportsForTarget,
 } from './admin-reports.mjs';
+import { readAnalyticsReport, reportOptions } from './analytics-report.mjs';
 import { deleteAccountData } from './account-deletion.mjs';
 
 const PORT = Number(process.env.PORT || 8787);
@@ -256,6 +257,7 @@ async function handleEvents(req, res, origin) {
   const events = Array.isArray(body.events) ? body.events.slice(0, 50) : [];
   if (!events.length) return sendJson(res, 400, { error: 'events_required' }, origin);
 
+  const acknowledgedEventIds = [];
   let accepted = 0;
   let duplicates = 0;
   let invalid = 0;
@@ -266,7 +268,7 @@ async function handleEvents(req, res, origin) {
     const anonymousUserId = cleanString(raw.anonymousUserId, 100);
     const sessionId = cleanString(raw.sessionId, 100);
     if (!name || !eventId || !anonymousUserId || !sessionId) { invalid += 1; continue; }
-    if (seenEventIds.has(eventId)) { duplicates += 1; continue; }
+    if (seenEventIds.has(eventId)) { duplicates += 1; acknowledgedEventIds.push(eventId); continue; }
 
     const rawTimestamp = raw.occurredAt || raw.timestamp;
     const timestamp = Number.isFinite(Date.parse(rawTimestamp)) ? new Date(rawTimestamp).toISOString() : new Date().toISOString();
@@ -278,6 +280,8 @@ async function handleEvents(req, res, origin) {
       timestamp,
       receivedAt: new Date().toISOString(),
       appVersion: cleanString(raw.appVersion, 60),
+      recommendationId: cleanString(raw.recommendationId, 100),
+      isTestTraffic: raw.isTestTraffic === true,
       firstVisit: Boolean(raw.firstVisit),
       previousUseCount: parseNumber(raw.previousUseCount, { min: 0, max: 1_000_000, fallback: 0 }),
       properties: sanitizeProperties(raw.properties || {}),
@@ -285,9 +289,10 @@ async function handleEvents(req, res, origin) {
     await appendJsonLine(monthlyFilename('events', timestamp), record);
     keepBounded(seenEventIds, eventId);
     accepted += 1;
+    acknowledgedEventIds.push(eventId);
   }
   if (!accepted && !duplicates) return sendJson(res, 400, { error: 'no_valid_events', invalid }, origin);
-  return sendJson(res, 202, { accepted, duplicates, invalid, received: events.length }, origin);
+  return sendJson(res, 202, { accepted, duplicates, invalid, received: events.length, acknowledgedEventIds }, origin);
 }
 
 async function handleFeedback(req, res, origin) {
@@ -480,6 +485,12 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && requestUrl.pathname === '/api/resolve-location') return await handleResolveLocation(requestUrl, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/events') return await handleEvents(req, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
+    if (req.method === 'GET' && requestUrl.pathname === '/api/admin/analytics') {
+      await requireAdmin(req);
+      const params = Object.fromEntries(requestUrl.searchParams);
+      params.excludeIds = [process.env.ANALYTICS_EXCLUDED_IDS, params.excludeIds].filter(Boolean).join(',');
+      return sendJson(res, 200, await readAnalyticsReport(DATA_DIR, reportOptions(params)), origin);
+    }
     if (req.method === 'GET' && requestUrl.pathname === '/api/admin/reports') return await handleAdminReports(req, requestUrl, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/admin/action') return await handleAdminAction(req, res, origin);
     if (req.method === 'POST' && requestUrl.pathname === '/api/account/delete') return await handleAccountDelete(req, res, origin);
