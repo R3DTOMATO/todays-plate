@@ -1377,24 +1377,51 @@
     return Number(localStorage.getItem(STORAGE.visitCount) || 0);
   }
 
+  let analyticsSyncRunning = false;
+  let analyticsRetryTimer = null;
+  let analyticsRecommendationId = '';
+  let analyticsSelectedMenu = '';
+  let analyticsSelectedAt = '';
+  const linkedAnalyticsEvents = new Set([
+    'recommendation_started', 'recommendation_step_completed', 'recommendation_completed',
+    'recommendation_result_viewed', 'alternative_menu_selected', 'menu_selected',
+    'menu_rejected', 'rejection_reason_selected',
+  ]);
+
   async function syncAnalyticsEvents() {
-    if (!API_BASE_URL || getAnalyticsConsent() !== true || !navigator.onLine) return;
-    const events = readAnalyticsEvents();
-    const pending = events.filter(event => !event.syncedAt && event.eventId).slice(0, 50);
-    if (!pending.length) return;
+    if (analyticsSyncRunning || !API_BASE_URL || getAnalyticsConsent() !== true || !navigator.onLine) return;
+    analyticsSyncRunning = true;
+    clearTimeout(analyticsRetryTimer);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ events: pending }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const syncedIds = new Set(pending.map(event => event.eventId));
-      const now = new Date().toISOString();
-      writeAnalyticsEvents(events.map(event => syncedIds.has(event.eventId) ? { ...event, syncedAt: now } : event));
+      while (getAnalyticsConsent() === true && navigator.onLine) {
+        const pending = readAnalyticsEvents().filter(event => !event.syncedAt && event.eventId).slice(0, 50);
+        if (!pending.length) break;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        let result;
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/events`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ events: pending }), signal: controller.signal,
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          result = await response.json();
+        } finally { clearTimeout(timeout); }
+        const pendingIds = new Set(pending.map(event => event.eventId));
+        const acknowledged = Array.isArray(result.acknowledgedEventIds)
+          ? result.acknowledgedEventIds.filter(id => pendingIds.has(id))
+          : result.invalid === 0 && result.accepted + result.duplicates === pending.length
+            ? [...pendingIds] : [];
+        if (!acknowledged.length) throw new Error('events_not_acknowledged');
+        if (getAnalyticsConsent() !== true) break;
+        const ids = new Set(acknowledged), now = new Date().toISOString();
+        // Re-read so actions added during fetch aren't overwritten.
+        writeAnalyticsEvents(readAnalyticsEvents().map(event => ids.has(event.eventId) ? { ...event, syncedAt: now } : event));
+      }
     } catch (error) {
       console.warn('analytics sync failed', error);
-    }
+      if (getAnalyticsConsent() === true) analyticsRetryTimer = setTimeout(syncAnalyticsEvents, 30000);
+    } finally { analyticsSyncRunning = false; }
   }
 
   function trackEvent(name, properties = {}) {
@@ -1405,6 +1432,9 @@
         eventId: makeId('event'),
         name,
         properties: sanitizeAnalyticsProperties(properties),
+        recommendationId: Object.prototype.hasOwnProperty.call(properties, 'recommendationId')
+          ? properties.recommendationId : linkedAnalyticsEvents.has(name) ? analyticsRecommendationId : '',
+        isTestTraffic: localStorage.getItem('todaysplate_analytics_test_v1') === 'true',
         anonymousUserId: getAnonymousUserId(),
         sessionId: getSessionId(),
         occurredAt: new Date().toISOString(),
@@ -2692,6 +2722,9 @@
     try {
       localStorage.setItem(STORAGE.recommendationDraft, JSON.stringify({
         flowVersion: 2,
+        recommendationId: analyticsRecommendationId,
+        analyticsSelectedMenu,
+        analyticsSelectedAt,
         stage,
         currentStep,
         answers: { ...answers },
@@ -2725,6 +2758,9 @@
   }
 
   function clearRecommendationDraft() {
+    analyticsRecommendationId = '';
+    analyticsSelectedMenu = '';
+    analyticsSelectedAt = '';
     localStorage.removeItem(STORAGE.recommendationDraft);
     renderResumeRecommendation();
   }
@@ -2747,6 +2783,9 @@
     if (!window.appEntry?.canRecommend()) return;
     const draft = getRecommendationDraft();
     if (!draft) { startQuiz(); return; }
+    analyticsRecommendationId = draft.recommendationId || '';
+    analyticsSelectedMenu = draft.analyticsSelectedMenu || '';
+    analyticsSelectedAt = draft.analyticsSelectedAt || '';
     answers = draft.answers && typeof draft.answers === 'object' ? draft.answers : { contextTime: getCurrentMealTime() };
     history = Array.isArray(draft.history) ? draft.history : [];
     currentStep = Math.max(0, Math.min(Number(draft.currentStep || 0), questions.length - 1));
@@ -3088,6 +3127,9 @@
     if (!currentMenu) return;
     recordMenuFeedback(currentMenu, 'accept', answers.time || getCurrentMealTime());
     decidedMenuName = currentMenu.name;
+    if (analyticsSelectedMenu !== currentMenu.name) analyticsSelectedAt = new Date().toISOString();
+    analyticsSelectedMenu = currentMenu.name;
+    saveRecommendationDraft('result', { menuName: currentMenu.name });
     trackEvent('menu_selected', { menuId: currentMenu.id || currentMenu.name, menuName: currentMenu.name });
     showToast(`'${currentMenu.name}' 선호를 학습했어요`);
     // 곧바로 기록 모달을 띄우지 않고 다음 행동을 고를 수 있게 한다.
@@ -3201,6 +3243,9 @@
   // ─── Start quiz ───
   function startQuiz() {
     if (!window.appEntry?.canRecommend()) return;
+    analyticsRecommendationId = makeId('recommendation');
+    analyticsSelectedMenu = '';
+    analyticsSelectedAt = '';
     quizTransitionPending = false;
     currentStep = 0;
     answers = { contextTime: getCurrentMealTime() };
@@ -3219,6 +3264,9 @@
 
   function quickRecommend() {
     if (!window.appEntry?.canRecommend()) return;
+    analyticsRecommendationId = makeId('recommendation');
+    analyticsSelectedMenu = '';
+    analyticsSelectedAt = '';
     currentStep = questions.length;
     const mealTime = getCurrentMealTime();
     answers = { contextTime: mealTime };
@@ -3739,6 +3787,7 @@
   // ─── Record Modal ───
   let selectedMealTime = null;
   let recordMenuSelection = null;
+  let recordRecommendationContext = null;
 
   function menuSearchText(menu) {
     return `${menu?.name || ''} ${menu?.en || ''} ${menu?.type || ''} ${menu?.desc || ''} ${(menu?.ingredients || []).map(ingredientName).join(' ')}`.toLowerCase();
@@ -3834,6 +3883,9 @@
 
   function openRecordModal(menu = currentMenu, direct = false, recordId = '') {
     const existing = recordId ? diary.find(item => item.id === recordId) : null;
+    recordRecommendationContext = !existing && analyticsRecommendationId && menu?.name === analyticsSelectedMenu
+      && ['result', 'menudetail', 'recipe', 'nearby'].includes(document.body.dataset.panel)
+      ? { id: analyticsRecommendationId, name: menu.name, selectedAt: analyticsSelectedAt } : null;
     editingRecordId = existing?.id || '';
     recordMenuSelection = existing?.menu || menu || null;
     selectedMealTime = existing?.time || answers?.contextTime || answers?.time || getCurrentMealTime();
@@ -4003,6 +4055,9 @@
     const previousDiary = diary.slice();
     const record = {
       id: existing?.id || makeId('meal'),
+      recommendationId: existing?.recommendationId || (recordRecommendationContext?.name === selectedMenu.name
+        && dateTime.getTime() >= Math.floor(Date.parse(recordRecommendationContext.selectedAt) / 60000) * 60000
+        && dateTime.getTime() <= Date.now() ? recordRecommendationContext.id : ''),
       date: dateTime.toDateString(),
       dateTime: dateTime.toISOString(),
       time: selectedMealTime,
@@ -4048,6 +4103,9 @@
     renderDiary();
     renderProfile();
     trackEvent(existing ? 'meal_record_updated' : 'meal_record_created', {
+      recommendationId: record.recommendationId,
+      recordId: record.id,
+      mealOccurredAt: record.dateTime,
       menuId: selectedMenu.id || selectedMenu.name,
       customMenu: Boolean(selectedMenu.isCustomDiaryMenu),
       mealTime: selectedMealTime,
@@ -4265,6 +4323,9 @@
     if (!menu) return;
     currentMenu = menu;
     answers = {};
+    analyticsRecommendationId = '';
+    analyticsSelectedMenu = '';
+    analyticsSelectedAt = '';
     rememberViewedMenu(menu.name);
     // 탐색에서 고른 메뉴도 "추천 완료"가 아니라 상세 정보를 보여준다.
     menuDetailReturnPanel = document.body.dataset.panel || 'favorites';
@@ -6246,6 +6307,7 @@
     // 동의는 앱 실행 후에 누를 수 있으므로 그 시점에 알려 준다.
     document.dispatchEvent(new CustomEvent('analyticsConsentChanged', { detail: { enabled } }));
     if (!enabled) {
+      clearTimeout(analyticsRetryTimer);
       localStorage.removeItem(STORAGE.analytics);
     } else {
       trackEvent('analytics_consent_changed', { enabled: true });

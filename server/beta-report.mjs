@@ -1,3 +1,4 @@
+import { readAnalyticsReport, reportOptions } from './analytics-report.mjs';
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -98,4 +99,9 @@ const report = {
   errorsByCode: countBy(errors, (event) => event.properties?.errorCode),
 };
 
+// Old all-time counts remain available. Linked cohort has separate period/filters.
+report.linkedRecommendations = await readAnalyticsReport(DATA_DIR, reportOptions({
+  from: process.env.ANALYTICS_FROM, to: process.env.ANALYTICS_TO,
+  includeTests: process.env.ANALYTICS_INCLUDE_TESTS, excludeIds: process.env.ANALYTICS_EXCLUDED_IDS,
+}));
 console.log(JSON.stringify(report, null, 2));
