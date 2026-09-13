@@ -1,12 +1,13 @@
 import { recommendMenus, explainRecommendation } from '../js/recommendation-engine.js';
 import fs from 'fs';
 
-const menus = JSON.parse(fs.readFileSync('../data/menus.json','utf8'));
+const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
 
 const situations = ['혼밥','친구','데이트','가족','회식','야식'];
 const typeSets = [['한식'],['양식'],['중식'],['일식'],['세계음식'],[]];
 const moodSets = [['매콤'],['국물'],['가벼움'],['든든'],['매콤','국물'],['순함'],[]];
-const budgets = [8000,12000,20000,0];
+// 퀴즈 예산 선택값과 같아야 한다 (BUDGET_TIERS 키: 10000/30000/50000, 0 = 상관없음)
+const budgets = [10000,30000,50000,0];
 const modes = ['집밥','외식','배달'];
 
 let total=0, zero=0, fallback=0, under3=0;

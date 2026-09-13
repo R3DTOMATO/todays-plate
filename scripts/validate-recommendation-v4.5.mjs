@@ -7,9 +7,11 @@ ok('앱 버전 v4.5 이상', /korea-beta-(?:v4\.(5|6|7|8|9)|v[5-9]\.\d+)/.test(a
 ok('국가별 집밥 설정', app.includes('HOME_COUNTRY_CONFIG') && app.includes("JP: { label:'일본'") && app.includes("cuisine:'일식'"));
 ok('집밥 대표 메뉴 국가 우선', (app.includes('prioritizeHomeCuisineForHomeMode') || app.includes('prioritizeMarketCuisine')) && app.includes('getHomeCuisineType'));
 ok('라조기 정확 키워드', JSON.stringify(keywords['라조기']) === JSON.stringify(['라조기']), JSON.stringify(keywords['라조기']));
-ok('일반 중식에서 마라 폴백 금지', app.includes("return ['중화요리', '중국집', '반점']") && app.includes("if (/마라/.test(name))"));
-ok('식당 후보 판매 여부 고지', app.includes('메뉴 판매 여부 확인') && app.includes('전체 메뉴판을 제공하지 않습니다'));
-ok('정확 메뉴 후 음식점 후보 2단계', app.includes("await collect(exactQueries, 'exact'") && app.includes("await collect(cuisineQueries, 'cuisine_candidate'"));
+// v6에서 폴백이 배열 대신 객체({venueQueries, venueTerms, rejectTerms})를 반환하도록 바뀌었다.
+ok('일반 중식에서 마라 폴백 금지', app.includes("venueQueries:['중화요리', '중국집', '반점']") && app.includes("if (/마라/.test(name))"));
+ok('식당 후보 판매 여부 고지', app.includes('판매 여부 확인') && app.includes('전체 메뉴판을 제공하지 않습니다'));
+// cuisineQueries → venueQueries 로 이름이 바뀌었다. 2단계 수집 구조 자체는 그대로다.
+ok('정확 메뉴 후 음식점 후보 2단계', app.includes("await collect(exactQueries, 'exact'") && app.includes("await collect(venueQueries, 'cuisine_candidate'"));
 const failed = checks.filter(x => !x.pass);
 console.table(checks);
 if (failed.length) process.exit(1);

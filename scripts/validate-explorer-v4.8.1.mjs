@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 
-const app = fs.readFileSync('js/app.js', 'utf8');
-const html = fs.readFileSync('index.html', 'utf8');
-const css = fs.readFileSync('css/app.css', 'utf8');
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../css/app.css', import.meta.url), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const checks = [
   ['version', /^(?:4\.(?:8\.[1-9][0-9]*|9\.[0-9]+)|[5-9]\.\d+\.\d+)$/.test(pkg.version) && app.includes(`korea-beta-v${pkg.version}`) && html.includes(`app.js?v=${pkg.version}`)],

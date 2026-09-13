@@ -5,7 +5,9 @@ const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
 
 const requiredAppFragments = [
-  "if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;",
+  // 음식 종류 선호는 하드필터에서 점수 가감으로 바뀌었다.
+  // (하드필터는 조합에 따라 결과가 0개가 되는 문제가 있었다 — 점수제가 현재 원칙이다.)
+  'bonus += preferredTypes.includes(menu.type) ? 10 : -3;',
   'function isDietFriendlyMenu(menu)',
   'function openDirectRecordModal()',
   'function buildCustomDiaryMenu(name, snapshot = {})',
@@ -16,7 +18,8 @@ const requiredAppFragments = [
 const requiredHtmlFragments = [
   'id="recordMenuName"',
   'id="recordMenuSuggestions"',
-  '<h2 class="sub-title">음식 탐색</h2>',
+  // 탐색 패널의 h2는 '음식 탐색' → '피드'로 바뀌었다. 탭 자체는 aria-label로 남아 있다.
+  'aria-label="음식 탐색"',
   '<span class="nav-label">탐색</span>',
 ];
 
@@ -31,13 +34,18 @@ if (!/\.\/js\/app\.js\?v=(?:4\.(?:8|9)(?:\.[0-9]+)?|[5-9]\.\d+\.\d+)/.test(html)
 for (const fragment of requiredAppFragments) {
   if (!app.includes(fragment)) failures.push(`app.js missing: ${fragment}`);
 }
+// 음식 종류 선호 입력은 퀴즈에서 '내 입맛' 온보딩으로 옮겨졌다.
 const hasTypePreferenceInput = (
   app.includes("title: '어떤 종류의 음식이 좋아요?'") && app.includes("key: 'type'")
 ) || (
   app.includes("title:'어떤 한 끼가 당기나요?'") && app.includes("value:'type:한식'") && app.includes("key:'preferenceBundle'")
+) || (
+  app.includes("key:'preferredTypes', title:'자주 끌리는 음식은요?'")
 );
 if (!hasTypePreferenceInput) failures.push('음식 종류 선호 입력 흐름 누락');
-if (!app.includes("flow: 'four_step'") && !app.includes("flow: 'figma_three_step'")) {
+// 추천 시작 이벤트의 flow 값은 four_step → figma_three_step → account_three_step/instant 로 바뀌어 왔다.
+const RECOMMENDATION_FLOWS = ['four_step', 'figma_three_step', 'account_three_step', 'instant'];
+if (!RECOMMENDATION_FLOWS.some(flow => app.includes(`flow: '${flow}'`))) {
   failures.push('추천 흐름 분석 이벤트 누락');
 }
 for (const fragment of requiredHtmlFragments) {

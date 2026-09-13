@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const app = fs.readFileSync('js/app.js', 'utf8');
-const css = fs.readFileSync('css/app.css', 'utf8');
-const html = fs.readFileSync('index.html', 'utf8');
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../css/app.css', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const checks = [];
 const check = (name, condition) => {

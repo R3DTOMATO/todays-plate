@@ -238,9 +238,9 @@
   // 메뉴 가격은 매장·지역에 따라 달라질 수 있으므로 선택 금액을 절대 상한으로 쓰지 않습니다.
   // 화면에는 1·3·5만원의 이해하기 쉬운 구간을 보여주고, 실제 후보는 소폭의 여유 범위까지 허용합니다.
   const BUDGET_TIERS = {
-    10000: { label:'약 1만 원', ceiling:12000, hint:'최대 1만 2천 원 정도' },
-    30000: { label:'약 3만 원', ceiling:33000, hint:'최대 3만 3천 원 정도' },
-    50000: { label:'약 5만 원', ceiling:55000, hint:'최대 5만 5천 원 정도' }
+    10000: { label:'약 1만 원', ceiling:11500, hint:'최대 1만 1천 5백 원 정도' },
+    30000: { label:'약 3만 원', ceiling:34500, hint:'최대 3만 4천 5백 원 정도' },
+    50000: { label:'약 5만 원', ceiling:57500, hint:'최대 5만 7천 5백 원 정도' }
   };
 
   function normalizeBudgetTarget(value) {
@@ -264,7 +264,9 @@
   }
 
   function budgetLabel(value) {
-    if ([8000, 12000, 20000].includes(Number(value))) return `약 ${Number(value).toLocaleString()}원`;
+    // 퀴즈 선택값이 곧 구간 키(10000/30000/50000)이므로 별도 예외 처리가 필요 없다.
+    // 예전에는 퀴즈만 8000/12000/20000을 쓰면서 구간과 어긋나, 1만 2천과 2만이
+    // 같은 상한(3만 3천)으로 정규화되는 문제가 있었다.
     const tier = getBudgetTier(value);
     return tier ? tier.label : '가격 상관없음';
   }
@@ -1004,9 +1006,9 @@
       ] },
     { step:3, total:3, title:'한 끼 예산은요?', sub:'1인 기준의 예상 금액이에요. 초과 후보는 따로 알려드려요.', key:'budget', grid:2,
       options:[
-        { emoji:'', text:'8천 원', hint:'가볍게', value:8000 },
-        { emoji:'', text:'1만 2천 원', hint:'부담 없이', value:12000 },
-        { emoji:'', text:'2만 원', hint:'조금 여유 있게', value:20000 },
+        { emoji:'', text:'약 1만 원', hint:'가볍게', value:10000 },
+        { emoji:'', text:'약 3만 원', hint:'부담 없이', value:30000 },
+        { emoji:'', text:'약 5만 원', hint:'여유 있게', value:50000 },
         { emoji:'', text:'상관없어요', hint:'가격보다 입맛', value:null },
       ] },
   ];
@@ -3581,6 +3583,14 @@
     nearbyReturnPanel = document.body.dataset.panel || 'home';
     if (currentMenu) trackEvent('restaurant_search_started', { menuId: currentMenu.id || currentMenu.name });
     switchPanel('nearby');
+  }
+
+  // 그룹 투표(js/group-vote.js)가 마감 후 1위 메뉴로 주변 식당을 열 때 씁니다.
+  // renderNearby는 currentMenu를 보고 분기하므로, 패널을 열기 전에 먼저 맞춰 줍니다.
+  function goNearbyWithMenu(menuName) {
+    const menu = findMenuByName(menuName);
+    if (menu) currentMenu = menu;
+    goNearby();
   }
 
   let selectedGroupVote = '';
@@ -7722,7 +7732,8 @@
     clearTasteSelection, closeFeedbackModal, closePrivacyModal, closeRecordModal,
     closeRejectReasonModal, confirmRecord, confirmRejectReason, copyRecipeKey,
     deleteMealRecord, downloadLocalData, editMealRecord, escapeJsString,
-    findMenuByName, goNearby, goRecipe, handleRecordMenuInput,
+    findMenuByName, goNearby, goNearbyWithMenu, goRecipe,
+    handleRecordMenuInput,
     nextTasteStep, openDirectRecordModal, openFeedbackModal, openGroupVote,
     openMenuFromExplorer, openOnboarding, openPrivacyModal, openRecordModal,
     openRestaurantResult, previousTasteStep, rateCurrentMenu, rememberExplorerSearch,

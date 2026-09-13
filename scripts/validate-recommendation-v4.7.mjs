@@ -13,9 +13,23 @@ assert(/^(?:4\.(?:7|8|9)(?:\.\d+)?|[5-9]\.\d+\.\d+)$/.test(pkg.version), 'packag
 assert(/const APP_VERSION = 'korea-beta-(?:v4\.(?:7|8|9)(?:\.\d+)?|v[5-9]\.\d+\.\d+)'/.test(app), 'APP_VERSION is not v4.7 or newer');
 assert(/app\.js\?v=(?:4\.(?:7|8|9)(?:\.\d+)?|[5-9]\.\d+\.\d+)/.test(index), 'index cache version is not v4.7 or newer');
 
-assert(app.includes("10000: { label:'약 1만 원', ceiling:12000"), '1만원 flexible tier missing');
-assert(app.includes("30000: { label:'약 3만 원', ceiling:33000"), '3만원 flexible tier missing');
-assert(app.includes("50000: { label:'약 5만 원', ceiling:55000"), '5만원 flexible tier missing');
+// 여유폭은 세 구간 모두 +15%로 통일했다 (예전에는 20%/10%/10%로 제각각이었다).
+assert(app.includes("10000: { label:'약 1만 원', ceiling:11500"), '1만원 flexible tier missing');
+assert(app.includes("30000: { label:'약 3만 원', ceiling:34500"), '3만원 flexible tier missing');
+assert(app.includes("50000: { label:'약 5만 원', ceiling:57500"), '5만원 flexible tier missing');
+
+// 퀴즈 선택값은 반드시 BUDGET_TIERS의 키와 같아야 한다.
+// 어긋나면 normalizeBudgetTarget이 서로 다른 선택을 같은 구간으로 뭉개 버린다.
+const budgetQuestionBlock = app.match(/key:'budget'[\s\S]*?\]\s*\}/);
+assert(budgetQuestionBlock, 'quiz budget question not found');
+const quizBudgetValues = [...budgetQuestionBlock[0].matchAll(/value:\s*(\d+)/g)].map(m => Number(m[1]));
+assert(quizBudgetValues.length === 3, `quiz budget options must be 3 (got ${quizBudgetValues.length})`);
+for (const value of quizBudgetValues) {
+  assert(
+    app.includes(`${value}: { label:`),
+    `quiz budget value ${value} has no matching BUDGET_TIERS entry`,
+  );
+}
 assert(/text:'(?:약 )?1만(?: 원|원대)'/.test(app), 'quiz 1만원 option missing');
 assert(/text:'(?:약 )?3만(?: 원|원대)'/.test(app), 'quiz 3만원 option missing');
 assert(/text:'(?:약 )?5만(?: 원|원대)'/.test(app), 'quiz 5만원 option missing');
@@ -76,8 +90,8 @@ console.log(JSON.stringify({
   familiarityCounts,
   familiarKoreanMenus: koreanFamiliar.length,
   budgetTiers: {
-    10000: 12000,
-    30000: 33000,
-    50000: 55000
+    10000: 11500,
+    30000: 34500,
+    50000: 57500
   }
 }, null, 2));

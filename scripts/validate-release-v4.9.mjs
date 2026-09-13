@@ -63,7 +63,10 @@ for (const name of ['김치찌개','초밥','라조기','부리또','아침 부�
 }
 check(menus.filter(menu => menu.type === '한식').length >= 50, 'Korean menu coverage below 50');
 check(app.includes('if (excluded.some(tag => tags.includes(tag))) return true;'), 'hard exclusion filter missing');
-check(app.includes("if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;"), 'strict taste type filter missing');
+// 음식 종류 선호는 하드필터에서 점수 가감으로 바뀌었다(결과 0개 문제 때문).
+// 알레르기·제외 재료만 하드필터로 남긴다 — 바로 위 체크가 그것을 지킨다.
+check(app.includes('bonus += preferredTypes.includes(menu.type) ? 10 : -3;'), 'taste type preference scoring missing');
+check(!app.includes('if (!ans.type && preferredTypes.length && !preferredTypes.includes(m.type)) return false;'), 'old strict taste type filter came back');
 
 if (failures.length) {
   console.error('v4.9 release validation failed');

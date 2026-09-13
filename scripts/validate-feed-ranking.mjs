@@ -1,6 +1,6 @@
 import { rankFeed, buildTasteVector } from '../js/feed-ranking.js';
 import fs from 'fs';
-const menus = JSON.parse(fs.readFileSync('../data/menus.json','utf8'));
+const menus = JSON.parse(fs.readFileSync(new URL('../data/menus.json', import.meta.url), 'utf8'));
 
 const NOW = Date.parse('2026-08-29T19:00:00+09:00');
 let seq=0;
