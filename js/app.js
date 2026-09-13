@@ -1,3 +1,16 @@
+(function () {
+
+  // ─── 개발용 QA 화면 노출 여부 ───
+  // recipeqa / debug 패널과 그 핸들러는 이 플래그가 켜졌을 때만 열립니다.
+  // 프로덕션에서는 config.js에 ENABLE_QA_PANEL을 두지 않으므로 콘솔로도 열 수 없습니다.
+  const QA_ENABLED = (() => {
+    try {
+      if (window.APP_CONFIG && window.APP_CONFIG.ENABLE_QA_PANEL === true) return true;
+      return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    } catch (_) {
+      return false;
+    }
+  })();
 
   // ─── Menu Database ───
   let menus = [];
@@ -2318,7 +2331,7 @@
         <div class="profile-label">선호 기록</div>
         <div class="profile-title">자주 선택한 메뉴</div>
         ${liked.length ? `<div class="profile-list">${liked.map(({menu, stats}) => `
-          <div class="profile-row" onclick="currentMenu=findMenuByName('${escapeJsString(menu.name)}'); showResultForMenu(currentMenu)">
+          <div class="profile-row" onclick="showResultForMenu(findMenuByName('${escapeJsString(menu.name)}'))">
             <div class="profile-row-emoji">${menu.emoji}</div>
             <div class="profile-row-main"><div class="profile-row-name">${escapeHtml(menu.name)}</div><div class="profile-row-meta">선호 ${stats.likes || 0}회 · 선택 ${stats.chosen || 0}회</div></div>
           </div>
@@ -4562,6 +4575,7 @@
   }
 
   function switchPanel(name, updateNav = true) {
+    if ((name === 'recipeqa' || name === 'debug') && !QA_ENABLED) return false;
     if (window.appEntry && !window.appEntry.allowPanel(name)) return false;
     let nextPanel = document.getElementById('panel-' + name);
     if (!nextPanel) {
@@ -7698,3 +7712,33 @@
     const menu = findMenuByName(menuName);
     return menu ? getMenuImage(menu, 600) : '';
   };
+
+  // ─── 전역 노출 ────────────────────────────────────────────────
+  // 이 파일은 IIFE로 감싸져 있어 내부 함수가 자동으로 window에 오르지 않습니다.
+  // 아래 목록에 없는 함수는 브라우저 콘솔에서도 호출할 수 없습니다.
+  // 여기 있는 것들은 index.html의 인라인 핸들러 또는 다른 모듈이 실제로 쓰는 것들입니다.
+  Object.assign(window, {
+    acceptCurrentMenu, applyRecentExplorerSearch, checkApiHealth, clearExplorerHistory,
+    clearTasteSelection, closeFeedbackModal, closePrivacyModal, closeRecordModal,
+    closeRejectReasonModal, confirmRecord, confirmRejectReason, copyRecipeKey,
+    deleteMealRecord, downloadLocalData, editMealRecord, escapeJsString,
+    findMenuByName, goNearby, goRecipe, handleRecordMenuInput,
+    nextTasteStep, openDirectRecordModal, openFeedbackModal, openGroupVote,
+    openMenuFromExplorer, openOnboarding, openPrivacyModal, openRecordModal,
+    openRestaurantResult, previousTasteStep, rateCurrentMenu, rememberExplorerSearch,
+    removePendingMealPhoto, renderFavorites, requestNearbyLocation, resetAllData,
+    resetPreferenceOnly, respondAnalyticsConsent, resumeRecommendationFlow, searchByManualLocation,
+    selectRecordMenu, setAnalyticsConsent, setExplorerCuisine, showResultForMenu,
+    showToast, startQuiz, submitGeneralFeedback, switchPanel,
+    toggleCookingScope, toggleFavorite, toggleFavoriteByName, toggleOnboardingValue,
+    trackEvent, unbanMenu,
+  });
+
+  // QA·디버그 전용. 플래그가 꺼져 있으면 아예 노출하지 않습니다.
+  if (QA_ENABLED) {
+    Object.assign(window, {
+      downloadRecipeQaReport, openRecipeFromQA, runRecipeQA, runRecommendationTest,
+      selectRunner,
+    });
+  }
+})();
