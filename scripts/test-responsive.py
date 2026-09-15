@@ -127,23 +127,25 @@ def run():
 
         # Emulate a map SDK to test resizing without an API key or location access.
         page.evaluate('''async () => {
-            window.APP_CONFIG.KAKAO_JS_KEY = 'fixture';
+            window.APP_CONFIG.NAVER_MAPS_CLIENT_ID = 'fixture';
             window.__mapLayouts = 0;
-            window.kakao = {maps: {
+            window.naver = {maps: {
                 Map: class {
                     constructor(_, opts) { this.center = opts.center; window.__map = this; }
                     getCenter() { return this.center; }
                     setCenter(value) { this.center = value; }
-                    relayout() { window.__mapLayouts++; }
-                    setZoomable() {}
+                    setSize() { window.__mapLayouts++; }
+                    fitBounds() {}
                 },
                 LatLng: class { constructor(lat, lng) { this.lat = lat; this.lng = lng; } },
                 LatLngBounds: class { extend() {} },
-                CustomOverlay: class { setMap() {} }
+                Marker: class { setMap() {} },
+                Point: class {}, Size: class {},
+                Event: {addListener() {}, removeListener() {}}
             }};
             switchPanel('nearby');
-            const module = await import('./js/kakao-map.js?responsive-fixture');
-            await module.renderKakaoMap({lat: 37.5, lng: 127}, [], () => {});
+            const module = await import('./js/naver-map.js?responsive-fixture');
+            await module.renderNaverMap({lat: 37.5, lng: 127}, [], () => {});
         }''')
         page.wait_for_function('window.__mapLayouts > 0')
         page.wait_for_timeout(100)  # Drain the existing delayed initial relayout.

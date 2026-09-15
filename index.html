@@ -327,8 +327,9 @@
     <div class="nb-screen">
       <!-- Nearby Map -->
       <div class="nb-map">
-        <!-- 실제 카카오 지도. 키가 없거나 로드 실패 시 아래 일러스트로 대체된다. -->
-        <div class="nb-map-canvas" id="nbMapCanvas"></div>
+        <!-- 네이버 지도. 연결 실패 시 위치 마커 없이 안내와 식당 목록을 유지한다. -->
+        <div class="nb-map-canvas" id="nbMapCanvas" hidden></div>
+        <p class="nb-map-status" id="nbMapStatus" role="status" hidden>지도를 표시할 수 없어요. 식당 목록이나 네이버 지도에서 확인해 주세요.</p>
         <div class="nb-map-art-wrap" id="nbMapArtWrap">
           <img class="nb-map-art" src="./assets/figma/nearby/map-art.svg" alt="" aria-hidden="true">
           <div class="nb-markers" id="nbMarkers" aria-hidden="true"></div>
@@ -856,7 +857,7 @@
       </section>
       <section>
         <h3>위치 정보</h3>
-        <p>주변 식당 찾기를 누른 시점에만 위치를 요청합니다. 좌표는 Railway 서버를 거쳐 Kakao 장소 검색에 일시적으로 사용되며 이벤트 파일에는 저장하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
+        <p>주변 식당 찾기를 누른 시점에만 위치를 요청합니다. 좌표는 Railway 서버를 거쳐 네이버 주소·지역 검색에 일시적으로 사용되며 이벤트 파일에는 저장하지 않습니다. 권한을 거부하면 지역·주소·역 이름을 직접 입력할 수 있습니다.</p>
       </section>
       <section>
         <h3>서버로 전송되는 정보</h3>
@@ -894,9 +895,9 @@ setTimeout(function () {
   retry.onclick = function () { location.reload(); };
 }, 20000);
 </script>
-<script src="./js/app.js?v=6.1.0" defer></script>
+<script src="./js/app.js?v=6.2.0" defer></script>
 <!-- 그룹 투표 (GROUP TABLE). FIREBASE_CONFIG가 비어 있으면 자동으로 비활성화됩니다. -->
-<script type="module" src="./js/kakao-map.js"></script>
+<script type="module" src="./js/naver-map.js"></script>
 <script type="module" src="./js/monitoring.js"></script>
 <script type="module" src="./js/auth.js"></script>
 <script type="module" src="./js/auth-ui.js"></script>

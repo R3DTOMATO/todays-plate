@@ -1,8 +1,11 @@
 # 오늘의 식탁 친구 베타 API
 
+네이버 지도 전환의 키 발급·도메인 등록·검색 한계는 [전환 안내](../docs/naver-maps-migration.md)를 먼저 확인하세요.
+
+
 브라우저에 비밀키를 넣지 않고 다음 기능을 제공하는 Node.js 표준 라이브러리 기반 서버입니다.
 
-- Kakao Local 주변 식당 검색
+- 네이버 지역 검색 기반 식당 검색
 - 주소·지역·역 이름 좌표 확인
 - 익명 분석 이벤트 수집
 - 사용자 피드백 수집
@@ -11,9 +14,12 @@
 ## 실행
 
 ```bash
-KAKAO_REST_API_KEY="발급받은_서버용_키" \
+NAVER_SEARCH_CLIENT_ID="검색_Client_ID" \
+NAVER_SEARCH_CLIENT_SECRET="검색_Client_Secret" \
+NAVER_MAPS_CLIENT_ID="Maps_Client_ID" \
+NAVER_MAPS_CLIENT_SECRET="Maps_Client_Secret" \
 ALLOWED_ORIGINS="http://localhost:5500,http://127.0.0.1:5500" \
-node server/kakao-nearby-proxy.mjs
+node server/nearby-proxy.mjs
 ```
 
 환경 변수:
@@ -21,7 +27,8 @@ node server/kakao-nearby-proxy.mjs
 | 변수 | 기본값 | 설명 |
 |---|---|---|
 | `PORT` | `8787` | API 포트 |
-| `KAKAO_REST_API_KEY` | 없음 | Kakao REST API 키 |
+| `NAVER_SEARCH_CLIENT_ID`, `NAVER_SEARCH_CLIENT_SECRET` | 없음 | 네이버 지역 검색 키 |
+| `NAVER_MAPS_CLIENT_ID`, `NAVER_MAPS_CLIENT_SECRET` | 없음 | 네이버 Maps 키 |
 | `ALLOWED_ORIGINS` | 로컬 5500 | 허용할 웹 앱 출처 |
 | `DATA_DIR` | `server/data` | JSONL 저장 위치 |
 | `RATE_LIMIT_PER_MINUTE` | `120` | IP 기준 분당 요청 수 |
@@ -32,7 +39,8 @@ node server/kakao-nearby-proxy.mjs
 window.APP_CONFIG = {
   API_BASE_URL: 'http://localhost:8787',
   NEARBY_PROXY_URL: 'http://localhost:8787/api/nearby',
-  NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000]
+  NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000],
+  NAVER_MAPS_CLIENT_ID: 'Maps의 공개 Client ID'
 };
 ```
 
@@ -40,11 +48,11 @@ window.APP_CONFIG = {
 
 ### `GET /api/health`
 
-서버와 수집 기능 상태를 확인합니다. Kakao 키가 없어도 사용할 수 있습니다.
+서버와 수집 기능 상태를 확인합니다. 네이버 키가 없어도 사용할 수 있습니다.
 
 ### `GET /api/nearby`
 
-필수 쿼리: `query`, `x`, `y`. Kakao API 키가 필요합니다.
+필수 쿼리: `query`, `x`, `y`. 네이버 검색·Maps 키가 필요합니다.
 
 ### `GET /api/resolve-location`
 

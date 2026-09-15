@@ -8070,3 +8070,7 @@ body::before { display: none; }
 
 /* 내 식탁: 사진 로드 실패 시 일러스트로 되돌린다 */
 .mt-visual.no-photo .mt-photo { display: none; }
+
+/* A failed map must not display invented restaurant positions. */
+.nb-map-status { position:absolute; z-index:2; left:20px; right:20px; bottom:24px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.96); color:var(--ink); font-size:13px; line-height:1.6; box-shadow:0 2px 12px #0001; }
+.nb-map-status[hidden] { display:none; }

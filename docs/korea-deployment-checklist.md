@@ -1,9 +1,12 @@
 # 한국 공개 배포 전 체크리스트
 
+네이버 지도 전환의 키 발급·도메인 등록·검색 한계는 [전환 안내](./naver-maps-migration.md)를 먼저 확인하세요.
+
+
 ## P0 · 스토어 심사 전 필수
 
-- [ ] `server/kakao-nearby-proxy.mjs`를 HTTPS 환경에 배포
-- [ ] `KAKAO_REST_API_KEY`를 서버 비밀 환경변수로 설정
+- [ ] `server/nearby-proxy.mjs`를 HTTPS 환경에 배포
+- [ ] `NAVER_SEARCH_CLIENT_ID`, `NAVER_SEARCH_CLIENT_SECRET`, `NAVER_MAPS_CLIENT_ID`, `NAVER_MAPS_CLIENT_SECRET`를 서버 환경변수로 설정
 - [ ] 운영 도메인만 `ALLOWED_ORIGINS`에 등록
 - [ ] Firebase Auth 또는 동등한 인증 수단 연결
 - [ ] 익명 데이터와 로그인 계정 데이터 병합

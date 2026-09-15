@@ -2,6 +2,7 @@
 window.APP_CONFIG = {
   API_BASE_URL: 'http://localhost:8787',
   NEARBY_PROXY_URL: 'http://localhost:8787/api/nearby',
+  NAVER_MAPS_CLIENT_ID: '', // Naver Cloud Maps의 공개 Client ID
   NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000],
 
   // 개발용 QA 화면(recipeqa / debug) 노출.

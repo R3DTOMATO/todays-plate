@@ -1,0 +1,481 @@
+import { createServer } from 'node:http';
+import { createNaverPlacesClient, validLocation } from './naver-places.mjs';
+import { appendFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  adminConfigured, verifyIdToken, isAdmin,
+  listReports, fetchTarget, hidePost, restorePost, hideComment,
+  resolveReport, countReportsForTarget,
+} from './admin-reports.mjs';
+import { readAnalyticsReport, reportOptions } from './analytics-report.mjs';
+import { deleteAccountData } from './account-deletion.mjs';
+
+const PORT = Number(process.env.PORT || 8787);
+const naverPlaces = createNaverPlacesClient();
+const HERE = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = resolve(process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || resolve(HERE, 'data'));
+const RETENTION_DAYS = Math.max(30, Number(process.env.DATA_RETENTION_DAYS || 90));
+const ALLOWED_ORIGINS = new Set(
+  (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
+
+const requestBuckets = new Map();
+const WINDOW_MS = 60_000;
+const MAX_REQUESTS_PER_WINDOW = Number(process.env.RATE_LIMIT_PER_MINUTE || 120);
+const MAX_BODY_BYTES = 256 * 1024;
+const MAX_DEDUPE_IDS = 50_000;
+const seenEventIds = new Set();
+const seenFeedbackIds = new Set();
+
+function isOriginAllowed(origin) {
+  return !origin || ALLOWED_ORIGINS.has(origin);
+}
+
+function sendJson(res, status, payload, origin = '', cacheControl = 'no-store') {
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': cacheControl,
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+  });
+  res.end(JSON.stringify(payload));
+}
+
+function rateLimit(ip) {
+  const now = Date.now();
+  const current = requestBuckets.get(ip);
+  if (!current || now - current.startedAt >= WINDOW_MS) {
+    requestBuckets.set(ip, { startedAt: now, count: 1 });
+    return false;
+  }
+  current.count += 1;
+  return current.count > MAX_REQUESTS_PER_WINDOW;
+}
+
+function parseNumber(value, { min, max, fallback }) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+}
+
+function cleanString(value, max = 200) {
+  return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
+}
+
+function cleanScalar(value) {
+  if (typeof value === 'string') return cleanString(value, 180);
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'boolean' || value === null) return value;
+  return undefined;
+}
+
+function sanitizeProperties(value, depth = 0) {
+  if (depth > 3 || value === undefined) return undefined;
+  const scalar = cleanScalar(value);
+  if (scalar !== undefined) return scalar;
+  if (Array.isArray(value)) return value.slice(0, 30).map((item) => sanitizeProperties(item, depth + 1)).filter((item) => item !== undefined);
+  if (!value || typeof value !== 'object') return undefined;
+
+  const blocked = /(^|_)(lat|lng|latitude|longitude|address|contact|email|phone|memo|photo|image)($|_)/i;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !blocked.test(key))
+      .slice(0, 50)
+      .map(([key, item]) => [cleanString(key, 64), sanitizeProperties(item, depth + 1)])
+      .filter(([, item]) => item !== undefined),
+  );
+}
+
+async function readJsonBody(req) {
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) {
+      const error = new Error('payload_too_large');
+      error.statusCode = 413;
+      throw error;
+    }
+    chunks.push(chunk);
+  }
+  if (!chunks.length) return {};
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    const error = new Error('invalid_json');
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
+function monthKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const safe = Number.isNaN(date.getTime()) ? new Date() : date;
+  return `${safe.getUTCFullYear()}-${String(safe.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthlyFilename(kind, value = new Date()) {
+  return `${kind}-${monthKey(value)}.jsonl`;
+}
+
+function keepBounded(set, value) {
+  if (!value || set.has(value)) return;
+  set.add(value);
+  if (set.size <= MAX_DEDUPE_IDS) return;
+  const removeCount = Math.max(1, Math.floor(MAX_DEDUPE_IDS * 0.1));
+  const iterator = set.values();
+  for (let i = 0; i < removeCount; i += 1) {
+    const next = iterator.next();
+    if (next.done) break;
+    set.delete(next.value);
+  }
+}
+
+async function appendJsonLine(filename, payload) {
+  await mkdir(DATA_DIR, { recursive: true });
+  await appendFile(resolve(DATA_DIR, filename), `${JSON.stringify(payload)}\n`, { encoding: 'utf8', mode: 0o600 });
+}
+
+async function readJsonLinesIfExists(filename) {
+  try {
+    const text = await readFile(resolve(DATA_DIR, filename), 'utf8');
+    return text.split(/\r?\n/).filter(Boolean).flatMap((line) => {
+      try { return [JSON.parse(line)]; } catch { return []; }
+    });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
+async function warmDedupeSets() {
+  const now = new Date();
+  const previous = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const files = [
+    'events.jsonl', 'feedback.jsonl',
+    monthlyFilename('events', now), monthlyFilename('events', previous),
+    monthlyFilename('feedback', now), monthlyFilename('feedback', previous),
+  ];
+  for (const filename of [...new Set(files)]) {
+    const rows = await readJsonLinesIfExists(filename);
+    for (const row of rows) {
+      if (row.eventId) keepBounded(seenEventIds, cleanString(row.eventId, 100));
+      if (row.id) keepBounded(seenFeedbackIds, cleanString(row.id, 100));
+    }
+  }
+}
+
+async function cleanupExpiredData() {
+  await mkdir(DATA_DIR, { recursive: true });
+  const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const names = await readdir(DATA_DIR);
+  const removed = [];
+  for (const name of names) {
+    const match = /^(events|feedback)-(\d{4})-(\d{2})\.jsonl$/.exec(name);
+    if (!match) continue;
+    const [, , year, month] = match;
+    const nextMonth = Date.UTC(Number(year), Number(month), 1);
+    if (nextMonth >= cutoff) continue;
+    await rm(resolve(DATA_DIR, name), { force: true });
+    removed.push(name);
+  }
+  return removed;
+}
+
+async function handleNearby(requestUrl, res, origin) {
+  const query = cleanString(requestUrl.searchParams.get('query'), 80);
+  const lng = requestUrl.searchParams.get('x');
+  const lat = requestUrl.searchParams.get('y');
+  const radius = Number(requestUrl.searchParams.get('radius') || 5000);
+  const size = Number(requestUrl.searchParams.get('size') || 15);
+  if (query.length < 2 || !validLocation(lat, lng) || !Number.isInteger(radius) || radius < 1 || radius > 20000 || !Number.isInteger(size) || size < 1 || size > 15) {
+    return sendJson(res, 400, { error: 'invalid_parameters', errorCode: 'NEARBY_PARAM_001' }, origin);
+  }
+  const payload = await naverPlaces.nearby({ query, lat: Number(lat), lng: Number(lng), radius, size });
+  return sendJson(res, 200, payload, origin, 'no-store');
+}
+
+async function handleResolveLocation(requestUrl, res, origin) {
+  const query = cleanString(requestUrl.searchParams.get('query'), 120);
+  if (query.length < 2) return sendJson(res, 400, { error: 'invalid_query', errorCode: 'LOCATION_QUERY_001' }, origin);
+  return sendJson(res, 200, await naverPlaces.resolveLocation(query), origin);
+}
+
+async function handleEvents(req, res, origin) {
+  const body = await readJsonBody(req);
+  const events = Array.isArray(body.events) ? body.events.slice(0, 50) : [];
+  if (!events.length) return sendJson(res, 400, { error: 'events_required' }, origin);
+
+  const acknowledgedEventIds = [];
+  let accepted = 0;
+  let duplicates = 0;
+  let invalid = 0;
+  for (const raw of events) {
+    if (!raw || typeof raw !== 'object') { invalid += 1; continue; }
+    const name = cleanString(raw.name || raw.eventName, 80);
+    const eventId = cleanString(raw.eventId, 100);
+    const anonymousUserId = cleanString(raw.anonymousUserId, 100);
+    const sessionId = cleanString(raw.sessionId, 100);
+    if (!name || !eventId || !anonymousUserId || !sessionId) { invalid += 1; continue; }
+    if (seenEventIds.has(eventId)) { duplicates += 1; acknowledgedEventIds.push(eventId); continue; }
+
+    const rawTimestamp = raw.occurredAt || raw.timestamp;
+    const timestamp = Number.isFinite(Date.parse(rawTimestamp)) ? new Date(rawTimestamp).toISOString() : new Date().toISOString();
+    const record = {
+      eventId,
+      name,
+      anonymousUserId,
+      sessionId,
+      timestamp,
+      receivedAt: new Date().toISOString(),
+      appVersion: cleanString(raw.appVersion, 60),
+      recommendationId: cleanString(raw.recommendationId, 100),
+      isTestTraffic: raw.isTestTraffic === true,
+      firstVisit: Boolean(raw.firstVisit),
+      previousUseCount: parseNumber(raw.previousUseCount, { min: 0, max: 1_000_000, fallback: 0 }),
+      properties: sanitizeProperties(raw.properties || {}),
+    };
+    await appendJsonLine(monthlyFilename('events', timestamp), record);
+    keepBounded(seenEventIds, eventId);
+    accepted += 1;
+    acknowledgedEventIds.push(eventId);
+  }
+  if (!accepted && !duplicates) return sendJson(res, 400, { error: 'no_valid_events', invalid }, origin);
+  return sendJson(res, 202, { accepted, duplicates, invalid, received: events.length, acknowledgedEventIds }, origin);
+}
+
+async function handleFeedback(req, res, origin) {
+  const body = await readJsonBody(req);
+  const id = cleanString(body.feedbackId || body.id, 100) || `feedback_${Date.now()}`;
+  const type = cleanString(body.type, 80);
+  const message = cleanString(body.message, 4000);
+  if (!type || !message) return sendJson(res, 400, { error: 'type_and_message_required' }, origin);
+  if (seenFeedbackIds.has(id)) return sendJson(res, 202, { accepted: true, duplicate: true, feedbackId: id }, origin);
+
+  const record = {
+    id,
+    type,
+    message,
+    contact: cleanString(body.contact, 240),
+    anonymousUserId: cleanString(body.anonymousUserId, 100),
+    sessionId: cleanString(body.sessionId, 100),
+    occurredAt: Number.isFinite(Date.parse(body.occurredAt)) ? new Date(body.occurredAt).toISOString() : new Date().toISOString(),
+    receivedAt: new Date().toISOString(),
+    appVersion: cleanString(body.appVersion, 60),
+    context: sanitizeProperties(body.context || {}),
+    status: 'received',
+  };
+  await appendJsonLine(monthlyFilename('feedback', record.receivedAt), record);
+  keepBounded(seenFeedbackIds, id);
+  return sendJson(res, 202, { accepted: true, duplicate: false, feedbackId: id }, origin);
+}
+
+
+// ─── 신고 검토 관리자 API ───
+// Firestore 규칙상 reports는 클라이언트가 읽을 수 없으므로 서버에서만 처리한다.
+
+async function requireAdmin(req) {
+  if (!adminConfigured) {
+    const error = new Error('admin_not_configured');
+    error.statusCode = 503;
+    throw error;
+  }
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) {
+    const error = new Error('missing_token');
+    error.statusCode = 401;
+    throw error;
+  }
+  let uid;
+  try {
+    uid = await verifyIdToken(token);
+  } catch (cause) {
+    const error = new Error('invalid_token');
+    error.statusCode = 401;
+    throw error;
+  }
+  if (!isAdmin(uid)) {
+    const error = new Error('not_admin');
+    error.statusCode = 403;
+    throw error;
+  }
+  return uid;
+}
+
+async function handleAdminReports(req, requestUrl, res, origin) {
+  await requireAdmin(req);
+  const status = cleanString(requestUrl.searchParams.get('status') || 'pending', 20);
+  const reports = await listReports(status, 50);
+
+  // 신고 대상 원문과 누적 신고 수를 함께 붙여야 판단할 수 있다
+  const detailed = await Promise.all(reports.map(async (report) => {
+    const [target, count] = await Promise.all([
+      fetchTarget(report.targetType, report.targetId, report.parentId || ''),
+      countReportsForTarget(report.targetType, report.targetId),
+    ]);
+    return { ...report, target, reportCount: count };
+  }));
+
+  return sendJson(res, 200, { reports: detailed }, origin);
+}
+
+async function handleAdminAction(req, res, origin) {
+  const adminUid = await requireAdmin(req);
+  const body = await readJsonBody(req);
+
+  const action = cleanString(body.action || '', 20);
+  const reportId = cleanString(body.reportId || '', 200);
+  const note = cleanString(body.note || '', 300);
+
+  if (!reportId) {
+    const error = new Error('missing_report_id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (action === 'dismiss') {
+    await resolveReport(reportId, 'reviewed', note || '문제 없음', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  if (action === 'hide') {
+    const targetType = cleanString(body.targetType || '', 20);
+    const targetId = cleanString(body.targetId || '', 400);
+    if (targetType === 'post') {
+      await hidePost(targetId);
+    } else if (targetType === 'comment') {
+      const parentId = cleanString(body.parentId || '', 400);
+      const target = await fetchTarget('comment', targetId, parentId);
+      if (target?._path) await hideComment(target._path);
+    }
+    await resolveReport(reportId, 'actioned', note || '숨김 처리', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  if (action === 'restore') {
+    const targetId = cleanString(body.targetId || '', 400);
+    await restorePost(targetId);
+    await resolveReport(reportId, 'reviewed', note || '복원', adminUid);
+    return sendJson(res, 200, { ok: true, action }, origin);
+  }
+
+  const error = new Error('unknown_action');
+  error.statusCode = 400;
+  throw error;
+}
+
+
+// ─── 계정 삭제 (본인 요청) ───
+// 관리자 권한이 아니라 "본인 확인"만 필요하다. 토큰의 uid만 지운다.
+
+async function handleAccountDelete(req, res, origin) {
+  if (!adminConfigured) {
+    const error = new Error('service_unavailable');
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) {
+    const error = new Error('missing_token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  let uid;
+  try {
+    uid = await verifyIdToken(token);
+  } catch (cause) {
+    const error = new Error('invalid_token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // 다른 사람의 계정을 지울 수 없다. 토큰에서 얻은 uid만 사용한다.
+  const summary = await deleteAccountData(uid);
+  return sendJson(res, 200, { ok: true, deleted: summary }, origin);
+}
+
+const server = createServer(async (req, res) => {
+  const origin = String(req.headers.origin || '');
+
+  if (!isOriginAllowed(origin)) return sendJson(res, 403, { error: 'origin_not_allowed', errorCode: 'CORS_001' });
+
+  if (req.method === 'OPTIONS') {
+    if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.writeHead(204);
+    return res.end();
+  }
+
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+  if (rateLimit(ip)) return sendJson(res, 429, { error: 'rate_limit_exceeded', errorCode: 'RATE_LIMIT_001' }, origin);
+
+  const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+  try {
+    if (req.method === 'GET' && requestUrl.pathname === '/api/health') {
+      return sendJson(res, 200, {
+        ok: true,
+        version: '6.2.0',
+        placesProvider: 'naver',
+        naverConfigured: naverPlaces.searchConfigured && naverPlaces.mapsConfigured,
+        naverSearchConfigured: naverPlaces.searchConfigured,
+        naverMapsConfigured: naverPlaces.mapsConfigured,
+        eventCollection: true,
+        feedbackCollection: true,
+        storageMode: 'monthly-jsonl',
+        retentionDays: RETENTION_DAYS,
+        adminConfigured,
+      }, origin, 'no-store');
+    }
+    if (req.method === 'GET' && requestUrl.pathname === '/api/nearby') return await handleNearby(requestUrl, res, origin);
+    if (req.method === 'GET' && requestUrl.pathname === '/api/resolve-location') return await handleResolveLocation(requestUrl, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/events') return await handleEvents(req, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/feedback') return await handleFeedback(req, res, origin);
+    if (req.method === 'GET' && requestUrl.pathname === '/api/admin/analytics') {
+      await requireAdmin(req);
+      const params = Object.fromEntries(requestUrl.searchParams);
+      params.excludeIds = [process.env.ANALYTICS_EXCLUDED_IDS, params.excludeIds].filter(Boolean).join(',');
+      return sendJson(res, 200, await readAnalyticsReport(DATA_DIR, reportOptions(params)), origin);
+    }
+    if (req.method === 'GET' && requestUrl.pathname === '/api/admin/reports') return await handleAdminReports(req, requestUrl, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/admin/action') return await handleAdminAction(req, res, origin);
+    if (req.method === 'POST' && requestUrl.pathname === '/api/account/delete') return await handleAccountDelete(req, res, origin);
+    return sendJson(res, 404, { error: 'not_found', errorCode: 'ROUTE_404' }, origin);
+  } catch (error) {
+    const status = Number(error?.statusCode) || 500;
+    const payload = { error: cleanString(error?.message || 'internal_error', 100), errorCode: status >= 500 ? 'SERVER_001' : 'REQUEST_001' };
+    if (error?.detail) payload.detail = cleanString(error.detail, 240);
+    return sendJson(res, status, payload, origin);
+  }
+});
+
+await mkdir(DATA_DIR, { recursive: true });
+await cleanupExpiredData();
+await warmDedupeSets();
+
+setInterval(() => {
+  const cutoff = Date.now() - WINDOW_MS * 2;
+  for (const [ip, bucket] of requestBuckets) {
+    if (bucket.startedAt < cutoff) requestBuckets.delete(ip);
+  }
+}, 5 * 60_000).unref();
+
+server.listen(PORT, () => {
+  console.log(`Today's Plate beta API v6.2.0 listening on http://localhost:${PORT}`);
+  console.log(`Data directory: ${DATA_DIR}`);
+  console.log(`Retention: ${RETENTION_DAYS} days`);
+});

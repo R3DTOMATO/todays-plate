@@ -122,7 +122,7 @@ js/app.js                    추천·기록·분석·피드백 로직
 js/config.js                 배포 환경 API 주소
 js/config.example.js         로컬 서버 설정 예시
 data/                        메뉴·레시피·검색 키워드 데이터
-server/kakao-nearby-proxy.mjs
+server/nearby-proxy.mjs
 server/beta-report.mjs
 server/data/                 실행 후 생성되는 이벤트·피드백 JSONL
 docs/
@@ -143,12 +143,15 @@ python -m http.server 5500
 
 ## 2. 베타 API 실행
 
-Kakao REST API 키는 브라우저에 넣지 않습니다.
+네이버 Client Secret은 서버에만 저장합니다. [네이버 전환 설정](docs/naver-maps-migration.md)을 참고하세요.
 
 ```bash
-KAKAO_REST_API_KEY="발급받은_서버용_키" \
+NAVER_SEARCH_CLIENT_ID="검색_Client_ID" \
+NAVER_SEARCH_CLIENT_SECRET="검색_Client_Secret" \
+NAVER_MAPS_CLIENT_ID="Maps_Client_ID" \
+NAVER_MAPS_CLIENT_SECRET="Maps_Client_Secret" \
 ALLOWED_ORIGINS="http://localhost:5500,http://127.0.0.1:5500" \
-node server/kakao-nearby-proxy.mjs
+node server/nearby-proxy.mjs
 ```
 
 API 주소:
@@ -161,7 +164,7 @@ POST /api/events
 POST /api/feedback
 ```
 
-Kakao 키가 없어도 상태 확인, 분석 이벤트, 피드백 저장은 동작합니다. 주변 식당과 지역 좌표 검색만 사용할 수 없습니다.
+네이버 키가 없어도 상태 확인, 분석 이벤트, 피드백 저장은 동작합니다. 주변 식당과 지역 좌표 검색만 사용할 수 없습니다.
 
 ## 3. 베타 리포트 확인
 

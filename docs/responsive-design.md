@@ -24,7 +24,7 @@
 
 ```sh
 npm run check
-node --check js/kakao-map.js
+node --check js/naver-map.js
 python -m http.server 9154
 ```
 

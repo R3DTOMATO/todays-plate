@@ -1013,21 +1013,13 @@
       ] },
   ];
 
-  // ─── 카카오 로컬 API ───
-  //
-  // 1. https://developers.kakao.com/ 가입 후 애플리케이션 추가
-  // 2. 앱 키 메뉴에서 'REST API 키' 복사
-  // 3. 플랫폼 메뉴에서 Web 플랫폼 등록 (사이트 도메인: http://localhost:5500 등)
-  // 4. ⚠️ [카카오맵] > [사용 설정]을 [ON]으로 (2024.12.1 이후 신규 앱 필수)
-  // 5. 실제 배포에서는 브라우저 키 대신 서버 프록시 주소를 설정
-  //
-  // 무료 한도: 월 300,000 콜 (충분히 넉넉)
-  // 비어있으면 mock 데이터로 폴백
+  // 네이버 식당 검색은 서버 프록시로만 호출합니다.
+  // Search Client Secret과 Maps Client Secret은 서버 환경변수에 둡니다.
   const NEARBY_PROXY_URL = (window.APP_CONFIG && window.APP_CONFIG.NEARBY_PROXY_URL) || '';
 
-  // 메뉴 → 카카오 검색 키워드 매핑 (한국어)
+  // 메뉴 → 네이버 검색 키워드 매핑 (한국어)
   // 메뉴 이름이 그대로 통하는 경우가 많아서 대부분 그대로 사용
-  const kakaoSearchKeywords = {
+  const naverSearchKeywords = {
     '아보카도 토스트': '아보카도 토스트',
     '오트밀 볼': '브런치 카페',
     '스크램블 에그': '브런치 카페',
@@ -1139,7 +1131,7 @@
   };
 
   // 음식 종류별 fallback
-  const kakaoTypeKeywords = {
+  const naverTypeKeywords = {
     '한식': '한식',
     '일식': '일식',
     '중식': '중식',
@@ -1166,17 +1158,17 @@
     });
   }
 
-  // ─── 카카오 로컬 API 검색 ───
+  // ─── 네이버 로컬 API 검색 ───
   function isProviderConfigured() {
     return !!NEARBY_PROXY_URL;
   }
 
   async function searchPlaces(menu, location) {
-    const query = kakaoSearchKeywords[menu.name] || kakaoTypeKeywords[menu.type] || '음식점';
-    return searchPlacesKakao(query, location, { radius: 2000, size: 8, pageLimit: 1, sort: 'distance' });
+    const query = naverSearchKeywords[menu.name] || naverTypeKeywords[menu.type] || '음식점';
+    return searchPlacesNaver(query, location, { radius: 2000, size: 8, pageLimit: 1, sort: 'distance' });
   }
 
-  // 카카오 응답을 UI 형식으로 변환
+  // 네이버 응답을 UI 형식으로 변환
   // (중복 선언 제거됨: formatPlace — 아래쪽 최신 정의를 사용)
 
   // Mock 데이터 (API 키 없거나 실패 시 폴백)
@@ -1215,8 +1207,8 @@
 
 
   // ─── State ───
-  const APP_VERSION = 'korea-beta-v6.1.0';
-  const APP_RELEASE_DATE = '2026-09-08';
+  const APP_VERSION = 'korea-beta-v6.2.0';
+  const APP_RELEASE_DATE = '2026-09-15';
   const APP_DATA_VERSION = 'menus-197-v4.9';
   let currentStep = 0;
   let answers = {};
@@ -1239,7 +1231,7 @@
   let apiHealthState = {
     status: 'idle',
     checkedAt: '',
-    kakaoConfigured: null,
+    naverConfigured: null,
     eventCollection: null,
     feedbackCollection: null,
     retentionDays: null,
@@ -1264,7 +1256,7 @@
     feedbackQueue: 'todaysplate_feedback_queue_v1',
     recentSearches: 'todaysplate_recent_searches_v1',
     recentViewed: 'todaysplate_recent_viewed_v1',
-    apiHealth: 'todaysplate_api_health_v1',
+    apiHealth: 'todaysplate_api_health_naver_v1',
   };
 
   const API_BASE_URL = (() => {
@@ -1310,7 +1302,7 @@
       apiHealthState = {
         status:'ok',
         checkedAt:new Date().toISOString(),
-        kakaoConfigured:Boolean(payload.kakaoConfigured),
+        naverConfigured:Boolean(payload.naverConfigured),
         eventCollection:Boolean(payload.eventCollection),
         feedbackCollection:Boolean(payload.feedbackCollection),
         retentionDays:Number(payload.retentionDays || 0) || null,
@@ -2359,7 +2351,7 @@
           <div><span>메뉴 데이터</span><strong>${menus.length.toLocaleString()}개 · ${escapeHtml(APP_DATA_VERSION)}</strong></div>
           <div><span>네트워크</span><strong>${navigator.onLine ? '온라인' : '오프라인'}</strong></div>
           <div><span>API 서버</span><strong class="status-${escapeHtml(apiHealthState.status)}">${escapeHtml(apiHealthLabel())}</strong></div>
-          <div><span>Kakao 검색</span><strong>${apiHealthState.kakaoConfigured === true ? '설정됨' : apiHealthState.kakaoConfigured === false ? '키 확인 필요' : '확인 전'}</strong></div>
+          <div><span>네이버 검색</span><strong>${apiHealthState.naverConfigured === true ? '설정됨' : apiHealthState.naverConfigured === false ? '키 확인 필요' : '확인 전'}</strong></div>
           <div><span>보조 데이터</span><strong>${escapeHtml(APP_DATA_STATE.supplemental === 'ready' ? '정상' : APP_DATA_STATE.supplemental === 'partial' ? '일부 제한' : '확인 중')}</strong></div>
         </div>
         ${lastClientError ? `<div class="last-error-box"><span>최근 오류 코드</span><strong>${escapeHtml(lastClientError.code || 'CLIENT_UNKNOWN')}</strong><small>${escapeHtml(lastClientError.message || '')}</small></div>` : '<p class="form-notice">이 기기에서 기록된 최근 실행 오류가 없습니다.</p>'}
@@ -3318,13 +3310,20 @@
 
   // (중복 선언 제거됨: renderRestaurantCard — 아래쪽 최신 정의를 사용)
 
+  function restaurantClickHandler(place) {
+    const values = [place.id || place.name, place.name, place.addr || '', place.placeUrl || ''];
+    return escapeHtml(`openRestaurantResult(${values.map(value => "'" + escapeJsString(value) + "'").join(', ')})`);
+  }
+
   function openRestaurantResult(restaurantId, name, addr, placeUrl) {
     trackEvent('restaurant_selected', {
       restaurantId: restaurantId || name || 'unknown',
       menuId: currentMenu?.id || currentMenu?.name || '',
       distanceBand: 'unknown'
     });
-    if (placeUrl) window.open(placeUrl, '_blank', 'noopener,noreferrer');
+    let validUrl = '';
+    try { const url = new URL(placeUrl); if (url.protocol === 'https:' && ['map.naver.com', 'm.map.naver.com', 'm.place.naver.com'].includes(url.hostname)) validUrl = url.href; } catch (_) {}
+    if (validUrl) window.open(validUrl, '_blank', 'noopener,noreferrer');
     else openInMaps(name, addr);
   }
 
@@ -3408,22 +3407,13 @@
   // (중복 선언 제거됨: renderNearbySearchStrategy — 아래쪽 최신 정의를 사용)
 
   function externalMapQuery(menu) {
-    const q = buildPlaceQueries(menu);
-    return q.primary || menu.name;
+    const dish = menu ? (buildPlaceQueries(menu).primary || menu.name) : (nearbySearchTerm || '음식점');
+    return [userLocationLabel, dish].filter(Boolean).join(' ');
   }
 
   function renderExternalSearchLinks(menu) {
-    const query = encodeURIComponent(externalMapQuery(menu));
-    const google = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    const kakao = `https://map.kakao.com/link/search/${query}`;
-    const naver = `https://map.naver.com/p/search/${query}`;
-    return `
-      <div class="map-link-row">
-        <button class="map-link-btn" onclick="window.open('${google}', '_blank')">Google</button>
-        <button class="map-link-btn" onclick="window.open('${kakao}', '_blank')">Kakao</button>
-        <button class="map-link-btn" onclick="window.open('${naver}', '_blank')">Naver</button>
-      </div>
-    `;
+    const url = `https://map.naver.com/p/search/${encodeURIComponent(externalMapQuery(menu))}`;
+    return `<div class="map-link-row"><a class="map-link-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">네이버 지도에서 검색</a></div>`;
   }
 
   function placeRelevanceScore(place, menu, tierName, query) {
@@ -3453,8 +3443,8 @@
 
   // (중복 선언 제거됨: qualityBadgesForPlace — 아래쪽 최신 정의를 사용)
 
-  async function searchKakaoByQuery(query, location, radius, size = 8) {
-    return searchPlacesKakao(query, location, { radius, size, pageLimit: 1, sort: 'distance' });
+  async function searchNaverByQuery(query, location, radius, size = 8) {
+    return searchPlacesNaver(query, location, { radius, size, pageLimit: 1, sort: 'distance' });
   }
 
   async function searchPlacesSmart(menu, location) {
@@ -3467,7 +3457,7 @@
     const map = new Map();
     for (const item of plan) {
       try {
-        const places = await searchKakaoByQuery(item.query, location, item.radius, 8);
+        const places = await searchNaverByQuery(item.query, location, item.radius, 8);
         places.forEach(p => {
           const key = p.id || `${p.place_name}|${p.road_address_name || p.address_name}`;
           const scored = { ...p, query: item.query, tier: item.tier, score: placeRelevanceScore(p, menu, item.tier, item.query) };
@@ -3509,7 +3499,7 @@
         dist: baseDistances[i],
         rating: `★ ${(4.2 + (i % 4) * 0.15).toFixed(1)}`,
         price: prices[i % prices.length],
-        addr: '(예시 데이터 · 실제 검색은 지도 버튼 또는 Kakao API 사용)',
+        addr: '(예시 데이터 · 실제 검색은 지도 버튼 또는 네이버 검색 사용)',
         subcategory: i < 2 ? `${coreDishName(menu)} 후보` : `${menu.type} · ${menu.soup ? '국물' : '식사'} 메뉴`,
         query,
         tier,
@@ -3576,7 +3566,7 @@
 
   function openInMaps(name, addr) {
     const query = encodeURIComponent(`${name || ''} ${addr || ''}`.trim());
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    window.open(`https://map.naver.com/p/search/${query}`, '_blank', 'noopener,noreferrer');
   }
 
   function goNearby() {
@@ -5449,23 +5439,23 @@
   // (중복 선언 제거됨: renderNearbyNoData — 아래쪽 최신 정의를 사용)
 
   function renderNearbyProviderNotice() {
-    return `
-      <div class="nearby-status-card">
-        현재 버전은 가짜 식당 후보를 만들지 않습니다. Kakao REST API 키와 위치 권한이 있을 때만 실제 주변 식당을 표시합니다. API가 없으면 존재 여부를 확정하지 않고 지도 검색 버튼만 제공합니다.
-      </div>
-    `;
+    return `<div class="nearby-status-card">지금은 앱에서 식당을 불러올 수 없어요. 네이버 지도에서 검색하거나 잠시 후 다시 시도해 주세요.</div>${renderExternalSearchLinks(currentMenu)}`;
+  }
+
+  function renderNearbySearchError() {
+    return `<div class="nb-state-card"><h3 class="nb-state-title">식당을 불러오지 못했어요</h3><p class="nb-state-desc">잠시 후 다시 시도하거나 네이버 지도에서 확인해 주세요.</p><button type="button" class="nb-state-primary" onclick="nearbySearchTerm ? runNearbySearch(nearbySearchTerm) : renderNearby()">다시 시도</button></div>${renderExternalSearchLinks(currentMenu)}${renderManualLocationForm()}`;
   }
 
   // (중복 선언 제거됨: renderNearby — 아래쪽 최신 정의를 사용)
 
 
-  // ─── Nearby Search Hotfix: map-like Kakao keyword search ───
+  // ─── Nearby Search Hotfix: Naver keyword search ───
   // 지도 앱에서 직접 검색되는 식당이 앱에서 빠지던 문제를 수정합니다.
-  // 원인: 기존 코드는 undefined 함수(searchPlacesKakao)를 호출했고, 검색 결과의 가게명/카테고리에 메뉴명이 없으면 제거했습니다.
+  // 원인: 기존 코드는 undefined 함수(searchPlacesNaver)를 호출했고, 검색 결과의 가게명/카테고리에 메뉴명이 없으면 제거했습니다.
   // 실제 지도 검색은 키워드 매칭 결과를 우선 보여주므로, 앱도 "정확 메뉴명/핵심 메뉴명" 검색 결과를 우선 신뢰하도록 바꿉니다.
   const NEARBY_SEARCH_DEFAULTS = {
     radiusSteps: [3000, 7000, 12000, 20000],
-    pageLimit: 2,
+    pageLimit: 1,
     pageSize: 15,
   };
   let lastNearbySearchLog = [];
@@ -5487,7 +5477,7 @@
       .sort((a, b) => a - b);
   }
 
-  function normalizeKakaoPlace(place, query, tier, sort, radius) {
+  function normalizeNaverPlace(place, query, tier, sort, radius) {
     return {
       ...place,
       query,
@@ -5498,53 +5488,27 @@
     };
   }
 
-  async function searchPlacesKakao(query, location, options = {}) {
-    if (!NEARBY_PROXY_URL) throw new Error('주변 식당 프록시가 설정되지 않았습니다.');
+  async function searchPlacesNaver(query, location, options = {}) {
+    if (!NEARBY_PROXY_URL) throw new Error('주변 식당 검색을 연결하지 못했어요.');
     if (!query) return [];
-    if (!location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) {
-      throw new Error('위치 좌표가 올바르지 않습니다.');
-    }
-
+    if (!location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) throw new Error('위치 좌표를 확인해 주세요.');
     const radius = Math.min(20000, Math.max(1, Number(options.radius || 5000)));
     const size = Math.min(15, Math.max(1, Number(options.size || NEARBY_SEARCH_DEFAULTS.pageSize)));
-    const pageLimit = Math.min(3, Math.max(1, Number(options.pageLimit || NEARBY_SEARCH_DEFAULTS.pageLimit)));
-    const sort = options.sort || 'accuracy';
-    const documents = [];
-
-    for (let page = 1; page <= pageLimit; page += 1) {
-      const params = new URLSearchParams({
-        query: String(query),
-        x: String(location.lng),
-        y: String(location.lat),
-        radius: String(radius),
-        size: String(size),
-        page: String(page),
-        sort,
-      });
+    const sort = options.sort || 'distance';
+    const params = new URLSearchParams({ query: String(query), x: String(location.lng), y: String(location.lat), radius: String(radius), size: String(size) });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
       const separator = NEARBY_PROXY_URL.includes('?') ? '&' : '?';
-      const res = await fetch(`${NEARBY_PROXY_URL}${separator}${params.toString()}`, {
-        headers: { 'Accept': 'application/json' }
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`주변 식당 프록시 ${res.status}: ${errText.slice(0, 180)}`);
-      }
-
+      const res = await fetch(`${NEARBY_PROXY_URL}${separator}${params}`, { headers: { Accept: 'application/json' }, signal: controller.signal });
       const data = await res.json();
-      const pageDocs = (data.documents || []).filter(d => {
-        const group = d.category_group_code || '';
-        const cat = d.category_name || '';
-        return group === 'FD6' || group === 'CE7' || /음식점|카페|간식|주점/.test(cat);
-      });
-      documents.push(...pageDocs);
-      if (!data.meta || data.meta.is_end || !(data.documents || []).length) break;
-    }
-
-    return documents.map(d => normalizeKakaoPlace(d, String(query), options.tier || 'exact', sort, radius));
+      if (!res.ok) throw Object.assign(new Error('식당 검색을 잠시 이용할 수 없어요.'), { code: data.error || `HTTP_${res.status}` });
+      if (data.provider !== 'naver' || !Array.isArray(data.documents)) throw Object.assign(new Error('식당 검색 연결을 확인해 주세요.'), { code: 'unexpected_places_provider' });
+      return data.documents
+        .filter(place => ['FD6', 'CE7'].includes(place.category_group_code) && Number(place.distance) <= radius)
+        .map(place => normalizeNaverPlace(place, String(query), options.tier || 'exact', sort, radius));
+    } finally { clearTimeout(timer); }
   }
-
-
 
   // (중복 선언 제거됨: strictMenuPlaceQueries — 아래쪽 최신 정의를 사용)
 
@@ -5555,12 +5519,12 @@
   // (중복 선언 제거됨: renderNearbySearchDebug — 아래쪽 최신 정의를 사용)
 
   function renderNearbyNoData(menu, reason) {
-    const q = strictMenuPlaceQueries(menu);
+    const q = menu ? strictMenuPlaceQueries(menu) : [nearbySearchTerm || '음식점'];
     return `
       <div class="nearby-empty-strict">
         <div class="icon">🔍</div>
-        <p><strong>${escapeHtml(menu.name)}</strong>을(를) 파는 주변 식당을 찾지 못했습니다.</p>
-        <p>${escapeHtml(reason || '현재 위치 주변에는 이 추천 메뉴를 파는 식당이 없습니다.')}</p>
+        <p><strong>${escapeHtml(menu?.name || nearbySearchTerm || '음식점')}</strong> 관련 식당이 검색되지 않았어요.</p>
+        <p>${escapeHtml(reason || '검색 결과가 주변의 모든 식당을 포함하지는 않아요. 지역이나 검색어를 바꿔 보세요.')}</p>
         <p style="font-size:12px; margin-top:8px;">검색 기준: ${q.map(escapeHtml).join(' · ')}</p>
         <p style="font-size:11px; margin-top:6px; color:var(--ink-soft);">검색 반경: ${getNearbySearchRadiusSteps().map(v => (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'km').join(' → ')}</p>
         ${renderNearbySearchDebug()}
@@ -5577,23 +5541,22 @@
           <input id="manualLocationQuery" type="search" maxlength="80" autocomplete="street-address" placeholder="예: 강남역, 광운대역, 서울 노원구 월계동" onkeydown="if(event.key==='Enter'){event.preventDefault();searchByManualLocation();}">
           <button type="button" onclick="searchByManualLocation()">지역 검색</button>
         </div>
-        <p class="manual-location-help">위치 권한을 허용하지 않아도 사용할 수 있습니다. 입력한 검색어는 지역 좌표 확인에만 사용합니다.</p>
+        <p class="manual-location-help">위치 권한을 허용하지 않아도 사용할 수 있습니다. 입력한 지역을 기준으로 주변 식당을 검색합니다.</p>
       </div>`;
   }
 
   async function resolveManualLocation(query) {
-    if (!API_BASE_URL) throw new Error('지역 검색 서버가 연결되지 않았습니다.');
+    if (!API_BASE_URL) throw new Error('지역 검색을 연결하지 못했어요.');
     const params = new URLSearchParams({ query });
-    const response = await fetch(`${API_BASE_URL}/api/resolve-location?${params}`, { headers: { Accept: 'application/json' } });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      const error = new Error(payload.error === 'location_not_found' ? '입력한 지역을 찾지 못했습니다.' : '지역 검색에 실패했습니다.');
-      error.code = payload.error || `HTTP_${response.status}`;
-      throw error;
-    }
-    const payload = await response.json();
-    if (!Number.isFinite(Number(payload.lat)) || !Number.isFinite(Number(payload.lng))) throw new Error('지역 좌표가 올바르지 않습니다.');
-    return { lat: Number(payload.lat), lng: Number(payload.lng), label: String(payload.label || query).slice(0, 100) };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/resolve-location?${params}`, { headers: { Accept: 'application/json' }, signal: controller.signal });
+      const payload = await response.json();
+      if (!response.ok) throw Object.assign(new Error(payload.error === 'location_not_found' ? '입력한 지역을 찾지 못했어요.' : '지역 검색에 실패했어요.'), { code: payload.error || `HTTP_${response.status}` });
+      if (payload.provider !== 'naver' || payload.lat == null || payload.lng == null || !Number.isFinite(Number(payload.lat)) || !Number.isFinite(Number(payload.lng))) throw new Error('지역 좌표를 확인해 주세요.');
+      return { lat: Number(payload.lat), lng: Number(payload.lng), label: String(payload.label || query).slice(0, 100) };
+    } finally { clearTimeout(timer); }
   }
 
   async function searchByManualLocation() {
@@ -5603,23 +5566,30 @@
       showToast('지역, 주소 또는 역 이름을 2자 이상 입력해 주세요');
       return;
     }
+    const requestId = ++nearbySearchRequest;
     const c = document.getElementById('nearbyContent');
-    // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
     const strategy = renderExternalSearchLinks(currentMenu);
     c.innerHTML = strategy + `<div class="empty-state"><div class="empty-icon">🔍</div><p class="empty-text">${escapeHtml(query)} 위치를 확인하고 있어요.</p></div>`;
     try {
       const location = await resolveManualLocation(query);
+      if (requestId !== nearbySearchRequest) return;
       userLocation = { lat: location.lat, lng: location.lng };
       userLocationLabel = location.label;
       trackEvent('location_manual_search', { queryType: /역$/.test(query) ? 'station' : /[로길동구시군]$/.test(query) ? 'address_or_region' : 'keyword' });
-      await searchNearbyAtLocation(userLocation, 'manual');
+      if (nearbySearchTerm) await runNearbySearch(nearbySearchTerm);
+      else if (currentMenu) await searchNearbyAtLocation(userLocation, 'manual');
+      else await searchNearbyGeneral();
     } catch (error) {
+      if (requestId !== nearbySearchRequest) return;
       c.innerHTML = strategy + renderNearbyNoData(currentMenu, error.message || '지역 검색어를 확인해 주세요.') + renderManualLocationForm();
       trackEvent('restaurant_search_failed', { errorCode: error.code || 'manual_location_error', source: 'manual' });
     }
   }
 
   async function searchNearbyAtLocation(location, source = 'device') {
+    const requestId = ++nearbySearchRequest;
+    const menu = currentMenu;
+    renderNearbyMapMarkers([], location);
     const c = document.getElementById('nearbyContent');
     // 검색 전략·선택 가이드 안내는 제거했다. 외부 지도 검색 링크만 남긴다.
     const strategy = renderExternalSearchLinks(currentMenu);
@@ -5630,7 +5600,8 @@
         <p class="empty-text">${escapeHtml(label)} 주변에서 실제 식당을 검색 중입니다.</p>
       </div>`;
     try {
-      const places = await searchPlacesForExactMenuOnly(currentMenu, location);
+      const places = await searchPlacesForExactMenuOnly(menu, location);
+      if (requestId !== nearbySearchRequest) return;
       trackEvent('restaurant_search_completed', { menuId: currentMenu.id || currentMenu.name, source, resultCount: places.length });
       if (!places.length) {
         renderNearbyMapMarkers([], location);
@@ -5642,8 +5613,9 @@
       // 검색 방식·전략 안내는 제거하고, 위치 변경 수단만 남긴다.
       c.innerHTML = renderNearbySheet(formatted, label) + renderManualLocationForm();
     } catch (error) {
+      if (requestId !== nearbySearchRequest) return;
       console.error('Nearby search failed:', error);
-      c.innerHTML = strategy + renderNearbyNoData(currentMenu, `식당 검색에 실패했습니다. ${error.message || ''}`.trim()) + renderManualLocationForm();
+      c.innerHTML = renderNearbySearchError();
       trackEvent('restaurant_search_failed', { errorCode: error.code || 'provider_error', source });
     }
   }
@@ -5746,7 +5718,7 @@
 
 
   // ─── v4.5 Home-country recommendation + menu-first nearby search ───
-  // Kakao Local 키워드 API는 식당의 전체 메뉴판을 제공하지 않습니다.
+  // 네이버 지역 검색 API는 식당의 전체 메뉴판을 제공하지 않습니다.
   // 따라서 1차는 정확 메뉴명으로 검색하고, 결과가 부족할 때만 같은 음식 문화의 가까운 식당을
   // '판매 여부 확인 필요' 후보로 보여줍니다. 라조기를 마라로 바꾸는 식의 임의 치환은 금지합니다.
   const GENERIC_RESTAURANT_KEYWORDS = new Set([
@@ -6555,7 +6527,7 @@
     if (requestedTier === 'exact' && venueMatch) return { tier:'menu_query_candidate', evidenceRank:1, menuAvailability:'unknown' };
     if (requestedTier === 'cuisine_candidate' && venueMatch) return { tier:'cuisine_candidate', evidenceRank:2, menuAvailability:'unknown' };
 
-    // 카카오가 정확 메뉴 검색으로 반환했더라도 업종 근거가 전혀 없으면 노출하지 않습니다.
+    // 네이버가 정확 메뉴 검색으로 반환했더라도 업종 근거가 전혀 없으면 노출하지 않습니다.
     if (requestedTier === 'exact' && queryText && placeText.includes(queryText)) {
       return { tier:'verified_name_match', evidenceRank:0, menuAvailability:'name_evidence' };
     }
@@ -6575,6 +6547,8 @@
     const radiusSteps = getNearbySearchRadiusSteps();
     const results = new Map();
     const logs = [];
+    const fetched = new Map();
+    const maxRadius = Math.max(...radiusSteps);
 
     async function collect(queries, requestedTier, targetCount, sorts) {
       for (const radius of radiusSteps) {
@@ -6582,10 +6556,12 @@
           for (const sort of sorts) {
             let places = [];
             try {
-              places = await searchPlacesKakao(query, location, { radius, sort, tier: requestedTier, size:15, pageLimit:2 });
+              if (!fetched.has(query)) fetched.set(query, await searchPlacesNaver(query, location, { radius: maxRadius, sort: 'distance', tier: requestedTier, size:15 }));
+              places = fetched.get(query).filter(place => Number(place.distance) <= radius);
             } catch (error) {
-              logs.push({ query:`${requestedTier === 'exact' ? '[메뉴]' : '[업종]'} ${query}`, radius, sort, tier:requestedTier, count:0, error:error.message || String(error) });
-              continue;
+              logs.push({ query, radius, tier:requestedTier, count:0, error:error.code || error.message });
+              lastNearbySearchLog = logs;
+              throw error;
             }
 
             let acceptedCount = 0;
@@ -6594,7 +6570,7 @@
               if (!evidence) return;
               acceptedCount += 1;
               const key = place.id || `${place.place_name}|${place.road_address_name || place.address_name}`;
-              const distance = Number(place.distance || 99999);
+              const distance = Number(place.distance ?? 99999);
               const candidate = {
                 ...place,
                 query,
@@ -6617,7 +6593,7 @@
     }
 
     // 메뉴명·표기 변형을 먼저 확인합니다. 카페 등 업종 불일치 결과는 여기서 제거됩니다.
-    await collect(exactQueries, 'exact', 6, ['accuracy', 'distance']);
+    await collect(exactQueries, 'exact', 6, ['distance']);
     // 결과가 부족할 때만 메뉴에 맞는 전문 업종으로 확장합니다. 양식 전체/브런치로 확장하지 않습니다.
     if (results.size < 8) await collect(venueQueries, 'cuisine_candidate', 10, ['distance']);
 
@@ -6631,13 +6607,13 @@
     // 대신 근거 등급은 같은 거리대(400m 단위) 안에서만 순위를 가른다.
     // 가까우면서 근거도 확실한 가게가 자연스럽게 위로 온다.
     const DISTANCE_BUCKET = 400;
-    const bucketOf = place => Math.floor(Number(place.distance || 99999) / DISTANCE_BUCKET);
+    const bucketOf = place => Math.floor(Number(place.distance ?? 99999) / DISTANCE_BUCKET);
 
     return Array.from(results.values())
       .sort((a, b) =>
         bucketOf(a) - bucketOf(b)
         || placeTierRank(a.tier) - placeTierRank(b.tier)
-        || Number(a.distance || 99999) - Number(b.distance || 99999)
+        || Number(a.distance ?? 99999) - Number(b.distance ?? 99999)
         || b.score - a.score)
       .slice(0, 10);
   }
@@ -6669,23 +6645,23 @@
       dist,
       distanceMeters: Number.isFinite(distance) ? distance : Number.POSITIVE_INFINITY,
       score: place.score,
-      fitLabel: restaurantFitLabel(place.score, place.tier),
+      fitLabel: menu ? restaurantFitLabel(place.score, place.tier) : '검색 결과',
       price: '',
       addr: place.road_address_name || place.address_name || '',
       subcategory: category,
-      // 카카오는 x=경도, y=위도로 준다. 지도 마커를 찍으려면 반드시 보존해야 한다.
+      // 서버가 네이버 좌표를 x=경도, y=위도로 정규화한다. 지도 마커를 찍으려면 반드시 보존해야 한다.
       lat: Number(place.y),
       lng: Number(place.x),
       placeUrl: place.place_url,
       phone: place.phone || '',
       query: place.query || '',
-      tier: place.tier || 'cuisine_candidate',
-      availabilityNote: verified
+      tier: menu ? (place.tier || 'cuisine_candidate') : 'direct_search',
+      availabilityNote: !menu ? '네이버 검색으로 찾은 식당입니다. 메뉴와 영업 상태는 매장에서 확인해 주세요.' : verified
         ? `상호명에 '${menu?.name}' 관련 표현이 있습니다. 실제 판매 여부와 영업 상태를 확인하세요.`
         : queryCandidate
           ? `'${menu?.name}' 검색으로 확인된 ${menu?.type} 식당입니다. 메뉴판 또는 전화로 판매 여부를 확인하세요.`
           : `가까운 ${menu?.type} 전문점 후보입니다. '${menu?.name}' 판매를 보장하지 않습니다.`,
-      badges: qualityBadgesForPlace(place, menu),
+      badges: menu ? qualityBadgesForPlace(place, menu) : [],
     };
   }
 
@@ -7147,59 +7123,45 @@
     return `도보 ${Math.max(1, Math.round(meters / 67))}분`;
   }
 
-  // 지도 마커. 디자인은 가격을 보여주지만 카카오 API는 가격을 주지 않으므로
+  // 지도 마커. 디자인은 가격을 보여주지만 네이버 API는 가격을 주지 않으므로
   // 실제로 아는 값인 "거리"를 표시한다. 없는 정보를 지어내지 않는다.
   // 실제 지도를 그린다. 실패하면 일러스트 마커로 되돌아간다.
-  async function renderNearbyMapMarkers(list, center) {
+  let nearbyMapRenderRequest = 0;
+  function showNearbyMapUnavailable() {
+    ++nearbyMapRenderRequest;
     const canvas = document.getElementById('nbMapCanvas');
-    const artWrap = document.getElementById('nbMapArtWrap');
-    const origin = center || userLocation;
+    const art = document.getElementById('nbMapArtWrap');
+    if (canvas) canvas.hidden = true;
+    if (art) art.hidden = false;
+    const markers = document.getElementById('nbMarkers');
+    if (markers) markers.innerHTML = '';
+    const status = document.getElementById('nbMapStatus');
+    if (status) status.hidden = false;
+  }
+  window.addEventListener('plate:map-unavailable', showNearbyMapUnavailable);
 
-    if (window.kakaoMap && window.kakaoMap.usable() && origin) {
+  async function renderNearbyMapMarkers(list, center) {
+    const requestId = ++nearbyMapRenderRequest;
+    const origin = center || userLocation;
+    if (window.naverMap?.usable() && origin) {
       try {
-        const ok = await window.kakaoMap.render(origin, list, index => {
+        const ok = await window.naverMap.render(origin, list, index => {
           const place = list[index];
           if (place) openRestaurantResult(place.id || place.name, place.name, place.addr || '', place.placeUrl || '');
         });
+        if (requestId !== nearbyMapRenderRequest) return;
         if (ok) {
-          if (canvas) canvas.hidden = false;
-          if (artWrap) artWrap.hidden = true;
+          document.getElementById('nbMapCanvas').hidden = false;
+          document.getElementById('nbMapArtWrap').hidden = true;
+          document.getElementById('nbMapStatus').hidden = true;
           return;
         }
       } catch (error) {
-        // 키가 잘못됐거나 도메인 미등록이면 여기로 온다.
-        // 주변 식당 기능 자체는 계속 써야 하므로 일러스트로 넘어간다.
-        console.warn('[nearby] 지도를 불러오지 못해 일러스트로 대체합니다:', error.message);
+        if (requestId !== nearbyMapRenderRequest) return;
+        console.warn('[nearby] 네이버 지도를 표시하지 못했습니다:', error.message);
       }
     }
-
-    if (canvas) canvas.hidden = true;
-    if (artWrap) artWrap.hidden = false;
-    renderIllustratedMarkers(list);
-  }
-
-  function renderIllustratedMarkers(list) {
-    const host = document.getElementById('nbMarkers');
-    if (!host) return;
-
-    // 디자인의 마커 좌표(224,122 / 76,230 / 278,252)와 현재 위치(177,182)
-    const spots = [
-      { left: 224, top: 122, primary: true },
-      { left: 76,  top: 230, primary: false },
-      { left: 278, top: 252, primary: false }
-    ];
-
-    const markers = (list || []).slice(0, 3).map((place, index) => {
-      const spot = spots[index];
-      const label = place.dist || '근처';
-      return `<span class="nb-marker${spot.primary ? ' is-primary' : ''}"
-        style="left:${spot.left}px; top:${spot.top}px;">${escapeHtml(label)}</span>`;
-    }).join('');
-
-    host.innerHTML = markers +
-      `<span class="nb-current" style="left:177px; top:182px;">
-         <img src="./assets/figma/nearby/current-location.svg" alt="">
-       </span>`;
+    if (requestId === nearbyMapRenderRequest) showNearbyMapUnavailable();
   }
 
   function renderNearbySheet(list, label) {
@@ -7214,6 +7176,8 @@
         <p class="nb-subtitle">${escapeHtml(label)} 기준${
           openCount ? ` · 상호 확인 ${openCount}곳` : ''
         }</p>
+        <p class="nb-subtitle">메뉴·가격·영업 여부는 네이버 지도에서 확인해 주세요.</p>
+        ${list.some(place => place.distanceMeters > (getNearbySearchRadiusSteps()[0] || 3000)) ? '<p class="nb-subtitle">가까운 결과가 부족해 설정된 검색 범위를 넓혔어요.</p>' : ''}
       </div>`;
 
     const [featured, ...rest] = list;
@@ -7221,21 +7185,18 @@
       ${header}
       ${featured ? renderNearbyFeatured(featured) : ''}
       ${rest.length ? `<div class="nb-list">${
-        rest.slice(0, 4).map((place, index) => renderNearbyRow(place, index + 2)).join('')
+        rest.map((place, index) => renderNearbyRow(place, index + 2)).join('')
       }</div>` : ''}
-      ${list.length > 5 ? `
-        <button class="nb-view-all" type="button" onclick="openNearbyExternalSearch()">
-          카카오맵에서 더 보기
-        </button>` : ''}
+      <button class="nb-view-all" type="button" onclick="openNearbyExternalSearch()">네이버 지도에서 더 보기</button>
     </div>`;
   }
 
   function renderNearbyFeatured(place) {
-    const walk = walkMinutes(place.dist);
+    const walk = place.dist ? `직선 거리 ${place.dist}` : '';
     const photo = place.tier !== 'direct_search' && typeof getMenuImage === 'function' ? getMenuImage(currentMenu, 300) : '';
 
     // 디자인의 '취향 96%'는 적합도 라벨로, '영업 중'은 상호 검증 상태로 대체한다.
-    // 평점·리뷰 수·영업 상태는 카카오 로컬 API가 제공하지 않는다.
+    // 평점·리뷰 수·영업 상태는 네이버 로컬 API가 제공하지 않는다.
     const badges = [];
     if (place.fitLabel) badges.push(place.fitLabel);
     if (place.tier === 'verified_name_match') badges.push('상호 일치');
@@ -7245,7 +7206,7 @@
 
     return `
       <button class="nb-featured" type="button"
-              onclick="openRestaurantResult('${escapeJsString(place.id || place.name)}', '${escapeJsString(place.name)}', '${escapeJsString(place.addr || '')}', '${escapeJsString(place.placeUrl || '')}')">
+              onclick="${restaurantClickHandler(place)}">
         <span class="nb-featured-photo">
           ${photo ? `<img src="${escapeHtml(photo)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
           <span class="nb-featured-emoji" aria-hidden="true">${place.emoji || '🍽️'}</span>
@@ -7262,11 +7223,11 @@
   }
 
   function renderNearbyRow(place, rank) {
-    const walk = walkMinutes(place.dist);
+    const walk = place.dist ? `직선 거리 ${place.dist}` : '';
     const meta = [place.subcategory, walk || place.dist, place.phone].filter(Boolean).join(' · ');
     return `
       <button class="nb-row" type="button"
-              onclick="openRestaurantResult('${escapeJsString(place.id || place.name)}', '${escapeJsString(place.name)}', '${escapeJsString(place.addr || '')}', '${escapeJsString(place.placeUrl || '')}')">
+              onclick="${restaurantClickHandler(place)}">
         <span class="nb-rank">${rank}</span>
         <span class="nb-row-copy">
           <strong>${escapeHtml(place.name)}</strong>
@@ -7277,9 +7238,9 @@
   }
 
   function openNearbyExternalSearch() {
-    const term = nearbySearchTerm || (currentMenu ? `${currentMenu.name} 맛집` : '음식점');
+    const term = [userLocationLabel, nearbySearchTerm || (currentMenu ? currentMenu.name : '음식점')].filter(Boolean).join(' ');
     const query = encodeURIComponent(term);
-    window.open(`https://map.kakao.com/?q=${query}`, '_blank', 'noopener');
+    window.open(`https://map.naver.com/p/search/${query}`, '_blank', 'noopener,noreferrer');
   }
 
   // '직접 검색하기' — 메뉴를 먼저 골라야 주변 식당을 찾을 수 있으므로
@@ -7293,6 +7254,8 @@
   // 추천 메뉴가 없으면 '음식점' 자체로 검색한다.
 
   async function searchNearbyGeneral() {
+    const requestId = ++nearbySearchRequest;
+    renderNearbyMapMarkers([], userLocation);
     const c = document.getElementById('nearbyContent');
     if (!c) return;
 
@@ -7307,6 +7270,7 @@
     c.innerHTML = '<div class="nb-loading" role="status">주변을 찾고 있어요…</div>';
 
     const location = userLocation || (await getUserLocation().catch(() => null));
+    if (requestId !== nearbySearchRequest) return;
     if (!location) {
       c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
         <img class="nb-state-icon" src="./assets/figma/nearby/state-icon.svg" alt="" aria-hidden="true">
@@ -7318,7 +7282,8 @@
 
     try {
       const radius = getNearbySearchRadiusSteps()[0] || 3000;
-      const raw = await searchPlacesKakao('음식점', location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
+      const raw = await searchPlacesNaver('음식점', location, { radius, size: 15, sort: 'distance' });
+      if (requestId !== nearbySearchRequest) return;
       const formatted = (raw || []).map(place => formatPlace(place, null)).filter(Boolean);
 
       renderNearbyMapMarkers(formatted, location);
@@ -7327,18 +7292,19 @@
         c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
           <h3 class="nb-state-title">근처에 검색된 곳이 없어요</h3>
           <p class="nb-state-desc">검색 범위를 넓히거나 메뉴를 검색해 보세요.</p>
-        </section></div>`;
+        </section>${renderExternalSearchLinks(null)}${renderManualLocationForm()}</div>`;
         return;
       }
 
-      c.innerHTML = renderNearbySheet(formatted, '현재 위치');
+      c.innerHTML = renderNearbySheet(formatted, userLocationLabel || '현재 위치') + renderManualLocationForm();
       trackEvent('nearby_general_viewed', { resultCount: formatted.length });
     } catch (error) {
+      if (requestId !== nearbySearchRequest) return;
       console.error('[nearby] 주변 조회 실패:', error);
       c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
         <h3 class="nb-state-title">주변을 불러오지 못했어요</h3>
         <p class="nb-state-desc">잠시 후 다시 시도해 주세요.</p>
-      </section></div>`;
+      </section>${renderExternalSearchLinks(currentMenu)}${renderManualLocationForm()}</div>`;
     }
   }
 
@@ -7381,11 +7347,12 @@
     }
 
     c.innerHTML = '<div class="nb-loading" role="status">주변을 찾고 있어요…</div>';
+    renderNearbyMapMarkers([], location);
 
     try {
-      // 입력어를 그대로 카카오에 넘긴다. 메뉴명이든 상호든 모두 처리된다.
+      // 입력어를 그대로 네이버에 넘긴다. 메뉴명이든 상호든 모두 처리된다.
       const radius = getNearbySearchRadiusSteps()[0] || 3000;
-      const raw = await searchPlacesKakao(keyword, location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
+      const raw = await searchPlacesNaver(keyword, location, { radius, size: 15, pageLimit: 1, sort: 'distance' });
 
       if (requestId !== nearbySearchRequest) return;
       const formatted = (raw || [])
@@ -7399,7 +7366,7 @@
         c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
           <h3 class="nb-state-title">'${escapeHtml(keyword)}' 결과가 없어요</h3>
           <p class="nb-state-desc">다른 말로 검색하거나 검색 범위를 넓혀 보세요.</p>
-        </section></div>`;
+        </section>${renderExternalSearchLinks(null)}${renderManualLocationForm()}</div>`;
         return;
       }
 
@@ -7411,7 +7378,7 @@
       c.innerHTML = `<div class="nb-entry"><section class="nb-state-card">
         <h3 class="nb-state-title">검색에 실패했어요</h3>
         <p class="nb-state-desc">잠시 후 다시 시도해 주세요.</p>
-      </section></div>`;
+      </section>${renderExternalSearchLinks(currentMenu)}${renderManualLocationForm()}</div>`;
     }
   }
 

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const app = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../css/app.css', import.meta.url), 'utf8');
-const server = fs.readFileSync(new URL('../server/kakao-nearby-proxy.mjs', import.meta.url), 'utf8');
+const server = fs.readFileSync(new URL('../server/nearby-proxy.mjs', import.meta.url), 'utf8');
 const report = fs.readFileSync(new URL('../server/beta-report.mjs', import.meta.url), 'utf8');
 const firebase = JSON.parse(fs.readFileSync(new URL('../firebase.json', import.meta.url), 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
