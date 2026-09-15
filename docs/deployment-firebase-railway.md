@@ -1,5 +1,8 @@
 # Firebase Hosting + Railway 배포
 
+네이버 지도 전환의 키 발급·도메인 등록·검색 한계는 [전환 안내](./naver-maps-migration.md)를 먼저 확인하세요.
+
+
 ## 1. Railway API
 
 Railway에서 GitHub 저장소를 연결하거나 Railway CLI로 이 프로젝트를 배포한다.
@@ -7,7 +10,10 @@ Railway에서 GitHub 저장소를 연결하거나 Railway CLI로 이 프로젝�
 필수 서비스 변수:
 
 ```env
-KAKAO_REST_API_KEY=카카오_REST_API_키
+NAVER_SEARCH_CLIENT_ID=검색_Client_ID
+NAVER_SEARCH_CLIENT_SECRET=검색_Client_Secret
+NAVER_MAPS_CLIENT_ID=Maps_Client_ID
+NAVER_MAPS_CLIENT_SECRET=Maps_Client_Secret
 ALLOWED_ORIGINS=https://FIREBASE_PROJECT_ID.web.app,https://FIREBASE_PROJECT_ID.firebaseapp.com
 RATE_LIMIT_PER_MINUTE=120
 ```
@@ -22,7 +28,7 @@ RATE_LIMIT_PER_MINUTE=120
 https://RAILWAY_DOMAIN/api/health
 ```
 
-`ok: true`, `kakaoConfigured: true`여야 한다.
+`ok: true`, `naverConfigured: true`여야 한다.
 
 ## 2. 프런트 설정
 
@@ -32,7 +38,8 @@ https://RAILWAY_DOMAIN/api/health
 window.APP_CONFIG = {
   API_BASE_URL: 'https://RAILWAY_DOMAIN',
   NEARBY_PROXY_URL: 'https://RAILWAY_DOMAIN/api/nearby',
-  NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000]
+  NEARBY_RADIUS_STEPS: [3000, 7000, 12000, 20000],
+  NAVER_MAPS_CLIENT_ID: 'Maps의 공개 Client ID'
 };
 ```
 

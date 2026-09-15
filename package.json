@@ -1,15 +1,15 @@
 {
   "name": "todays-plate-beta-api",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "start": "node server/kakao-nearby-proxy.mjs",
+    "start": "node server/nearby-proxy.mjs",
     "report": "node server/beta-report.mjs",
-    "check": "node --check server/kakao-nearby-proxy.mjs && node --check server/beta-report.mjs && node --check server/backup-data.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\" && node --check server/analytics-report.mjs && node --check js/admin-analytics.js",
+    "check": "node --check server/nearby-proxy.mjs && node --check server/naver-places.mjs && node --check js/naver-map.js && node --check server/beta-report.mjs && node --check server/backup-data.mjs && node -e \"new Function(require('fs').readFileSync('js/app.js','utf8'))\" && node --check server/analytics-report.mjs && node --check js/admin-analytics.js",
     "validate:recommendation": "node scripts/validate-recommendation-v4.4.mjs",
     "validate:v4.5": "node scripts/validate-recommendation-v4.5.mjs",
     "validate:v4.6": "node scripts/validate-nearby-v4.6.mjs",
@@ -29,6 +29,7 @@
     "test:cleanup": "node --test scripts/test-account-deletion.mjs scripts/test-feed-mutations.mjs",
     "test:rules": "firebase emulators:exec --project demo-plate --config firebase.test.json --only firestore,storage \"node scripts/test-firestore-rules.mjs\"",
     "test:analytics": "node --test scripts/test-analytics.mjs",
-    "test:analytics:ui": "python scripts/test-analytics-ui.py"
+    "test:analytics:ui": "python scripts/test-analytics-ui.py",
+    "test:naver": "node --test scripts/test-naver-places.mjs scripts/test-naver-ui.mjs"
   }
 }
